@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.indicators.service
 
+import java.time.Period
+import java.time.temporal.ChronoUnit
+
 import uk.gov.hmrc.gitclient.GitTag
 
 object LeadTimeCalculator {
@@ -25,7 +28,7 @@ object LeadTimeCalculator {
       .map(t => t -> releases.find(r => r.tag == t.name))
       .collect { case (t, Some(r)) => t -> r }
       .map { case (t, r) =>
-        t.createdAt.get.toLocalDate.until(r.date).getDays
+        ChronoUnit.DAYS.between(t.createdAt.get.toLocalDate, r.date)
       }
     
     val avg = BigDecimal(leadTimes.sum) / BigDecimal(leadTimes.size)
