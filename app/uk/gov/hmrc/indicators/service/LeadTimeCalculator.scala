@@ -16,14 +16,20 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import uk.gov.hmrc.gitclient.GitTag
 
-import scala.concurrent.Future
+object LeadTimeCalculator {
+  def calculateLeadTime(tags: Seq[GitTag], releases: Seq[Release]): List[ProductionLeadTime] = {
 
+    val leadTimes = tags
+      .map(t => t -> releases.find(r => r.tag == t.name))
+      .collect { case (t, Some(r)) => t -> r }
+      .map { case (t, r) =>
+        t.createdAt.get.toLocalDate.until(r.date).getDays
+      }
+    
+    val avg = BigDecimal(leadTimes.sum) / BigDecimal(leadTimes.size)
 
-case class Release(tag : String, date : LocalDate)
-class ReleasesClient {
-
-  def getAllReleases(serviceName:String) : Future[List[Release]]= ???
-
+    List(ProductionLeadTime(releases.head.date, avg))
+  }
 }
