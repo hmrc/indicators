@@ -20,7 +20,29 @@ import java.time.temporal.ChronoUnit
 
 import uk.gov.hmrc.gitclient.GitTag
 
+object IndicatorTraversable{
+
+  implicit class TravOnce[A](self:TraversableOnce[A]){
+    def median[B >: A](implicit num : scala.Numeric[B],  ord:Ordering[A]) : BigDecimal ={
+      self.size match {
+        case 1 => BigDecimal(num.toDouble(self.toList.sorted.head))
+        case 2 => average(num)
+        case n if n % 2 == 0 => BigDecimal(num.toDouble(self.toList.sorted.apply((self.size / 2)-1)))
+        case n if n % 2 == 1 => BigDecimal(num.toDouble(self.toList.sorted.apply(self.size / 2)))
+      }
+    }
+
+    def average[B >: A](implicit num : scala.Numeric[B]) : BigDecimal ={
+      BigDecimal(self.map(n => num.toDouble(n)).sum) / BigDecimal(self.size)
+    }
+  }
+}
+
 object LeadTimeCalculator {
+
+  import IndicatorTraversable._
+
+
   def calculateLeadTime(tags: Seq[GitTag], releases: Seq[Release]): List[ProductionLeadTime] = {
 
     val groupByReleaseMonth: Map[Int, Seq[(GitTag, Release)]] = tags
@@ -31,11 +53,10 @@ object LeadTimeCalculator {
     groupByReleaseMonth
       .map { case (m , seq) =>
         val leadTimes = calculateLeadTimes(seq)
-        val avg = BigDecimal(leadTimes.sum) / BigDecimal(leadTimes.size)
-
-        ProductionLeadTime(seq.head._2.date, avg)
+        ProductionLeadTime(seq.head._2.date, leadTimes.median)
       }.toList.sortBy(_.period.toEpochDay)
   }
+
 
   def calculateLeadTimes(seq: Seq[(GitTag, Release)]): Seq[Long] = {
     seq.map { case (t, r) =>

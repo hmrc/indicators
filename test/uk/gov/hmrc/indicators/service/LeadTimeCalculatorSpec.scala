@@ -31,9 +31,10 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers{
   }
 
   val Feb_1st = LocalDate.of(2000, 2, 1)
-  val Feb_4th = Feb_1st.plusDays(3)
-  val Feb_10th = Feb_1st.plusDays(9)
-  val Feb_16th = Feb_1st.plusDays(15)
+  val Feb_4th = LocalDate.of(2000, 2, 4)
+  val Feb_10th = LocalDate.of(2000, 2, 10)
+  val Feb_16th = LocalDate.of(2000, 2, 16)
+  val Feb_18th = LocalDate.of(2000, 2, 18)
 
   val Mar_1st = LocalDate.of(2000, 3, 1)
   val Mar_4th = LocalDate.of(2000, 3, 4)
@@ -85,6 +86,43 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers{
       )
 
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Mar_4th, 3), ProductionLeadTime(Apr_10th, 6))
+    }
+
+
+    "calculate the correct median lead time for 3 releases" in {
+
+      val tags = List(
+        GitTag("1.0.0", Some(Feb_1st.zoned)),
+        GitTag("2.0.0", Some(Feb_4th.zoned)),
+        GitTag("3.0.0", Some(Feb_10th.zoned))
+      )
+
+      val releases = List(
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_10th),
+        Release("3.0.0", Feb_18th)
+      )
+      LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, 6))
+    }
+
+
+    "calculate the correct median lead time for 4 releases (3, 5, 6, 2)" in {
+
+      val tags = List(
+        GitTag("1.0.0", Some(Feb_1st.zoned)),
+        GitTag("2.0.0", Some(Feb_4th.zoned)),
+        GitTag("3.0.0", Some(Feb_10th.zoned)),
+        GitTag("4.0.0", Some(Feb_16th.zoned))
+      )
+
+      val releases = List(
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_10th),
+        Release("3.0.0", Feb_16th),
+        Release("4.0.0", Feb_18th)
+      )
+
+      LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, 3))
     }
 
     "ignore tags without any release" in {
