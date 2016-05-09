@@ -16,16 +16,25 @@
 
 package uk.gov.hmrc.indicators.controllers
 
-import uk.gov.hmrc.play.microservice.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import org.apache.commons.io.FileUtils
+import play.api.libs.json.Json
 import play.api.mvc._
-import scala.concurrent.Future
+import uk.gov.hmrc.gitclient.Git
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.microservice.controller.BaseController
 
-object MicroserviceHelloWorld extends MicroserviceHelloWorld
+object ServiceIndicatorController extends ServiceIndicatorController
 
-trait MicroserviceHelloWorld extends BaseController {
 
-	def hello() = Action.async { implicit request =>
-		Future.successful(Ok("Hello world"))
-	}
+trait ServiceIndicatorController extends BaseController {
+
+example.com")
+
+
+
+  def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
+
+
+    gitEnterPrise.getGitRepoTags(serviceName, "HMRC").map(x => Ok(Json.toJson(x.map(y => y.name))))
+  }
 }
