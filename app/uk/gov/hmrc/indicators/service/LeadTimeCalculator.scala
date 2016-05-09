@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.Period
 import java.time.temporal.ChronoUnit
 
 import uk.gov.hmrc.gitclient.GitTag
@@ -24,15 +23,23 @@ import uk.gov.hmrc.gitclient.GitTag
 object LeadTimeCalculator {
   def calculateLeadTime(tags: Seq[GitTag], releases: Seq[Release]): List[ProductionLeadTime] = {
 
-    val leadTimes = tags
+    val groupByReleaseMonth: Map[Int, Seq[(GitTag, Release)]] = tags
       .map(t => t -> releases.find(r => r.tag == t.name))
       .collect { case (t, Some(r)) => t -> r }
-      .map { case (t, r) =>
-        ChronoUnit.DAYS.between(t.createdAt.get.toLocalDate, r.date)
-      }
-    
-    val avg = BigDecimal(leadTimes.sum) / BigDecimal(leadTimes.size)
+      .groupBy { case (t, r) => r.date.getMonth.getValue }
 
-    List(ProductionLeadTime(releases.head.date, avg))
+    groupByReleaseMonth
+      .map { case (m , seq) =>
+        val leadTimes = calculateLeadTimes(seq)
+        val avg = BigDecimal(leadTimes.sum) / BigDecimal(leadTimes.size)
+
+        ProductionLeadTime(seq.head._2.date, avg)
+      }.toList.sortBy(_.period.toEpochDay)
+  }
+
+  def calculateLeadTimes(seq: Seq[(GitTag, Release)]): Seq[Long] = {
+    seq.map { case (t, r) =>
+      ChronoUnit.DAYS.between(t.createdAt.get.toLocalDate, r.date)
+    }
   }
 }
