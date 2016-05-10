@@ -106,7 +106,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers{
     }
 
 
-    "calculate the correct median lead time for 4 releases (3, 5, 6, 2)" in {
+    "calculate the correct median lead time for 4 releases (3, 6, 6, 2)" in {
 
       val tags = List(
         GitTag("1.0.0", Some(Feb_1st.zoned)),
@@ -115,14 +115,15 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers{
         GitTag("4.0.0", Some(Feb_16th.zoned))
       )
 
+
       val releases = List(
-        Release("1.0.0", Feb_4th),
-        Release("2.0.0", Feb_10th),
-        Release("3.0.0", Feb_16th),
-        Release("4.0.0", Feb_18th)
+        Release("1.0.0", Feb_4th), // 3 days
+        Release("2.0.0", Feb_10th),//6 days
+        Release("3.0.0", Feb_16th),//6 days
+        Release("4.0.0", Feb_18th)//2 days
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, 3))
+      LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, 4.5))
     }
 
     "ignore tags without any release" in {

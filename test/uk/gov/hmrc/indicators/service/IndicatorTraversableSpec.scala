@@ -20,7 +20,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class IndicatorTraversableSpec extends WordSpec with Matchers{
+class IndicatorTraversableSpec extends WordSpec with Matchers {
 
   import IndicatorTraversable._
 
@@ -38,7 +38,18 @@ class IndicatorTraversableSpec extends WordSpec with Matchers{
     }
 
     "find the median of 4 numbers by taking the left of the two inner numbers" in {
-      Seq(1, 5, 7, 7).median shouldBe 5
+      Seq(7, 7, 1, 4).median shouldBe 5.5
+    }
+
+    "find the median of 5 numbers by taking the left of the two inner numbers" in {
+      Seq(7, 7, 1, 4, 3).median shouldBe 4
+    }
+
+    "find the median of random series of numbers" in {
+      (1 to 10).median shouldBe 5.5
+      (11 to 20 ).median shouldBe 15.5
+      Seq(1, 2, 3, 3, 5, 20, 7, 8, 9, 10, 30).median shouldBe 7
+
     }
   }
 
