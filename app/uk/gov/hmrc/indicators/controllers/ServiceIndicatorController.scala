@@ -28,13 +28,11 @@ object ServiceIndicatorController extends ServiceIndicatorController
 
 trait ServiceIndicatorController extends BaseController {
 
-example.com")
-
+val gitEnterprise = Git("","","")
 
 
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
-
-    gitEnterPrise.getGitRepoTags(serviceName, "HMRC").map(x => Ok(Json.toJson(x.map(y => y.name))))
+    gitEnterprise.getGitRepoTags(serviceName, "HMRC").map(x => Ok(Json.toJson(x.map(y => y.name))))
   }
 }
