@@ -35,7 +35,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-url-binders" % playUrlBindersVersion,
     "uk.gov.hmrc" %% "play-config" % playConfigVersion,
     "uk.gov.hmrc" %% "play-json-logger" % playJsonLoggerVersion,
-    "uk.gov.hmrc" %% "git-client" % "0.2.0-4-g5d2f279",
+    "uk.gov.hmrc" %% "git-client" % "0.3.0",
     "uk.gov.hmrc" %% "domain" % domainVersion
   )
 
