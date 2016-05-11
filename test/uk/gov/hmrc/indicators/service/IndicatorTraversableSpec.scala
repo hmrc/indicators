@@ -16,39 +16,43 @@
 
 package uk.gov.hmrc.indicators.service
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{OptionValues, Matchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class IndicatorTraversableSpec extends WordSpec with Matchers {
+class IndicatorTraversableSpec extends WordSpec with Matchers with OptionValues{
 
   import IndicatorTraversable._
 
   "IndicatorTraversable" should {
+    "return none as median for empty seq" in {
+      Seq.empty[Int].median shouldBe None
+    }
+
     "find the median of 1 number" in {
-      Seq(1).median shouldBe 1
+      Seq(1).median.get shouldBe 1
     }
 
     "find the median of 2 numbers by calculating the average" in {
-      Seq(1, 2).median shouldBe 1.5
+      Seq(1, 2).median.get shouldBe 1.5
     }
 
     "find the median of 3 numbers" in {
-      Seq(1, 2, 3).median shouldBe 2
+      Seq(1, 2, 3).median.get shouldBe 2
     }
 
     "find the median of 4 numbers by taking the left of the two inner numbers" in {
-      Seq(7, 7, 1, 4).median shouldBe 5.5
+      Seq(7, 7, 1, 4).median.get shouldBe 5.5
     }
 
     "find the median of 5 numbers by taking the left of the two inner numbers" in {
-      Seq(7, 7, 1, 4, 3).median shouldBe 4
+      Seq(7, 7, 1, 4, 3).median.get shouldBe 4
     }
 
     "find the median of random series of numbers" in {
-      (1 to 10).median shouldBe 5.5
-      (11 to 20 ).median shouldBe 15.5
-      Seq(1, 2, 3, 3, 5, 20, 7, 8, 9, 10, 30).median shouldBe 7
+      (1 to 10).median.get shouldBe 5.5
+      (11 to 20 ).median.get shouldBe 15.5
+      Seq(1, 2, 3, 3, 5, 20, 7, 8, 9, 10, 30).median.get shouldBe 7
 
     }
   }

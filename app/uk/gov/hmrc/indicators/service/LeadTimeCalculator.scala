@@ -17,22 +17,23 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time.temporal.ChronoUnit
+import java.time.{LocalDate, YearMonth}
 
 import uk.gov.hmrc.gitclient.GitTag
 
 object IndicatorTraversable {
 
   implicit class TravOnce[A](self: TraversableOnce[A]) {
-    def median[B >: A](implicit num: scala.Numeric[B], ord: Ordering[A]): BigDecimal = {
+    def median[B >: A](implicit num: scala.Numeric[B], ord: Ordering[A]): Option[BigDecimal] = {
 
       val sorted = self.toList.sorted
 
-      self.size match {
-        case 1 => BigDecimal(num.toDouble(self.toList.sorted.head))
+      sorted.size match {
+        case 0 => None
         case n if n % 2 == 0 =>
           val idx = (n - 1) / 2
-          sorted.drop(idx).dropRight(idx).average(num)
-        case n  => BigDecimal(num.toDouble(sorted(n / 2)))
+          Some(sorted.drop(idx).dropRight(idx).average(num))
+        case n => Some(BigDecimal(num.toDouble(sorted(n / 2))))
       }
     }
 
@@ -47,6 +48,30 @@ object LeadTimeCalculator {
 
   import IndicatorTraversable._
 
+  def calculateRollingLeadTime(tags: Seq[GitTag], releases: Seq[Release], periodInMonths: Int = 9): List[ProductionLeadTime] = {
+
+    val t = Iterator.iterate(YearMonth.now())(_ minusMonths 1)
+      .take(periodInMonths).toList
+
+    val rt = releases
+      .dropWhile(r => YearMonth.from(r.date).isBefore(t.last))
+      .map { r => releaseLeadTime(r, tags).map((r, _)) }.flatten
+
+    t.reverseMap { ym =>
+      val m = rt.takeWhile { case (r, lt) =>
+        val rym: YearMonth = YearMonth.from(r.date)
+        rym.equals(ym) || rym.isBefore(ym)
+      }.map(_._2).median
+
+      ProductionLeadTime(LocalDate.of(ym.getYear, ym.getMonthValue, 1), m)
+    }
+
+  }
+
+  def releaseLeadTime(r: Release, tags: Seq[GitTag]): Option[Long] = {
+    val find: Option[GitTag] = tags.find(_.name == r.tag)
+    find.map(t => days(t, r))
+  }
 
   def calculateLeadTime(tags: Seq[GitTag], releases: Seq[Release]): List[ProductionLeadTime] = {
 
@@ -64,7 +89,11 @@ object LeadTimeCalculator {
 
   def calculateLeadTimes(seq: Seq[(GitTag, Release)]): Seq[Long] = {
     seq.map { case (t, r) =>
-      ChronoUnit.DAYS.between(t.createdAt.get.toLocalDate, r.date)
+      days(t, r)
     }
+  }
+
+  def days(tag: GitTag, release: Release): Long = {
+    ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.date)
   }
 }

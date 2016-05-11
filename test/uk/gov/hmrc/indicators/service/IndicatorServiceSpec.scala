@@ -52,8 +52,7 @@ class IndicatorServiceSpec extends WordSpec with Matchers with MockitoSugar with
       Mockito.when(gitClient.getGitRepoTags("test-service", "HMRC")).thenReturn(Future.successful(tags))
       Mockito.when(releasesClient.getAllReleases("test-service")).thenReturn(Future.successful(releases))
 
-      indicatorsService.getProductionDeploymentLeadTime("test-service")
-        .futureValue shouldBe List(ProductionLeadTime(Feb_4th, 3))
+      indicatorsService.getProductionDeploymentLeadTime("test-service").futureValue shouldBe List(ProductionLeadTime(Feb_4th, Some(3) ))
     }
   }
 }

@@ -19,20 +19,31 @@ package uk.gov.hmrc.indicators.controllers
 import org.apache.commons.io.FileUtils
 import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.gitclient.Git
+import uk.gov.hmrc.gitclient.{GitTag, Git}
+import uk.gov.hmrc.indicators.service.IndicatorsService
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-object ServiceIndicatorController extends ServiceIndicatorController
+import scala.concurrent.Future
+
+object ServiceIndicatorController extends ServiceIndicatorController {
+  override def indicatorsService: IndicatorsService = ???
+}
 
 
 trait ServiceIndicatorController extends BaseController {
 
-val gitEnterprise = Git("","","")
+  def indicatorsService : IndicatorsService
+
 
 
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
-    gitEnterprise.getGitRepoTags(serviceName, "HMRC").map(x => Ok(Json.toJson(x.map(y => y.name))))
+    indicatorsService.getProductionDeploymentLeadTime(serviceName)
+
+
+
+    ???
+
   }
 }

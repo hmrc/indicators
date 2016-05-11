@@ -23,7 +23,7 @@ import uk.gov.hmrc.gitclient.{GitClient, GitTag}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class ProductionLeadTime(period : LocalDate, median : BigDecimal)
+case class ProductionLeadTime(period : LocalDate, median : Option[BigDecimal])
 
 class IndicatorsService(gitClient: GitClient, releasesClient: ReleasesClient) {
 
@@ -33,6 +33,10 @@ class IndicatorsService(gitClient: GitClient, releasesClient: ReleasesClient) {
       tags <- gitClient.getGitRepoTags(serviceName, "HMRC")
       releases <- releasesClient.getAllReleases(serviceName)
     } yield {
+
+      //create a time line upto 9 months
+      //create a median of each month including the raw data of previous month
+
       LeadTimeCalculator.calculateLeadTime(tags, releases)
     }
   }
