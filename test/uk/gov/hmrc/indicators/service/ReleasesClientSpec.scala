@@ -25,11 +25,11 @@ import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, Configs, IndicatorsConfigProvider, WireMockSpec}
 
-class ReleasesConnectorSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig{
+class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig{
 
 
 
-  val releasesClient = new ReleasesConnector with IndicatorsConfigProvider {
+  val releasesClient = new ReleasesClient with IndicatorsConfigProvider {
     override def configs: Configs = new Configs {
       override def config(path: String): Option[String] = {
         Map(

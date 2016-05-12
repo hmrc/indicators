@@ -26,21 +26,21 @@ import uk.gov.hmrc.indicators.http.HttpClient
 import scala.concurrent.Future
 
 
-case class Release(env : String, an: String, ver: String, fs: LocalDate)
+case class AppRelease(env : String, an: String, ver: String, fs: LocalDate)
 
-object Release {
+object AppRelease {
 
   import JavaDateTimeFormatters._
 
-  implicit val format = Json.reads[Release]
+  implicit val format = Json.reads[AppRelease]
 }
 
 
-class ReleasesConnector {
+class ReleasesClient {
   self: IndicatorsConfigProvider =>
 
 
-  def getAllReleases: Future[List[Release]] = {
-    HttpClient.get[List[Release]](s"$releasesApiBase/apps")
+  def getAllReleases: Future[List[AppRelease]] = {
+    HttpClient.get[List[AppRelease]](s"$releasesApiBase/apps")
   }
 }

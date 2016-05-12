@@ -31,5 +31,9 @@ object JavaDateTimeFormatters {
     }
   }
 
+  implicit val localDateWrite = new Writes[LocalDate] {
+    override def writes(o: LocalDate): JsValue = JsString(o.toString)
+  }
+
 
 }

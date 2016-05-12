@@ -48,18 +48,18 @@ object LeadTimeCalculator {
 
   import IndicatorTraversable._
 
-  def calculateRollingLeadTime(tags: Seq[GitTag], releases: Seq[Release], periodInMonths: Int = 9): List[ProductionLeadTime] = {
+  def calculateRollingLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9): List[ProductionLeadTime] = {
 
     val t = Iterator.iterate(YearMonth.now())(_ minusMonths 1)
       .take(periodInMonths).toList
 
     val rt = releases
-      .dropWhile(r => YearMonth.from(r.fs).isBefore(t.last))
+      .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(t.last))
       .map { r => releaseLeadTime(r, tags).map((r, _)) }.flatten
 
     t.reverseMap { ym =>
       val m = rt.takeWhile { case (r, lt) =>
-        val rym: YearMonth = YearMonth.from(r.fs)
+        val rym: YearMonth = YearMonth.from(r.releasedAt)
         rym.equals(ym) || rym.isBefore(ym)
       }.map(_._2).median
 
@@ -68,32 +68,32 @@ object LeadTimeCalculator {
 
   }
 
-  def releaseLeadTime(r: Release, tags: Seq[GitTag]): Option[Long] = {
-    val find: Option[GitTag] = tags.find(_.name == r.ver)
+  def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[Long] = {
+    val find: Option[RepoTag] = tags.find(_.name == r.version)
     find.map(t => days(t, r))
   }
 
-  def calculateLeadTime(tags: Seq[GitTag], releases: Seq[Release]): List[ProductionLeadTime] = {
+  def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release]): List[ProductionLeadTime] = {
 
-    val groupByReleaseMonth: Map[Int, Seq[(GitTag, Release)]] = tags
-      .map(t => t -> releases.find(r => r.ver == t.name))
+    val groupByReleaseMonth: Map[Int, Seq[(RepoTag, Release)]] = tags
+      .map(t => t -> releases.find(r => r.version == t.name))
       .collect { case (t, Some(r)) => t -> r }
-      .groupBy { case (t, r) => r.fs.getMonth.getValue }
+      .groupBy { case (t, r) => r.releasedAt.getMonth.getValue }
 
     groupByReleaseMonth.map { case (m, seq) =>
       val leadTimes = calculateLeadTimes(seq)
-      ProductionLeadTime(seq.head._2.fs, leadTimes.median)
+      ProductionLeadTime(seq.head._2.releasedAt, leadTimes.median)
     }.toList.sortBy(_.period.toEpochDay)
   }
 
 
-  def calculateLeadTimes(seq: Seq[(GitTag, Release)]): Seq[Long] = {
+  def calculateLeadTimes(seq: Seq[(RepoTag, Release)]): Seq[Long] = {
     seq.map { case (t, r) =>
       days(t, r)
     }
   }
 
-  def days(tag: GitTag, release: Release): Long = {
-    ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.fs)
+  def days(tag: RepoTag, release: Release): Long = {
+    ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.releasedAt)
   }
 }

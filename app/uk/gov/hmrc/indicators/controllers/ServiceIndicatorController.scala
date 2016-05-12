@@ -27,23 +27,19 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.Future
 
 object ServiceIndicatorController extends ServiceIndicatorController {
+
   override def indicatorsService: IndicatorsService = ???
 }
 
 
 trait ServiceIndicatorController extends BaseController {
 
-  def indicatorsService : IndicatorsService
-
+  def indicatorsService: IndicatorsService
 
 
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
-    indicatorsService.getProductionDeploymentLeadTime(serviceName)
-
-
-
-    ???
+    indicatorsService.getProductionDeploymentLeadTime(serviceName).map(x => Ok(Json.toJson(x)))
 
   }
 }

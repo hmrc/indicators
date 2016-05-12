@@ -16,31 +16,30 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{LocalDate, YearMonth}
+import java.time.LocalDate
 
-import uk.gov.hmrc.gitclient.{GitClient, GitTag}
+import play.api.libs.json.Json
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-case class ProductionLeadTime(period : LocalDate, median : Option[BigDecimal])
+case class ProductionLeadTime(period: LocalDate, median: Option[BigDecimal])
 
-object ReleasesPredicate {
-
-  def apply(serviceName: String): (Release) => Boolean = {
-    r => r.an == serviceName && (r.env.startsWith("production") || r.env.startsWith("prod"))
-  }
-
+object ProductionLeadTime {
+  import JavaDateTimeFormatters._
+  implicit val formats = Json.format[ProductionLeadTime]
 }
 
-class IndicatorsService(gitClient: GitClient, releasesClient: ReleasesConnector) {
+class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: ReleasesDataSource) {
 
-  
-  def getProductionDeploymentLeadTime(serviceName :String) : Future[List[ProductionLeadTime]]  = {
 
+  def getProductionDeploymentLeadTime(serviceName: String): Future[List[ProductionLeadTime]] = {
+
+    val repoTagsF: Future[List[RepoTag]] = tagsDataSource.getServiceRepoTags(serviceName, "HMRC")
+    val releasesF: Future[List[Release]] = releasesDataSource.getAllReleases(serviceName)
     for {
-      tags <- gitClient.getGitRepoTags(serviceName, "HMRC")
-      releases <- releasesClient.getAllReleases.map { r => r.filter(ReleasesPredicate(serviceName)) }
+      tags <- repoTagsF
+      releases <- releasesF
     } yield LeadTimeCalculator.calculateLeadTime(tags, releases)
   }
 }
