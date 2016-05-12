@@ -25,20 +25,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class ProductionLeadTime(period : LocalDate, median : Option[BigDecimal])
 
-class IndicatorsService(gitClient: GitClient, releasesClient: ReleasesClient) {
+object ReleasesPredicate {
+  def apply(serviceName: String): (Release) => Boolean = {
+    a => true
+  }
 
+}
+
+class IndicatorsService(gitClient: GitClient, releasesClient: ReleasesConnector) {
+
+  
   def getProductionDeploymentLeadTime(serviceName :String) : Future[List[ProductionLeadTime]]  = {
 
     for {
       tags <- gitClient.getGitRepoTags(serviceName, "HMRC")
-      releases <- releasesClient.getAllReleases(serviceName)
-    } yield {
-
-      //create a time line upto 9 months
-      //create a median of each month including the raw data of previous month
-
-      LeadTimeCalculator.calculateLeadTime(tags, releases)
-    }
+      releases <- releasesClient.getAllReleases.map { r => r.filter(ReleasesPredicate(serviceName)) }
+    } yield LeadTimeCalculator.calculateLeadTime(tags, releases)
   }
 }
 

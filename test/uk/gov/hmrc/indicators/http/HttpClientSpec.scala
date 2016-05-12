@@ -20,7 +20,11 @@ import com.github.tomakehurst.wiremock.http.RequestMethod.GET
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
-import uk.gov.hmrc.indicators.DefaultPatienceConfig
+import play.api.test.FakeApplication
+import uk.gov.hmrc.indicators.{WireMockSpec, DefaultPatienceConfig}
+
+import play.api.test._
+import play.api.test.Helpers._
 
 
 class HttpClientSpec extends WireMockSpec with ScalaFutures with Matchers with DefaultPatienceConfig {
@@ -31,31 +35,34 @@ class HttpClientSpec extends WireMockSpec with ScalaFutures with Matchers with D
     implicit val formats = Json.format[Response]
   }
 
-  def httpClient = new HttpClient
 
   "HttpClientSpec.get" should {
 
     "report success with string body" in {
+      running(FakeApplication()) {
 
-      givenRequestExpects(
-        method = GET,
-        url = s"$endpointMockUrl/resource/1",
-        willRespondWith = (200, Some( """{"success" : true}"""))
-      )
+        givenRequestExpects(
+          method = GET,
+          url = s"$endpointMockUrl/resource/1",
+          willRespondWith = (200, Some( """{"success" : true}"""))
+        )
 
-      httpClient.get[Response](s"$endpointMockUrl/resource/1").futureValue should be(Response(success = true))
+        HttpClient.get[Response](s"$endpointMockUrl/resource/1").futureValue should be(Response(success = true))
+      }
 
     }
 
     "report exception if correct http status is not returned" in {
+      running(FakeApplication()) {
 
-      givenRequestExpects(
-        method = GET,
-        url = s"$endpointMockUrl/resource/1",
-        willRespondWith = (500, None)
-      )
+        givenRequestExpects(
+          method = GET,
+          url = s"$endpointMockUrl/resource/1",
+          willRespondWith = (500, None)
+        )
 
-      a[RuntimeException] should be thrownBy httpClient.get[Response](s"$endpointMockUrl/resource/1").futureValue
+        a[RuntimeException] should be thrownBy HttpClient.get[Response](s"$endpointMockUrl/resource/1").futureValue
+      }
     }
 
 

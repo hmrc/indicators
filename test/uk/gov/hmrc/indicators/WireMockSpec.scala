@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.http
+package uk.gov.hmrc.indicators
 
-import java.net.{URL, ServerSocket}
+import java.net.{ServerSocket, URL}
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.client.{ResponseDefinitionBuilder, MappingBuilder, RequestPatternBuilder, WireMock}
+import com.github.tomakehurst.wiremock.client.{MappingBuilder, RequestPatternBuilder, ResponseDefinitionBuilder, WireMock}
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import com.github.tomakehurst.wiremock.http.RequestMethod
-import org.scalatest.{WordSpec, BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, WordSpec}
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.test.WithFakeApplication
 
@@ -46,7 +46,7 @@ case class HttpRequest(method: RequestMethod, url: String, body: Option[String])
 }
 
 
-trait WireMockSpec extends WordSpec with BeforeAndAfterAll with BeforeAndAfterEach with WithFakeApplication{
+trait WireMockSpec extends WordSpec with BeforeAndAfterAll with BeforeAndAfterEach{
 
   val host: String = "localhost"
 
@@ -66,12 +66,12 @@ trait WireMockSpec extends WordSpec with BeforeAndAfterAll with BeforeAndAfterEa
 
   override def afterAll(): Unit = {
     endpointServer.stop()
-    super.afterAll()
+
   }
 
   override def beforeAll(): Unit = {
     endpointServer.start()
-    super.beforeAll()
+
   }
 
   def printMappings(): Unit = {

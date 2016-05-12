@@ -16,14 +16,20 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import java.time._
+import java.time.format.DateTimeFormatter
+import java.time.temporal.Temporal
 
-import scala.concurrent.Future
+import play.api.libs.json._
 
+object JavaDateTimeFormatters {
 
-case class Release(tag : String, date : LocalDate)
-class ReleasesClient {
+  implicit val localDateRead = new Reads[LocalDate] {
+    override def reads(json: JsValue): JsResult[LocalDate] = json match {
+      case JsNumber(v) => JsSuccess(LocalDateTime.ofEpochSecond(v.toLongExact, 0, ZoneOffset.UTC).toLocalDate)
+      case v => JsError(s"invalid value for epoch second '$v'")
+    }
+  }
 
-  def getAllReleases(serviceName:String) : Future[List[Release]]= ???
 
 }

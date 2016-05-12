@@ -26,9 +26,7 @@ import play.api.Play.current
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-class HttpClient {
-
-  val ws = WS.client
+object HttpClient {
 
   def get[T](url: String)(implicit r: Reads[T]): Future[T] = withErrorHandling("GET", url) {
     case s if s.status >= 200 && s.status < 300 =>
@@ -52,7 +50,7 @@ class HttpClient {
   }
 
   private def buildCall(method: String, url: String, body: Option[JsValue] = None): WSRequestHolder = {
-    val req = ws.url(url)
+    val req = WS.client.url(url)
       .withMethod(method)
       .withHeaders("content-type" -> "application/json")
 

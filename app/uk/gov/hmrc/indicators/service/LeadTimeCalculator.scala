@@ -54,12 +54,12 @@ object LeadTimeCalculator {
       .take(periodInMonths).toList
 
     val rt = releases
-      .dropWhile(r => YearMonth.from(r.date).isBefore(t.last))
+      .dropWhile(r => YearMonth.from(r.fs).isBefore(t.last))
       .map { r => releaseLeadTime(r, tags).map((r, _)) }.flatten
 
     t.reverseMap { ym =>
       val m = rt.takeWhile { case (r, lt) =>
-        val rym: YearMonth = YearMonth.from(r.date)
+        val rym: YearMonth = YearMonth.from(r.fs)
         rym.equals(ym) || rym.isBefore(ym)
       }.map(_._2).median
 
@@ -69,20 +69,20 @@ object LeadTimeCalculator {
   }
 
   def releaseLeadTime(r: Release, tags: Seq[GitTag]): Option[Long] = {
-    val find: Option[GitTag] = tags.find(_.name == r.tag)
+    val find: Option[GitTag] = tags.find(_.name == r.ver)
     find.map(t => days(t, r))
   }
 
   def calculateLeadTime(tags: Seq[GitTag], releases: Seq[Release]): List[ProductionLeadTime] = {
 
     val groupByReleaseMonth: Map[Int, Seq[(GitTag, Release)]] = tags
-      .map(t => t -> releases.find(r => r.tag == t.name))
+      .map(t => t -> releases.find(r => r.ver == t.name))
       .collect { case (t, Some(r)) => t -> r }
-      .groupBy { case (t, r) => r.date.getMonth.getValue }
+      .groupBy { case (t, r) => r.fs.getMonth.getValue }
 
     groupByReleaseMonth.map { case (m, seq) =>
       val leadTimes = calculateLeadTimes(seq)
-      ProductionLeadTime(seq.head._2.date, leadTimes.median)
+      ProductionLeadTime(seq.head._2.fs, leadTimes.median)
     }.toList.sortBy(_.period.toEpochDay)
   }
 
@@ -94,6 +94,6 @@ object LeadTimeCalculator {
   }
 
   def days(tag: GitTag, release: Release): Long = {
-    ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.date)
+    ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.fs)
   }
 }
