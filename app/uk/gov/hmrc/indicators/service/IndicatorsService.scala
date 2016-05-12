@@ -26,8 +26,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 case class ProductionLeadTime(period : LocalDate, median : Option[BigDecimal])
 
 object ReleasesPredicate {
+
   def apply(serviceName: String): (Release) => Boolean = {
-    a => true
+    r => r.an == serviceName && (r.env.startsWith("production") || r.env.startsWith("prod"))
   }
 
 }

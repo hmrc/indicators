@@ -70,14 +70,14 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
 
 
       val releases = List(
-        Release("1.0.0", Feb_4th), //  3 days
-        Release("2.0.0", Feb_10th), //  6 days
-        Release("3.0.0", Feb_16th), //  6 days
-        Release("4.0.0", Feb_18th), //  2 days
-        Release("5.0.0", Mar_1st), //   12 days
-        Release("6.0.0", Mar_27th), //  23 days
-        Release("7.0.0", Apr_1st), //   5 days
-        Release("8.0.0", Apr_11th) //   7 days
+        Release("", "", "1.0.0", Feb_4th), //  3 days
+        Release("", "", "2.0.0", Feb_10th), //  6 days
+        Release("", "", "3.0.0", Feb_16th), //  6 days
+        Release("", "", "4.0.0", Feb_18th), //  2 days
+        Release("", "", "5.0.0", Mar_1st), //   12 days
+        Release("", "", "6.0.0", Mar_27th), //  23 days
+        Release("", "", "7.0.0", Apr_1st), //   5 days
+        Release("", "", "8.0.0", Apr_11th) //   7 days
       )
 
 
@@ -101,7 +101,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       )
 
       val releases = List(
-        Release("1.0.0", Feb_4th)
+        Release("", "", "1.0.0", Feb_4th)
       )
 
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, Some(3)))
@@ -115,8 +115,8 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       )
 
       val releases = List(
-        Release("1.0.0", Feb_4th),
-        Release("2.0.0", Feb_16th)
+        Release("", "", "1.0.0", Feb_4th),
+        Release("", "", "2.0.0", Feb_16th)
       )
 
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, Some(4.5)))
@@ -131,8 +131,8 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       )
 
       val releases = List(
-        Release("1.0.0", Mar_4th),
-        Release("2.0.0", Apr_10th)
+        Release("", "", "1.0.0", Mar_4th),
+        Release("", "", "2.0.0", Apr_10th)
       )
 
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Mar_4th, Some(3)), ProductionLeadTime(Apr_10th, Some(6)))
@@ -148,9 +148,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       )
 
       val releases = List(
-        Release("1.0.0", Feb_4th),
-        Release("2.0.0", Feb_10th),
-        Release("3.0.0", Feb_18th)
+        Release("", "", "1.0.0", Feb_4th),
+        Release("", "", "2.0.0", Feb_10th),
+        Release("", "", "3.0.0", Feb_18th)
       )
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, Some(6)))
     }
@@ -167,10 +167,10 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
 
 
       val releases = List(
-        Release("1.0.0", Feb_4th), // 3 days
-        Release("2.0.0", Feb_10th), //6 days
-        Release("3.0.0", Feb_16th), //6 days
-        Release("4.0.0", Feb_18th) //2 days
+        Release("", "", "1.0.0", Feb_4th), // 3 days
+        Release("", "", "2.0.0", Feb_10th), //6 days
+        Release("", "", "3.0.0", Feb_16th), //6 days
+        Release("", "", "4.0.0", Feb_18th) //2 days
       )
 
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, Some(4.5)))
@@ -184,7 +184,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       )
 
       val releases = List(
-        Release("1.0.0", Feb_4th)
+        Release("", "", "1.0.0", Feb_4th)
       )
       LeadTimeCalculator.calculateLeadTime(tags, releases) shouldBe List(ProductionLeadTime(Feb_4th, Some(3)))
     }

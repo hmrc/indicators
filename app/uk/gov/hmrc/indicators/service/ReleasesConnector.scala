@@ -26,7 +26,7 @@ import uk.gov.hmrc.indicators.http.HttpClient
 import scala.concurrent.Future
 
 
-case class Release(ver: String, fs: LocalDate)
+case class Release(env : String, an: String, ver: String, fs: LocalDate)
 
 object Release {
 
