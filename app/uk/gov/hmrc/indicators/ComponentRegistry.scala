@@ -23,7 +23,6 @@ import uk.gov.hmrc.gitclient.Git
 import uk.gov.hmrc.indicators.service._
 
 object ComponentRegistry extends ConfigProvider {
-
   lazy private val tempDirectory = gitClientStorePath.fold(Files.createTempDirectory("local-git-store").toString)(identity)
   println(tempDirectory)
 
@@ -33,6 +32,4 @@ object ComponentRegistry extends ConfigProvider {
   val releasesDataSource = new AppReleasesDataSource(releasesClient)
 
   val indicatorsService = new IndicatorsService(tagsDataSource, releasesDataSource)
-
-
 }

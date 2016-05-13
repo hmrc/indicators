@@ -25,7 +25,6 @@ object IndicatorTraversable {
 
   implicit class TravOnce[A](self: TraversableOnce[A]) {
     def median[B >: A](implicit num: scala.Numeric[B], ord: Ordering[A]): Option[BigDecimal] = {
-
       val sorted = self.toList.sorted
 
       sorted.size match {
@@ -41,41 +40,42 @@ object IndicatorTraversable {
       BigDecimal(self.map(n => num.toDouble(n)).sum) / BigDecimal(self.size)
     }
   }
-
 }
 
 object LeadTimeCalculator {
-
   import IndicatorTraversable._
 
-  def calculateRollingLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[ProductionLeadTime] = {
+  def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[ProductionLeadTime] = {
+    val now = YearMonth.now(clock)
 
-    val now: YearMonth = YearMonth.now(clock)
-
-    val t = Iterator.iterate(now)(_ minusMonths 1)
+    val months = Iterator.iterate(now)(_ minusMonths 1)
       .take(periodInMonths).toList
 
-    val rt = releases.sortBy(_.releasedAt.toEpochDay)
-      .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(t.last))
-      .map { r => releaseLeadTime(r, tags)}.flatten
+    val allReleaseLeadTimes = releases.sortBy(_.releasedAt.toEpochDay)
+      .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
+      .flatMap { r => releaseLeadTime(r, tags) }
 
-    t.reverseMap { ym =>
-
-      val m: Seq[(Release, Long)] = rt.takeWhile { case (r, lt) =>
-        val rym: YearMonth = YearMonth.from(r.releasedAt)
-        rym.equals(ym) || rym.isBefore(ym)
+    months.reverseMap { ym =>
+      val releaseLeadTimes = allReleaseLeadTimes.takeWhile {
+        case ReleaseLeadTime(release, days) =>
+          val rym = YearMonth.from(release.releasedAt)
+          rym.equals(ym) || rym.isBefore(ym)
       }
-      ProductionLeadTime(LocalDate.of(ym.getYear, ym.getMonthValue, 1), m.map(_._2).median)
+
+      ProductionLeadTime(
+        LocalDate.of(ym.getYear, ym.getMonthValue, 1),
+        releaseLeadTimes.map(_.daysSinceTag).median)
     }
-
   }
 
-  def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[(Release, Long)] = {
-    val find: Option[RepoTag] = tags.find(t => t.name == r.version && t.createdAt.isDefined)
-    find.map(t => (r , days(t, r)))
+  def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[ReleaseLeadTime] = {
+    tags.find(t => t.name == r.version && t.createdAt.isDefined)
+      .map(t => ReleaseLeadTime(r , daysBetweenTagAndRelease(t, r)))
   }
-  
-  def days(tag: RepoTag, release: Release): Long = {
+
+  def daysBetweenTagAndRelease(tag: RepoTag, release: Release): Long = {
     ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.releasedAt)
   }
+
+  case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
 }

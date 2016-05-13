@@ -36,20 +36,11 @@ object RepoTag {
 }
 
 trait TagsDataSource {
-
   def getServiceRepoTags(repoName: String, owner: String): Future[List[RepoTag]]
-
 }
 
-
 class GitTagsDataSource(gitClient: GitClient) extends TagsDataSource {
-
-
   def getServiceRepoTags(repoName: String, owner: String): Future[List[RepoTag]] = {
-
     gitClient.getGitRepoTags(repoName, owner).map(x => x.map(RepoTag.gitTagToRepoTag))
-
   }
-
-
 }
