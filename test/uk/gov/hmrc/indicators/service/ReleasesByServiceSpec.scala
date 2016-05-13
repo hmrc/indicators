@@ -28,9 +28,8 @@ class ReleasesByServiceSpec extends WordSpec with Matchers {
     "return releases by name" in {
 
       val requiredServiceName: String = "serviceName"
-      val releasesForService = ReleasesByService(requiredServiceName) _
 
-      releasesForService(
+      ReleasesByService(requiredServiceName)(
         List(
           AppRelease("production", requiredServiceName, "1.0.0", now),
           AppRelease("prod", requiredServiceName, "2.0.0", now),
@@ -46,9 +45,8 @@ class ReleasesByServiceSpec extends WordSpec with Matchers {
     "return releases by name and env starting with prod and production" in {
 
       val requiredServiceName: String = "serviceName"
-      val releasesForService = ReleasesByService(requiredServiceName) _
 
-      releasesForService(
+      ReleasesByService(requiredServiceName)(
         List(
           AppRelease("production", requiredServiceName, "1.0.0", now),
           AppRelease("prod", requiredServiceName, "2.0.0", now),
@@ -64,9 +62,8 @@ class ReleasesByServiceSpec extends WordSpec with Matchers {
     "return releases by name and env starting with prod and production factoring multiple entries in different environments" in {
 
       val requiredServiceName: String = "serviceName"
-      val releasesForService = ReleasesByService(requiredServiceName) _
 
-      releasesForService(
+      ReleasesByService(requiredServiceName)(
         List(
           AppRelease("production", requiredServiceName, "1.0.0", now),
           AppRelease("prod", requiredServiceName, "1.0.0", now),

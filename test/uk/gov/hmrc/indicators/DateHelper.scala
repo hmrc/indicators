@@ -14,31 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators
 
-import java.time.LocalDate
+import java.time._
+import java.util.TimeZone
 
+object DateHelper {
 
-import play.api.libs.json.Json
-import uk.gov.hmrc.indicators.IndicatorsConfigProvider
-import uk.gov.hmrc.indicators.http.HttpClient
-
-import scala.concurrent.Future
-
-
-case class AppRelease(env: String, an: String, ver: String, fs: LocalDate)
-
-object AppRelease {
-
-  import JavaDateTimeFormatters._
-
-  implicit val format = Json.reads[AppRelease]
-}
-
-
-class ReleasesClient(releasesApiBase: String) {
-
-  def getAllReleases: Future[List[AppRelease]] = {
-    HttpClient.get[List[AppRelease]](s"$releasesApiBase/apps")
+  implicit class RichLocalDate(self: LocalDate) {
+    def zoned: ZonedDateTime = self.atStartOfDay().atZone(TimeZone.getDefault().toZoneId)
   }
+
+
+  def clockFrom(localDate : LocalDate) = {
+
+    Clock.fixed(localDate.zoned.toInstant, localDate.zoned.getZone)
+  }
+
 }

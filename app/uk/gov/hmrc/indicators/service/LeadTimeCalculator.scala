@@ -17,7 +17,7 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time.temporal.ChronoUnit
-import java.time.{LocalDate, YearMonth}
+import java.time.{Clock, LocalDate, YearMonth}
 
 import uk.gov.hmrc.gitclient.GitTag
 
@@ -48,9 +48,11 @@ object LeadTimeCalculator {
 
   import IndicatorTraversable._
 
-  def calculateRollingLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9): List[ProductionLeadTime] = {
+  def calculateRollingLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[ProductionLeadTime] = {
 
-    val t = Iterator.iterate(YearMonth.now())(_ minusMonths 1)
+    val now: YearMonth = YearMonth.now(clock)
+
+    val t = Iterator.iterate(now)(_ minusMonths 1)
       .take(periodInMonths).toList
 
     val rt = releases
@@ -69,30 +71,10 @@ object LeadTimeCalculator {
   }
 
   def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[Long] = {
-    val find: Option[RepoTag] = tags.find(_.name == r.version)
+    val find: Option[RepoTag] = tags.find(t => t.name == r.version && t.createdAt.isDefined)
     find.map(t => days(t, r))
   }
-
-  def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release]): List[ProductionLeadTime] = {
-
-    val groupByReleaseMonth: Map[Int, Seq[(RepoTag, Release)]] = tags
-      .map(t => t -> releases.find(r => r.version == t.name))
-      .collect { case (t, Some(r)) => t -> r }
-      .groupBy { case (t, r) => r.releasedAt.getMonth.getValue }
-
-    groupByReleaseMonth.map { case (m, seq) =>
-      val leadTimes = calculateLeadTimes(seq)
-      ProductionLeadTime(seq.head._2.releasedAt, leadTimes.median)
-    }.toList.sortBy(_.period.toEpochDay)
-  }
-
-
-  def calculateLeadTimes(seq: Seq[(RepoTag, Release)]): Seq[Long] = {
-    seq.map { case (t, r) =>
-      days(t, r)
-    }
-  }
-
+  
   def days(tag: RepoTag, release: Release): Long = {
     ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.releasedAt)
   }

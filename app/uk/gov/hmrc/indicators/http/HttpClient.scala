@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object HttpClient {
 
-  def get[T](url: String)(implicit r: Reads[T]): Future[T] = withErrorHandling("GET", url) {
+  def get[T](url: String, header : List[(String, String)] = List())(implicit r: Reads[T]): Future[T] = withErrorHandling("GET", url)(header) {
     case s if s.status >= 200 && s.status < 300 =>
       Try {
         s.json.as[T]
@@ -42,17 +42,17 @@ object HttpClient {
       throw new RuntimeException(s"Unexpected response status : ${res.status}  calling url : $url response body : ${res.body}")
   }
 
-  private def withErrorHandling[T](method: String, url: String, body : Option[JsValue] = None)(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] = {
-    buildCall(method, url, body).execute().transform(
+  private def withErrorHandling[T](method: String, url: String, body : Option[JsValue] = None)(headers : List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] = {
+    buildCall(method, url, body, headers).execute().transform(
       f,
       _ => throw new RuntimeException(s"Error connecting  $url")
     )
   }
 
-  private def buildCall(method: String, url: String, body: Option[JsValue] = None): WSRequestHolder = {
+  private def buildCall(method: String, url: String, body: Option[JsValue] = None, headers : List[(String, String)] = List()): WSRequestHolder = {
     val req = WS.client.url(url)
       .withMethod(method)
-      .withHeaders("content-type" -> "application/json")
+      .withHeaders(headers :_*)
 
     body.map { b =>
       req.withBody(b)

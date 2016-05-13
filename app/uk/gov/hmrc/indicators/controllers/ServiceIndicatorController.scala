@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.gitclient.{GitTag, Git}
+import uk.gov.hmrc.indicators.ComponentRegistry
 import uk.gov.hmrc.indicators.service.IndicatorsService
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -28,7 +29,7 @@ import scala.concurrent.Future
 
 object ServiceIndicatorController extends ServiceIndicatorController {
 
-  override def indicatorsService: IndicatorsService = ???
+  override val indicatorsService: IndicatorsService = ComponentRegistry.indicatorsService
 }
 
 

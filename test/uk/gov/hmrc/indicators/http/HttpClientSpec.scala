@@ -44,10 +44,13 @@ class HttpClientSpec extends WireMockSpec with ScalaFutures with Matchers with D
         givenRequestExpects(
           method = GET,
           url = s"$endpointMockUrl/resource/1",
-          willRespondWith = (200, Some( """{"success" : true}"""))
+          willRespondWith = (200, Some( """{"success" : true}""")),
+          headers = List(("content-type", "application/json"))
         )
 
-        HttpClient.get[Response](s"$endpointMockUrl/resource/1").futureValue should be(Response(success = true))
+        printMappings()
+
+        HttpClient.get[Response](s"$endpointMockUrl/resource/1", List(("content-type", "application/json"))).futureValue should be(Response(success = true))
       }
 
     }

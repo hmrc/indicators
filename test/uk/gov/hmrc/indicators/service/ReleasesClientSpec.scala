@@ -29,15 +29,7 @@ class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with S
 
 
 
-  val releasesClient = new ReleasesClient with IndicatorsConfigProvider {
-    override def configs: Configs = new Configs {
-      override def config(path: String): Option[String] = {
-        Map(
-          "releases.app.api.base" -> endpointMockUrl
-        ).get(path)
-      }
-    }
-  }
+  val releasesClient = new ReleasesClient(endpointMockUrl)
 
 
 

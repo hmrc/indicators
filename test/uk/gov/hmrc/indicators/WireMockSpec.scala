@@ -84,10 +84,12 @@ trait WireMockSpec extends WordSpec with BeforeAndAfterAll with BeforeAndAfterEa
                           method: RequestMethod,
                           url: String,
                           extraHeaders: Map[String, String] = Map(),
-                          willRespondWith: (Int, Option[String])): Unit = {
+                          willRespondWith: (Int, Option[String]), headers : List[(String, String)] = List()): Unit = {
 
     val builder = new MappingBuilder(method, urlPathEqualTo(new URL(url).getPath))
-      .withHeader("Content-Type", equalTo("application/json"))
+
+      headers.foreach(x=> builder.withHeader(x._1, equalTo(x._2)))
+
 
 
     val response: ResponseDefinitionBuilder = new ResponseDefinitionBuilder()
