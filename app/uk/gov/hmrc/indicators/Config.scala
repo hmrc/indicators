@@ -19,7 +19,6 @@ package uk.gov.hmrc.indicators
 import play.api.Play
 
 trait IndicatorsConfigProvider {
-
   def configs:Configs
 
   lazy val releasesApiBase: String = requiredConf("releases.app.api.base")
@@ -29,7 +28,6 @@ trait IndicatorsConfigProvider {
 
   private def optionalConf(path:String) : Option[String] =  configs.config(path)
   private def requiredConf(path : String) : String = configs.config(path).getOrElse(throw new RuntimeException(s"No conf for key : $path"))
-
 }
 
 trait ConfigProvider extends IndicatorsConfigProvider {
@@ -41,8 +39,5 @@ trait Configs {
 }
 
 object PlayConfigs extends Configs {
-
-
   def config(path: String) = Play.current.configuration.getString(path)
-
 }

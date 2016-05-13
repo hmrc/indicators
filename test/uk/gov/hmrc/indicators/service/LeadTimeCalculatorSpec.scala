@@ -70,7 +70,7 @@ trait SetUp {
         Release( "1.0.0", Feb_4th)
       )
 
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
     }
 
     "calculate the correct median lead time for two tags" in new SetUp {
@@ -86,7 +86,7 @@ trait SetUp {
         Release( "2.0.0", Feb_16th)
       )
 
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases,1) shouldBe List(ProductionLeadTime(Feb_1st, Some(4.5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases,1) shouldBe List(ProductionLeadTime(Feb_1st, Some(4.5)))
     }
 
     "calculate the correct median lead time for releases that spans two months" in new SetUp {
@@ -104,7 +104,7 @@ trait SetUp {
         Release( "2.0.0", Apr_10th) //6
       )
 
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases,2) shouldBe List(ProductionLeadTime(Mar_1st, Some(3.0)), ProductionLeadTime(Apr_1st, Some(4.5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases,2) shouldBe List(ProductionLeadTime(Mar_1st, Some(3.0)), ProductionLeadTime(Apr_1st, Some(4.5)))
     }
 
 
@@ -123,7 +123,7 @@ trait SetUp {
         Release( "2.0.0", Feb_10th),
         Release( "3.0.0", Feb_18th)
       )
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases,1) shouldBe List(ProductionLeadTime(Feb_1st, Some(6.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases,1) shouldBe List(ProductionLeadTime(Feb_1st, Some(6.0)))
     }
 
 
@@ -146,7 +146,7 @@ trait SetUp {
         Release( "4.0.0", Feb_18th) //2 days
       )
 
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(4.5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(4.5)))
     }
 
     "ignore tags without any release" in new SetUp {
@@ -161,7 +161,7 @@ trait SetUp {
       val releases = List(
         Release("1.0.0", Feb_4th)
       )
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
     }
 
 
@@ -177,7 +177,7 @@ trait SetUp {
       val releases = List(
         Release("1.0.0", Feb_4th)
       )
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
     }
 
 
@@ -209,7 +209,7 @@ trait SetUp {
       )
 
 
-      LeadTimeCalculator.calculateRollingLeadTime(tags, releases, 6) shouldBe List(
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 6) shouldBe List(
         ProductionLeadTime(Dec_1st_2015, None),
         ProductionLeadTime(Jan_1st, None),
         ProductionLeadTime(Feb_1st, Some(4.5)),

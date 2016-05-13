@@ -23,9 +23,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 
 trait ReleasesDataSource {
-
   def getAllReleases(serviceName: String): Future[List[Release]]
 }
+
 case class Release(version: String, releasedAt: LocalDate)
 
 class AppReleasesDataSource(releasesClient: ReleasesClient) extends ReleasesDataSource {
@@ -33,7 +33,6 @@ class AppReleasesDataSource(releasesClient: ReleasesClient) extends ReleasesData
     releasesClient.getAllReleases.map(ReleasesByService(serviceName))
   }
 }
-
 
 object ReleasesByService {
   def apply(serviceName: String)(allReleases: List[AppRelease]): List[Release] = {
