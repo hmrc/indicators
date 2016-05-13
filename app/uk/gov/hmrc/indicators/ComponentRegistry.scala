@@ -25,6 +25,7 @@ import uk.gov.hmrc.indicators.service._
 object ComponentRegistry extends ConfigProvider {
 
   lazy private val tempDirectory = gitClientStorePath.fold(Files.createTempDirectory("local-git-store").toString)(identity)
+  println(tempDirectory)
 
   val gitClient = Git(tempDirectory, gitEnterpriseToken, gitEnterpriseHost)
   val tagsDataSource = new GitTagsDataSource(gitClient)

@@ -55,17 +55,17 @@ object LeadTimeCalculator {
     val t = Iterator.iterate(now)(_ minusMonths 1)
       .take(periodInMonths).toList
 
-    val rt = releases
+    val rt = releases.sortBy(_.releasedAt.toEpochDay)
       .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(t.last))
       .map { r => releaseLeadTime(r, tags).map((r, _)) }.flatten
 
     t.reverseMap { ym =>
-      val m = rt.takeWhile { case (r, lt) =>
+
+      val m: Seq[(Release, Long)] = rt.takeWhile { case (r, lt) =>
         val rym: YearMonth = YearMonth.from(r.releasedAt)
         rym.equals(ym) || rym.isBefore(ym)
-      }.map(_._2).median
-
-      ProductionLeadTime(LocalDate.of(ym.getYear, ym.getMonthValue, 1), m)
+      }
+      ProductionLeadTime(LocalDate.of(ym.getYear, ym.getMonthValue, 1), m.map(_._2).median)
     }
 
   }

@@ -182,29 +182,30 @@ trait SetUp {
 
 
 
-    "calculate the rolling lead time for 9 months" in new SetUp {
+      "calculate the rolling lead time for 9 months when provided tags and releases are not ordered" in new SetUp {
 
       val tags = List(
+        RepoTag("8.0.0", Some(Apr_4th.zoned)),
+        RepoTag("6.0.0", Some(Mar_4th.zoned)),
+        RepoTag("7.0.0", Some(Mar_27th.zoned)),
         RepoTag("1.0.0", Some(Feb_1st.zoned)),
         RepoTag("2.0.0", Some(Feb_4th.zoned)),
         RepoTag("3.0.0", Some(Feb_10th.zoned)),
         RepoTag("4.0.0", Some(Feb_16th.zoned)),
-        RepoTag("5.0.0", Some(Feb_18th.zoned)),
-        RepoTag("6.0.0", Some(Mar_4th.zoned)),
-        RepoTag("7.0.0", Some(Mar_27th.zoned)),
-        RepoTag("8.0.0", Some(Apr_4th.zoned))
+        RepoTag("5.0.0", Some(Feb_18th.zoned))
+
       )
 
 
       val releases = List(
+        Release( "7.0.0", Apr_1st), //   5 days
+        Release( "8.0.0", Apr_11th), //   7 days
         Release( "1.0.0", Feb_4th), //  3 days
         Release( "2.0.0", Feb_10th), //  6 days
         Release( "3.0.0", Feb_16th), //  6 days
         Release( "4.0.0", Feb_18th), //  2 days
         Release( "5.0.0", Mar_1st), //   12 days
-        Release( "6.0.0", Mar_27th), //  23 days
-        Release( "7.0.0", Apr_1st), //   5 days
-        Release( "8.0.0", Apr_11th) //   7 days
+        Release( "6.0.0", Mar_27th) //  23 days
       )
 
 

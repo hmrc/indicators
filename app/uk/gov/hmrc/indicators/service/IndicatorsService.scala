@@ -18,7 +18,9 @@ package uk.gov.hmrc.indicators.service
 
 import java.time.{Clock, LocalDate}
 
+import play.api.Logger
 import play.api.libs.json.Json
+import uk.gov.hmrc.indicators.service.LeadTimeCalculator.calculateRollingLeadTime
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -44,7 +46,10 @@ class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: Rele
     for {
       tags <- repoTagsF
       releases <- releasesF
-    } yield LeadTimeCalculator.calculateRollingLeadTime(tags, releases, periodInMonths)
+    } yield {
+      Logger.debug(s"---------calculation fpr for : $serviceName --------")
+      calculateRollingLeadTime(tags, releases, periodInMonths)
+    }
   }
 }
 
