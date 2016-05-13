@@ -57,7 +57,7 @@ object LeadTimeCalculator {
 
     val rt = releases.sortBy(_.releasedAt.toEpochDay)
       .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(t.last))
-      .map { r => releaseLeadTime(r, tags).map((r, _)) }.flatten
+      .map { r => releaseLeadTime(r, tags)}.flatten
 
     t.reverseMap { ym =>
 
@@ -70,9 +70,9 @@ object LeadTimeCalculator {
 
   }
 
-  def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[Long] = {
+  def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[(Release, Long)] = {
     val find: Option[RepoTag] = tags.find(t => t.name == r.version && t.createdAt.isDefined)
-    find.map(t => days(t, r))
+    find.map(t => (r , days(t, r)))
   }
   
   def days(tag: RepoTag, release: Release): Long = {
