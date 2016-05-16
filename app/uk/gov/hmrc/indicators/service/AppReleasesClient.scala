@@ -19,9 +19,12 @@ package uk.gov.hmrc.indicators.service
 import java.time.LocalDate
 
 import play.api.libs.json.Json
+import uk.gov.hmrc.indicators.{Cache, IndicatorsConfigProvider}
 import uk.gov.hmrc.indicators.http.HttpClient
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 case class AppRelease(env: String, an: String, ver: String, fs: LocalDate)
@@ -31,8 +34,20 @@ object AppRelease {
   implicit val format = Json.reads[AppRelease]
 }
 
-class ReleasesClient(releasesApiBase: String) {
-  def getAllReleases: Future[List[AppRelease]] = {
-    HttpClient.get[List[AppRelease]](s"$releasesApiBase/apps")
-  }
+trait ReleasesClient {
+  def getAllReleases: Future[List[AppRelease]]
+}
+
+class CachedAppReleasesClient(releasesClient: ReleasesClient) extends ReleasesClient with Cache[String, List[AppRelease]] {
+
+  override val refreshTimeInMillis: FiniteDuration = 1 hour
+
+   def getAllReleases: Future[List[AppRelease]] = Future(cache.getUnchecked("appReleases"))
+
+   def cacheLoader: (String) => List[AppRelease] = _ => Await.result(releasesClient.getAllReleases, 30 seconds)
+}
+
+class AppReleasesClient(releasesApiBase: String) extends ReleasesClient {
+
+  def getAllReleases: Future[List[AppRelease]] = HttpClient.get[List[AppRelease]](s"$releasesApiBase/apps")
 }

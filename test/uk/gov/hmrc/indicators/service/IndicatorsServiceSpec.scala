@@ -55,7 +55,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       )
 
       Mockito.when(tagsDataSource.getServiceRepoTags("test-service", "HMRC")).thenReturn(Future.successful(tags))
-      Mockito.when(releasesClient.getAllReleases("test-service")).thenReturn(Future.successful(releases))
+      Mockito.when(releasesClient.getServiceReleases("test-service")).thenReturn(Future.successful(releases))
 
       indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue shouldBe List(ProductionLeadTime(Feb_1st.toLocalDate, Some(3)))
     }

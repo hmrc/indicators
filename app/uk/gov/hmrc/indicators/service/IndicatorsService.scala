@@ -37,13 +37,12 @@ class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: Rele
 
   def getProductionDeploymentLeadTime(serviceName: String, periodInMonths: Int = 9): Future[List[ProductionLeadTime]] = {
     val repoTagsF: Future[List[RepoTag]] = tagsDataSource.getServiceRepoTags(serviceName, "HMRC")
-    val releasesF: Future[List[Release]] = releasesDataSource.getAllReleases(serviceName)
-
+    val releasesF: Future[List[Release]] = releasesDataSource.getServiceReleases(serviceName)
     for {
       tags <- repoTagsF
       releases <- releasesF
     } yield {
-      Logger.debug(s"---------calculation fpr for : $serviceName --------")
+
       calculateLeadTime(tags, releases, periodInMonths)
     }
   }

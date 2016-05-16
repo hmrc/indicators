@@ -25,11 +25,11 @@ import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, Configs, IndicatorsConfigProvider, WireMockSpec}
 
-class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig{
+class AppReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig{
 
 
 
-  val releasesClient = new ReleasesClient(endpointMockUrl)
+  val releasesClient = new AppReleasesClient(endpointMockUrl)
 
 
 

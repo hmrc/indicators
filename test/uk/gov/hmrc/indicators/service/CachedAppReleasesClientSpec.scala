@@ -19,33 +19,39 @@ package uk.gov.hmrc.indicators.service
 import java.time.LocalDate
 
 import org.mockito.Mockito
+import org.mockito.Mockito.{times, when, verify}
+import org.mockito.internal.verification.{Times, Only}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import uk.gov.hmrc.gitclient.GitClient
+
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
-class AppReleasesDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
-  
-  val releasesClient = mock[AppReleasesClient]
+class CachedAppReleasesClientSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
 
-  val dataSource = new AppReleasesDataSource(releasesClient)
-  val now = LocalDate.now()
-  
-  "AppReleasesDataSource.getAllReleases(serviceName)" should {
-    
-    "give all releases for a given service in production" in {
-      Mockito.when(releasesClient.getAllReleases).thenReturn(Future.successful(
-      List(
-      AppRelease("production","some-serviceName","1.0",now),
-      AppRelease("prod","some-serviceName","2.0",now),
-      AppRelease("production","some-other-ServiceName","1.0",now)
-      )
-      ))
-
-      dataSource.getServiceReleases("some-serviceName").futureValue shouldBe List(Release("1.0",now), Release("2.0",now))
-    }  
+  val releaseClient = mock[ReleasesClient]
+  val cachedClient = new CachedAppReleasesClient(releaseClient) {
+    override val refreshTimeInMillis = 100.millis
   }
+
+  "getAllReleases" should {
+    "load from the releases client and also cache the values" in {
+
+      val result = List(AppRelease("", "appName", "1.0.0", LocalDate.now()))
+
+      when(releaseClient.getAllReleases).thenReturn(Future.successful(result))
+
+      cachedClient.getAllReleases.futureValue should be(result)
+
+      cachedClient.cache.get("appReleases") shouldBe result
+
+      verify(releaseClient, times(1)).getAllReleases
+    }
+
+
+  }
+
 
 }

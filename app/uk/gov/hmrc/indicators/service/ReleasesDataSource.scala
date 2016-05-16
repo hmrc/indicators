@@ -18,20 +18,22 @@ package uk.gov.hmrc.indicators.service
 
 import java.time.LocalDate
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-
-trait ReleasesDataSource {
-  def getAllReleases(serviceName: String): Future[List[Release]]
-}
 
 case class Release(version: String, releasedAt: LocalDate)
 
+trait ReleasesDataSource {
+
+  def getServiceReleases(serviceName: String): Future[List[Release]]
+
+}
+
 class AppReleasesDataSource(releasesClient: ReleasesClient) extends ReleasesDataSource {
-  def getAllReleases(serviceName: String): Future[List[Release]] = {
+  def getServiceReleases(serviceName: String): Future[List[Release]] =
     releasesClient.getAllReleases.map(ReleasesByService(serviceName))
-  }
+
 }
 
 object ReleasesByService {

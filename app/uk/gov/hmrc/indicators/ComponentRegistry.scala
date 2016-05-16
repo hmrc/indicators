@@ -19,17 +19,27 @@ package uk.gov.hmrc.indicators
 import java.nio.file.{Path, Files, Paths}
 
 
+import play.api.Logger
 import uk.gov.hmrc.gitclient.Git
 import uk.gov.hmrc.indicators.service._
 
 object ComponentRegistry extends ConfigProvider {
-  lazy private val tempDirectory = gitClientStorePath.fold(Files.createTempDirectory("local-git-store").toString)(identity)
-  println(tempDirectory)
+
+  lazy private val tempDirectory = {
+    val localGitStore = gitClientStorePath.fold(Files.createTempDirectory("local-git-store").toString)(identity)
+    Logger.info("Local git store path : " + localGitStore)
+    localGitStore
+  }
+
 
   val gitClient = Git(tempDirectory, gitEnterpriseToken, gitEnterpriseHost)
   val tagsDataSource = new GitTagsDataSource(gitClient)
-  val releasesClient = new ReleasesClient(releasesApiBase)
-  val releasesDataSource = new AppReleasesDataSource(releasesClient)
+  val cachedTagsDataSource = new CachedTagsDataSource(tagsDataSource)
 
-  val indicatorsService = new IndicatorsService(tagsDataSource, releasesDataSource)
+  val releasesClient = new AppReleasesClient(releasesApiBase)
+  val cachedReleasesClient = new CachedAppReleasesClient(releasesClient)
+  val releasesDataSource = new AppReleasesDataSource(cachedReleasesClient)
+
+  val indicatorsService = new IndicatorsService(cachedTagsDataSource, releasesDataSource)
+
 }
