@@ -181,6 +181,22 @@ trait SetUp {
     }
 
 
+    "ignore re releases" in new SetUp {
+
+      override implicit val clock: Clock = clockFrom(Feb_10th)
+
+      val tags = List(
+        RepoTag("1.0.0", Some(Feb_1st.zoned))
+      )
+
+      val releases = List(
+        Release("1.0.0", Feb_4th),
+        Release("1.0.0", Feb_10th)
+      )
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+    }
+
+
 
       "calculate the rolling lead time for 9 months when provided tags and releases are not ordered" in new SetUp {
 

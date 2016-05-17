@@ -42,7 +42,7 @@ class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: Rele
       tags <- repoTagsF
       releases <- releasesF
     } yield {
-
+      Logger.debug(s"### Calculating production lead time for ${serviceName} , period : $periodInMonths months ###")
       calculateLeadTime(tags, releases, periodInMonths)
     }
   }

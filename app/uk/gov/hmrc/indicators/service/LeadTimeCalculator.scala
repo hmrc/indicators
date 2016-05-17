@@ -19,6 +19,7 @@ package uk.gov.hmrc.indicators.service
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, LocalDate, YearMonth}
 
+import play.api.Logger
 import uk.gov.hmrc.gitclient.GitTag
 
 object IndicatorTraversable {
@@ -40,20 +41,36 @@ object IndicatorTraversable {
       BigDecimal(self.map(n => num.toDouble(n)).sum) / BigDecimal(self.size)
     }
   }
+
 }
 
 object LeadTimeCalculator {
+
   import IndicatorTraversable._
 
   def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[ProductionLeadTime] = {
     val now = YearMonth.now(clock)
 
+    Logger.debug(s"All releases ${releases.map(x => (x.version, x.releasedAt))}")
+
     val months = Iterator.iterate(now)(_ minusMonths 1)
       .take(periodInMonths).toList
 
-    val allReleaseLeadTimes = releases.sortBy(_.releasedAt.toEpochDay)
-      .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
-      .flatMap { r => releaseLeadTime(r, tags) }
+    val allReleasesInThePeriod: Seq[Release] = releases.sortBy(_.releasedAt.toEpochDay).foldLeft(List.empty[Release]){
+      case (ls, r) =>
+        if(ls.exists(_.version == r.version)) ls
+        else ls :+ r
+
+    }.dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
+
+    Logger.debug(s"All releases in the period ${allReleasesInThePeriod.map(x => (x.version, x.releasedAt))}")
+
+    val allReleaseLeadTimes: Seq[ReleaseLeadTime] = allReleasesInThePeriod
+      .flatMap { r =>
+      val times: Iterable[ReleaseLeadTime] = releaseLeadTime(r, tags)
+      times
+    }
+
 
     months.reverseMap { ym =>
       val releaseLeadTimes = allReleaseLeadTimes.takeWhile {
@@ -69,8 +86,14 @@ object LeadTimeCalculator {
   }
 
   def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[ReleaseLeadTime] = {
+
     tags.find(t => t.name == r.version && t.createdAt.isDefined)
-      .map(t => ReleaseLeadTime(r , daysBetweenTagAndRelease(t, r)))
+      .map {
+      t =>
+        val releaseLeadTimeInDays = daysBetweenTagAndRelease(t, r)
+        Logger.debug(s"Release : ${r.version} -> ${r.releasedAt}, tag : ${t.name} -> ${t.createdAt.get.toLocalDate}, lead time -> $releaseLeadTimeInDays")
+        ReleaseLeadTime(r, releaseLeadTimeInDays)
+    }
   }
 
   def daysBetweenTagAndRelease(tag: RepoTag, release: Release): Long = {
@@ -78,4 +101,5 @@ object LeadTimeCalculator {
   }
 
   case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
+
 }
