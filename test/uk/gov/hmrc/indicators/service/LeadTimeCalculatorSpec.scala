@@ -16,43 +16,42 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{Clock, LocalDate}
+import java.time._
 
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
 
 
-
 class LeadTimeCalculatorSpec extends WordSpec with Matchers {
 
-trait SetUp {
-  val Dec_1st_2015 = LocalDate.of(2015, 12, 1)
+  trait SetUp {
+    private val midNight: LocalTime = LocalTime.of(0, 0)
+    val Dec_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 12, 1), midNight)
 
-  val Jan_1st = LocalDate.of(2016, 1, 1)
-  val Jan_10th = LocalDate.of(2016, 1, 10)
+    val Jan_1st = LocalDateTime.of(LocalDate.of(2016, 1, 1), midNight)
+    val Jan_10th = LocalDateTime.of(LocalDate.of(2016, 1, 10), midNight)
 
-  val Feb_1st = LocalDate.of(2016, 2, 1)
-  val Feb_4th = LocalDate.of(2016, 2, 4)
-  val Feb_9th = LocalDate.of(2016, 2, 9)
-  val Feb_10th = LocalDate.of(2016, 2, 10)
-  val Feb_16th = LocalDate.of(2016, 2, 16)
-  val Feb_18th = LocalDate.of(2016, 2, 18)
+    val Feb_1st = LocalDateTime.of(LocalDate.of(2016, 2, 1), midNight)
+    val Feb_4th = LocalDateTime.of(LocalDate.of(2016, 2, 4), midNight)
+    val Feb_9th = LocalDateTime.of(LocalDate.of(2016, 2, 9), midNight)
+    val Feb_10th = LocalDateTime.of(LocalDate.of(2016, 2, 10), midNight)
+    val Feb_16th = LocalDateTime.of(LocalDate.of(2016, 2, 16), midNight)
+    val Feb_18th = LocalDateTime.of(LocalDate.of(2016, 2, 18), midNight)
 
-  val Mar_1st = LocalDate.of(2016, 3, 1)
-  val Mar_4th = LocalDate.of(2016, 3, 4)
-  val March_10th = LocalDate.of(2016, 3, 10)
-  val Mar_27th = LocalDate.of(2016, 3, 27)
+    val Mar_1st = LocalDateTime.of(LocalDate.of(2016, 3, 1), midNight)
+    val Mar_4th = LocalDateTime.of(LocalDate.of(2016, 3, 4), midNight)
+    val March_10th = LocalDateTime.of(LocalDate.of(2016, 3, 10), midNight)
+    val Mar_27th = LocalDateTime.of(LocalDate.of(2016, 3, 27), midNight)
 
-  val Apr_1st = LocalDate.of(2016, 4, 1)
-  val Apr_4th = LocalDate.of(2016, 4, 4)
-  val Apr_10th = LocalDate.of(2016, 4, 10)
-  val Apr_11th = LocalDate.of(2016, 4, 11)
-  val May_1st = LocalDate.of(2016, 5, 1)
-  val May_10th = LocalDate.of(2016, 5, 10)
+    val Apr_1st = LocalDateTime.of(LocalDate.of(2016, 4, 1), midNight)
+    val Apr_4th = LocalDateTime.of(LocalDate.of(2016, 4, 4), midNight)
+    val Apr_10th = LocalDateTime.of(LocalDate.of(2016, 4, 10), midNight)
+    val Apr_11th = LocalDateTime.of(LocalDate.of(2016, 4, 11), midNight)
+    val May_1st = LocalDateTime.of(LocalDate.of(2016, 5, 1), midNight)
+    val May_10th = LocalDateTime.of(LocalDate.of(2016, 5, 10), midNight)
 
-  implicit val clock = clockFrom(May_10th)
-}
-
+    implicit val clock = clockFrom(May_10th)
+  }
 
 
   "LeadTimeCalculator.calculateRollingLeadTime" should {
@@ -63,30 +62,30 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Feb_4th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned))
+        RepoTag("1.0.0", Some(Feb_1st))
       )
 
       val releases = List(
-        Release( "1.0.0", Feb_4th)
+        Release("1.0.0", Feb_4th)
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
     "calculate the correct median lead time for two tags" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_16th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned)),
-        RepoTag("2.0.0", Some(Feb_10th.zoned))
+        RepoTag("1.0.0", Some(Feb_1st)),
+        RepoTag("2.0.0", Some(Feb_10th))
       )
 
       val releases = List(
-        Release( "1.0.0", Feb_4th),
-        Release( "2.0.0", Feb_16th)
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_16th)
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases,1) shouldBe List(ProductionLeadTime(Feb_1st, Some(4.5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
     }
 
     "calculate the correct median lead time for releases that spans two months" in new SetUp {
@@ -94,17 +93,17 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Apr_10th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Mar_1st.zoned)),
-        RepoTag("2.0.0", Some(Apr_4th.zoned))
+        RepoTag("1.0.0", Some(Mar_1st)),
+        RepoTag("2.0.0", Some(Apr_4th))
 
       )
 
       val releases = List(
-        Release( "1.0.0", Mar_4th), //3
-        Release( "2.0.0", Apr_10th) //6
+        Release("1.0.0", Mar_4th), //3
+        Release("2.0.0", Apr_10th) //6
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases,2) shouldBe List(ProductionLeadTime(Mar_1st, Some(3.0)), ProductionLeadTime(Apr_1st, Some(4.5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 2) shouldBe List(LeadTimeResult(YearMonth.from(Mar_1st), Some(3)), LeadTimeResult(YearMonth.from(Apr_1st) , Some(5)))
     }
 
 
@@ -113,17 +112,17 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned)),
-        RepoTag("2.0.0", Some(Feb_4th.zoned)),
-        RepoTag("3.0.0", Some(Feb_10th.zoned))
+        RepoTag("1.0.0", Some(Feb_1st)),
+        RepoTag("2.0.0", Some(Feb_4th)),
+        RepoTag("3.0.0", Some(Feb_10th))
       )
 
       val releases = List(
-        Release( "1.0.0", Feb_4th),
-        Release( "2.0.0", Feb_10th),
-        Release( "3.0.0", Feb_18th)
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_10th),
+        Release("3.0.0", Feb_18th)
       )
-      LeadTimeCalculator.calculateLeadTime(tags, releases,1) shouldBe List(ProductionLeadTime(Feb_1st, Some(6.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(6)))
     }
 
 
@@ -132,21 +131,21 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned)),
-        RepoTag("2.0.0", Some(Feb_4th.zoned)),
-        RepoTag("3.0.0", Some(Feb_10th.zoned)),
-        RepoTag("4.0.0", Some(Feb_16th.zoned))
+        RepoTag("1.0.0", Some(Feb_1st)),
+        RepoTag("2.0.0", Some(Feb_4th)),
+        RepoTag("3.0.0", Some(Feb_10th)),
+        RepoTag("4.0.0", Some(Feb_16th))
       )
 
 
       val releases = List(
-        Release( "1.0.0", Feb_4th), // 3 days
-        Release( "2.0.0", Feb_10th), //6 days
-        Release( "3.0.0", Feb_16th), //6 days
-        Release( "4.0.0", Feb_18th) //2 days
+        Release("1.0.0", Feb_4th), // 3 days
+        Release("2.0.0", Feb_10th), //6 days
+        Release("3.0.0", Feb_16th), //6 days
+        Release("4.0.0", Feb_18th) //2 days
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(4.5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
     }
 
     "ignore tags without any release" in new SetUp {
@@ -154,14 +153,14 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Feb_10th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned)),
-        RepoTag("2.0.0", Some(Feb_10th.zoned))
+        RepoTag("1.0.0", Some(Feb_1st)),
+        RepoTag("2.0.0", Some(Feb_10th))
       )
 
       val releases = List(
         Release("1.0.0", Feb_4th)
       )
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
 
@@ -170,14 +169,14 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Feb_10th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned)),
+        RepoTag("1.0.0", Some(Feb_1st)),
         RepoTag("1.0.0", None)
       )
 
       val releases = List(
         Release("1.0.0", Feb_4th)
       )
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
 
@@ -186,52 +185,52 @@ trait SetUp {
       override implicit val clock: Clock = clockFrom(Feb_10th)
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st.zoned))
+        RepoTag("1.0.0", Some(Feb_1st))
       )
 
       val releases = List(
         Release("1.0.0", Feb_4th),
         Release("1.0.0", Feb_10th)
       )
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(ProductionLeadTime(Feb_1st, Some(3.0)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
 
 
-      "calculate the rolling lead time for 9 months when provided tags and releases are not ordered" in new SetUp {
+    "calculate the rolling lead time for 9 months when provided tags and releases are not ordered" in new SetUp {
 
       val tags = List(
-        RepoTag("8.0.0", Some(Apr_4th.zoned)),
-        RepoTag("6.0.0", Some(Mar_4th.zoned)),
-        RepoTag("7.0.0", Some(Mar_27th.zoned)),
-        RepoTag("1.0.0", Some(Feb_1st.zoned)),
-        RepoTag("2.0.0", Some(Feb_4th.zoned)),
-        RepoTag("3.0.0", Some(Feb_10th.zoned)),
-        RepoTag("4.0.0", Some(Feb_16th.zoned)),
-        RepoTag("5.0.0", Some(Feb_18th.zoned))
+        RepoTag("8.0.0", Some(Apr_4th)),
+        RepoTag("6.0.0", Some(Mar_4th)),
+        RepoTag("7.0.0", Some(Mar_27th)),
+        RepoTag("1.0.0", Some(Feb_1st)),
+        RepoTag("2.0.0", Some(Feb_4th)),
+        RepoTag("3.0.0", Some(Feb_10th)),
+        RepoTag("4.0.0", Some(Feb_16th)),
+        RepoTag("5.0.0", Some(Feb_18th))
 
       )
 
 
       val releases = List(
-        Release( "7.0.0", Apr_1st), //   5 days
-        Release( "8.0.0", Apr_11th), //   7 days
-        Release( "1.0.0", Feb_4th), //  3 days
-        Release( "2.0.0", Feb_10th), //  6 days
-        Release( "3.0.0", Feb_16th), //  6 days
-        Release( "4.0.0", Feb_18th), //  2 days
-        Release( "5.0.0", Mar_1st), //   12 days
-        Release( "6.0.0", Mar_27th) //  23 days
+        Release("7.0.0", Apr_1st), //   5 days
+        Release("8.0.0", Apr_11th), //   7 days
+        Release("1.0.0", Feb_4th), //  3 days
+        Release("2.0.0", Feb_10th), //  6 days
+        Release("3.0.0", Feb_16th), //  6 days
+        Release("4.0.0", Feb_18th), //  2 days
+        Release("5.0.0", Mar_1st), //   12 days
+        Release("6.0.0", Mar_27th) //  23 days
       )
 
 
       LeadTimeCalculator.calculateLeadTime(tags, releases, 6) shouldBe List(
-        ProductionLeadTime(Dec_1st_2015, None),
-        ProductionLeadTime(Jan_1st, None),
-        ProductionLeadTime(Feb_1st, Some(4.5)),
-        ProductionLeadTime(Mar_1st, Some(6.0)),
-        ProductionLeadTime(Apr_1st, Some(6.0)),
-        ProductionLeadTime(May_1st, Some(6.0))
+        LeadTimeResult(YearMonth.from(Dec_1st_2015), None),
+        LeadTimeResult(YearMonth.from(Jan_1st), None),
+        LeadTimeResult(YearMonth.from(Feb_1st), Some(5)),
+        LeadTimeResult(YearMonth.from(Mar_1st), Some(6)),
+        LeadTimeResult(YearMonth.from(Apr_1st), Some(6)),
+        LeadTimeResult(YearMonth.from(May_1st), Some(6))
       )
 
     }

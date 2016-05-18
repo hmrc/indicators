@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.ZonedDateTime
+import java.time.{LocalDateTime, ZonedDateTime}
 
 import uk.gov.hmrc.gitclient.{GitClient, GitTag}
 import uk.gov.hmrc.indicators.Cache
@@ -26,13 +26,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 
-case class RepoTag(name: String, createdAt: Option[ZonedDateTime])
+case class RepoTag(name: String, createdAt: Option[LocalDateTime])
 
 object RepoTag {
   val versionNumber = "(?:(\\d+)\\.)?(?:(\\d+)\\.)?(\\*|\\d+)$".r
 
   def gitTagToRepoTag(gitTag: GitTag): RepoTag = {
-    RepoTag(getVersionNumber(gitTag.name).getOrElse(gitTag.name), gitTag.createdAt)
+    RepoTag(getVersionNumber(gitTag.name).getOrElse(gitTag.name), gitTag.createdAt.map(_.toLocalDateTime))
   }
 
   private def getVersionNumber(tag: String): Option[String] = versionNumber.findFirstIn(tag)

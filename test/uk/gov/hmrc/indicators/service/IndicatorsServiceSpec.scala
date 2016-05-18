@@ -22,22 +22,24 @@ import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.gitclient.{GitClient, GitTag}
-import java.time.{Clock, LocalDate, LocalDateTime}
+import java.time.{YearMonth, Clock, LocalDate, LocalDateTime}
 import java.util.TimeZone
 
 import org.scalatest.concurrent.ScalaFutures
+import uk.gov.hmrc.indicators.DateHelper
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 
 class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
 
   val tagsDataSource = mock[TagsDataSource]
   val releasesClient = mock[ReleasesDataSource]
 
-  val Feb_1st = LocalDate.of(2000, 2, 1).atStartOfDay().atZone(TimeZone.getDefault().toZoneId)
-  val Feb_4th = LocalDate.of(2000, 2, 4)
-  val fixedClock = Clock.fixed(Feb_1st.toInstant, Feb_1st.getZone)
+  val Feb_1st = LocalDateTime.of(2000, 2, 1, 0, 0, 0)
+  val Feb_4th = LocalDateTime.of(2000, 2, 4, 0, 0, 0)
+  val fixedClock = DateHelper.clockFrom(Feb_1st)
 
   val indicatorsService = new IndicatorsService(tagsDataSource, releasesClient, fixedClock)
 
@@ -57,7 +59,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       Mockito.when(tagsDataSource.getServiceRepoTags("test-service", "HMRC")).thenReturn(Future.successful(tags))
       Mockito.when(releasesClient.getServiceReleases("test-service")).thenReturn(Future.successful(releases))
 
-      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue shouldBe List(ProductionLeadTime(Feb_1st.toLocalDate, Some(3)))
+      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
   }
 }

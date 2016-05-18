@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, when, verify}
@@ -39,7 +39,7 @@ class CachedAppReleasesClientSpec extends WordSpec with Matchers with MockitoSug
   "getAllReleases" should {
     "load from the releases client and also cache the values" in {
 
-      val result = List(AppRelease("", "appName", "1.0.0", LocalDate.now()))
+      val result = List(AppRelease("", "appName", "1.0.0", LocalDateTime.now()))
 
       when(releaseClient.getAllReleases).thenReturn(Future.successful(result))
 

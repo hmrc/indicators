@@ -46,9 +46,9 @@ class GitTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar wit
       )))
 
       dataSource.getServiceRepoTags("repoName", "HMRC").futureValue shouldBe List(
-        RepoTag("1.0.0", Some(now)),
-        RepoTag("9.101.0", Some(now)),
-        RepoTag("someRandomtagName", Some(now))
+        RepoTag("1.0.0", Some(now.toLocalDateTime)),
+        RepoTag("9.101.0", Some(now.toLocalDateTime)),
+        RepoTag("someRandomtagName", Some(now.toLocalDateTime))
       )
 
 

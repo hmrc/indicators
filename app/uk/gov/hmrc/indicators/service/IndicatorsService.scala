@@ -16,26 +16,30 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{Clock, LocalDate}
+import java.time.{Clock, YearMonth}
 
 import play.api.Logger
-import play.api.libs.json.Json
+
 import uk.gov.hmrc.indicators.service.LeadTimeCalculator.calculateLeadTime
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class ProductionLeadTime(period: LocalDate, median: Option[BigDecimal])
+case class LeadTimeResult(period: YearMonth, median: Option[Long])
 
-object ProductionLeadTime {
-  import JavaDateTimeFormatters._
-  implicit val formats = Json.format[ProductionLeadTime]
+object LeadTimeResult {
+
+  import play.api.libs.json.Json
+  import JavaDateTimeJsonFormatter._
+
+  implicit val writes = Json.writes[LeadTimeResult]
+
 }
 
 class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: ReleasesDataSource, clock: Clock = Clock.systemUTC()) {
   implicit val c = clock
 
-  def getProductionDeploymentLeadTime(serviceName: String, periodInMonths: Int = 9): Future[List[ProductionLeadTime]] = {
+  def getProductionDeploymentLeadTime(serviceName: String, periodInMonths: Int = 9): Future[List[LeadTimeResult]] = {
     val repoTagsF: Future[List[RepoTag]] = tagsDataSource.getServiceRepoTags(serviceName, "HMRC")
     val releasesF: Future[List[Release]] = releasesDataSource.getServiceReleases(serviceName)
     for {

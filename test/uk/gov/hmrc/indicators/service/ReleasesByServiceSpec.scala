@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
 import org.scalatest.{Matchers, WordSpec}
 
 class ReleasesByServiceSpec extends WordSpec with Matchers {
 
-  val now = LocalDate.now()
+  val now = LocalDateTime.now()
 
   "ReleasesByService" should {
     "return releases by name" in {

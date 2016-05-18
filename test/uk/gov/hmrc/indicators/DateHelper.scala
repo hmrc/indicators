@@ -21,14 +21,14 @@ import java.util.TimeZone
 
 object DateHelper {
 
-  implicit class RichLocalDate(self: LocalDate) {
-    def zoned: ZonedDateTime = self.atStartOfDay().atZone(TimeZone.getDefault().toZoneId)
+  implicit class RichLocalDate(self: LocalDateTime) {
+    def zoned: ZonedDateTime = self.atZone(TimeZone.getDefault().toZoneId)
   }
 
 
-  def clockFrom(localDate : LocalDate) = {
+  def clockFrom(localDate: LocalDateTime) = {
 
-    Clock.fixed(localDate.zoned.toInstant, localDate.zoned.getZone)
+    Clock.fixed(localDate.toInstant(ZoneOffset.UTC), TimeZone.getDefault().toZoneId)
   }
 
 }

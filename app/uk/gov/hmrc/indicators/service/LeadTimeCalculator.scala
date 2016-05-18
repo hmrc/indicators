@@ -17,7 +17,7 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time.temporal.ChronoUnit
-import java.time.{Clock, LocalDate, YearMonth}
+import java.time.{ZoneOffset, Clock, LocalDate, YearMonth}
 
 import play.api.Logger
 import uk.gov.hmrc.gitclient.GitTag
@@ -48,29 +48,22 @@ object LeadTimeCalculator {
 
   import IndicatorTraversable._
 
-  def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[ProductionLeadTime] = {
+  def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
     val now = YearMonth.now(clock)
-
-    Logger.debug(s"All releases ${releases.map(x => (x.version, x.releasedAt))}")
 
     val months = Iterator.iterate(now)(_ minusMonths 1)
       .take(periodInMonths).toList
 
-    val allReleasesInThePeriod: Seq[Release] = releases.sortBy(_.releasedAt.toEpochDay).foldLeft(List.empty[Release]){
+    val allReleasesInThePeriod = releases
+      .sortBy(_.releasedAt.toEpochSecond(ZoneOffset.UTC))
+      .foldLeft(List.empty[Release]) {
       case (ls, r) =>
-        if(ls.exists(_.version == r.version)) ls
+        if (ls.exists(_.version == r.version)) ls
         else ls :+ r
-
     }.dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
 
-    Logger.debug(s"All releases in the period ${allReleasesInThePeriod.map(x => (x.version, x.releasedAt))}")
-
-    val allReleaseLeadTimes: Seq[ReleaseLeadTime] = allReleasesInThePeriod
-      .flatMap { r =>
-      val times: Iterable[ReleaseLeadTime] = releaseLeadTime(r, tags)
-      times
-    }
-
+    val allReleaseLeadTimes =
+      allReleasesInThePeriod.flatMap { r => releaseLeadTime(r, tags) }
 
     months.reverseMap { ym =>
       val releaseLeadTimes = allReleaseLeadTimes.takeWhile {
@@ -79,9 +72,9 @@ object LeadTimeCalculator {
           rym.equals(ym) || rym.isBefore(ym)
       }
 
-      ProductionLeadTime(
-        LocalDate.of(ym.getYear, ym.getMonthValue, 1),
-        releaseLeadTimes.map(_.daysSinceTag).median)
+      LeadTimeResult(
+        ym,
+        releaseLeadTimes.map(_.daysSinceTag).median.map(x => Math.round(x.toDouble)))
     }
   }
 
@@ -91,7 +84,6 @@ object LeadTimeCalculator {
       .map {
       t =>
         val releaseLeadTimeInDays = daysBetweenTagAndRelease(t, r)
-        Logger.debug(s"Release : ${r.version} -> ${r.releasedAt}, tag : ${t.name} -> ${t.createdAt.get.toLocalDate}, lead time -> $releaseLeadTimeInDays")
         ReleaseLeadTime(r, releaseLeadTimeInDays)
     }
   }

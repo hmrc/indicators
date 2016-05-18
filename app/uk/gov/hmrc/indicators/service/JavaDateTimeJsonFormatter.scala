@@ -22,17 +22,20 @@ import java.time.temporal.Temporal
 
 import play.api.libs.json._
 
-object JavaDateTimeFormatters {
+object JavaDateTimeJsonFormatter {
 
-  implicit val localDateRead = new Reads[LocalDate] {
-    override def reads(json: JsValue): JsResult[LocalDate] = json match {
-      case JsNumber(v) => JsSuccess(LocalDateTime.ofEpochSecond(v.toLongExact, 0, ZoneOffset.UTC).toLocalDate)
+
+  implicit val localDateTime = new Reads[LocalDateTime] {
+    override def reads(json: JsValue): JsResult[LocalDateTime] = json match {
+      case JsNumber(v) => JsSuccess(
+        LocalDateTime.ofEpochSecond(v.toLongExact, 0, ZoneOffset.UTC)
+      )
       case v => JsError(s"invalid value for epoch second '$v'")
     }
   }
 
-  implicit val localDateWrite = new Writes[LocalDate] {
-    override def writes(o: LocalDate): JsValue = JsString(o.toString)
+  implicit val yearMonthWrite = new Writes[YearMonth] {
+    override def writes(o: YearMonth): JsValue = JsString(o.toString)
   }
 
 

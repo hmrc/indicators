@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-case class Release(version: String, releasedAt: LocalDate)
+case class Release(version: String, releasedAt: LocalDateTime)
 
 trait ReleasesDataSource {
 

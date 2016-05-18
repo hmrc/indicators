@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
 import org.mockito.Mockito
 import org.scalatest.concurrent.ScalaFutures
@@ -31,7 +31,7 @@ class AppReleasesDataSourceSpec extends WordSpec with Matchers with MockitoSugar
   val releasesClient = mock[AppReleasesClient]
 
   val dataSource = new AppReleasesDataSource(releasesClient)
-  val now = LocalDate.now()
+  val now = LocalDateTime.now()
   
   "AppReleasesDataSource.getAllReleases(serviceName)" should {
     

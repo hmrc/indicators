@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.indicators.{Cache, IndicatorsConfigProvider}
@@ -27,10 +27,10 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-case class AppRelease(env: String, an: String, ver: String, fs: LocalDate)
+case class AppRelease(env: String, an: String, ver: String, fs: LocalDateTime)
 
 object AppRelease {
-  import JavaDateTimeFormatters._
+  import JavaDateTimeJsonFormatter._
   implicit val format = Json.reads[AppRelease]
 }
 
