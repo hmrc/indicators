@@ -23,10 +23,11 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.gitclient.GitClient
+import uk.gov.hmrc.indicators.DefaultPatienceConfig
 
 import scala.concurrent.Future
 
-class AppReleasesDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
+class AppReleasesDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig {
   
   val releasesClient = mock[AppReleasesClient]
 

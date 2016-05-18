@@ -26,13 +26,13 @@ import java.time.{YearMonth, Clock, LocalDate, LocalDateTime}
 import java.util.TimeZone
 
 import org.scalatest.concurrent.ScalaFutures
-import uk.gov.hmrc.indicators.DateHelper
+import uk.gov.hmrc.indicators.{DefaultPatienceConfig, DateHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
+class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig{
 
   val tagsDataSource = mock[TagsDataSource]
   val releasesClient = mock[ReleasesDataSource]
