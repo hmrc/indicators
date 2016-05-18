@@ -16,14 +16,17 @@
 
 package uk.gov.hmrc.indicators.controllers
 
-import org.apache.commons.io.FileUtils
+import java.io.ByteArrayInputStream
+import java.time.YearMonth
+
+import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.gitclient.{GitTag, Git}
 import uk.gov.hmrc.indicators.ComponentRegistry
-import uk.gov.hmrc.indicators.service.IndicatorsService
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.indicators.service.{LeadTimeResult, IndicatorsService}
 import uk.gov.hmrc.play.microservice.controller.BaseController
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 import scala.concurrent.Future
 
@@ -35,12 +38,42 @@ object ServiceIndicatorController extends ServiceIndicatorController {
 
 trait ServiceIndicatorController extends BaseController {
 
+  val AcceptingCsv = Accepting("text/csv")
+
   def indicatorsService: IndicatorsService
 
 
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
-    indicatorsService.getProductionDeploymentLeadTime(serviceName).map(x => Ok(Json.toJson(x)).as("application/json"))
+    getLedTimeResults(serviceName).map {
+      ls =>
+        render {
+          case Accepts.Json() => Ok(Json.toJson(ls)).as("application/json")
+          case AcceptingCsv() => streamFile(LeadTimeCsv(ls, serviceName), serviceName)
+        }
+    }
 
+  }
+
+  private def streamFile(data: String, filePrefix: String): Result = {
+    Ok.chunked(Enumerator.fromStream(new ByteArrayInputStream(data.getBytes)))
+      .as("text/csv")
+      .withHeaders(CONTENT_DISPOSITION -> s"attachment; filename=$filePrefix.csv", CONTENT_TYPE -> "text/csv")
+
+  }
+
+  private def getLedTimeResults(serviceName: String) = {
+    indicatorsService.getProductionDeploymentLeadTime(serviceName)
+  }
+}
+
+object LeadTimeCsv {
+
+  def apply(leadTimes: List[LeadTimeResult], serviceName: String) = {
+    leadTimes.flatMap(LeadTimeResult.unapply).unzip match {
+      case (months, leadTimes) =>
+        s"""|Name,${months.mkString(",")}
+            |$serviceName,${leadTimes.map(_.getOrElse("")).mkString(",")}""".stripMargin
+    }
   }
 }
