@@ -25,7 +25,7 @@ import uk.gov.hmrc.indicators.service.LeadTimeCalculator.calculateLeadTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class LeadTimeResult(period: YearMonth, median: Option[Long])
+case class LeadTimeResult(period: YearMonth, median: Option[Int])
 
 object LeadTimeResult {
 
@@ -33,6 +33,11 @@ object LeadTimeResult {
   import JavaDateTimeJsonFormatter._
 
   implicit val writes = Json.writes[LeadTimeResult]
+
+  def of(period: YearMonth, median: Option[BigDecimal]): LeadTimeResult = {
+
+    LeadTimeResult(period, median.map(x => Math.round(x.toDouble).toInt))
+  }
 
 }
 

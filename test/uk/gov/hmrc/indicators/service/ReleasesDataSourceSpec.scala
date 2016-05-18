@@ -41,12 +41,43 @@ class AppReleasesDataSourceSpec extends WordSpec with Matchers with MockitoSugar
       List(
       AppRelease("production","some-serviceName","1.0",now),
       AppRelease("prod","some-serviceName","2.0",now),
-      AppRelease("production","some-other-ServiceName","1.0",now)
+      AppRelease("production","some-other-ServiceName","1.0",now.minusDays(2))
       )
       ))
 
       dataSource.getServiceReleases("some-serviceName").futureValue shouldBe List(Release("1.0",now), Release("2.0",now))
-    }  
+    }
+
+
+    "remove re releases and take the release with earliest date" in {
+      val twoDaysEarlier = now.minusDays(2)
+      val aHourEarlier = now.minusHours(1)
+      Mockito.when(releasesClient.getAllReleases).thenReturn(Future.successful(
+        List(
+          AppRelease("production","some-serviceName","1.0",now),
+          AppRelease("prod","some-serviceName","1.0",aHourEarlier),
+          AppRelease("production","some-serviceName","1.0", twoDaysEarlier),
+          AppRelease("production","some-other-serviceName","1.0", twoDaysEarlier)
+        )
+      ))
+
+      dataSource.getServiceReleases("some-serviceName").futureValue shouldBe List(Release("1.0",twoDaysEarlier))
+    }
+
+    "releases should be sorted by date" in {
+      val twoDaysEarlier = now.minusDays(2)
+      val aHourEarlier = now.minusHours(1)
+      Mockito.when(releasesClient.getAllReleases).thenReturn(Future.successful(
+        List(
+          AppRelease("production","some-serviceName","3.0",now),
+          AppRelease("prod","some-serviceName","2.0",aHourEarlier),
+          AppRelease("production","some-serviceName","1.0", twoDaysEarlier)
+        )
+      ))
+
+      dataSource.getServiceReleases("some-serviceName").futureValue shouldBe List(Release("1.0",twoDaysEarlier),Release("2.0",aHourEarlier),Release("3.0",now))
+    }
+
   }
 
 }

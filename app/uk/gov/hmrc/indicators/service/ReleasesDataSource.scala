@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{LocalDateTime, LocalDate}
+import java.time.{ZoneOffset, LocalDateTime, LocalDate}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,11 +38,11 @@ class AppReleasesDataSource(releasesClient: ReleasesClient) extends ReleasesData
 
 object ReleasesByService {
   def apply(serviceName: String)(allReleases: List[AppRelease]): List[Release] = {
-    allReleases.foldLeft(Set.empty[Release]) { case (rss, ar) =>
-      if (byServiceNameAndEnv(serviceName)(ar))
-        rss + Release(ar.ver, ar.fs)
+    allReleases.sortBy(_.fs.toEpochSecond(ZoneOffset.UTC)).foldLeft(List.empty[Release]) { case (rss, ar) =>
+      if (!rss.exists(_.version == ar.ver) && byServiceNameAndEnv(serviceName)(ar))
+        Release(ar.ver, ar.fs) :: rss
       else rss
-    }.toList
+    }.reverse
   }
 
   def byServiceNameAndEnv(serviceName: String): (AppRelease) => Boolean = {

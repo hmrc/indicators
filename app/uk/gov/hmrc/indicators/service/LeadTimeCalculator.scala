@@ -56,11 +56,7 @@ object LeadTimeCalculator {
 
     val allReleasesInThePeriod = releases
       .sortBy(_.releasedAt.toEpochSecond(ZoneOffset.UTC))
-      .foldLeft(List.empty[Release]) {
-      case (ls, r) =>
-        if (ls.exists(_.version == r.version)) ls
-        else ls :+ r
-    }.dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
+      .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
 
     val allReleaseLeadTimes =
       allReleasesInThePeriod.flatMap { r => releaseLeadTime(r, tags) }
@@ -72,9 +68,9 @@ object LeadTimeCalculator {
           rym.equals(ym) || rym.isBefore(ym)
       }
 
-      LeadTimeResult(
+      LeadTimeResult.of(
         ym,
-        releaseLeadTimes.map(_.daysSinceTag).median.map(x => Math.round(x.toDouble)))
+        releaseLeadTimes.map(_.daysSinceTag).median)
     }
   }
 
