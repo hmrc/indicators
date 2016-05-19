@@ -119,26 +119,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
 
-    "return deployment lead times for a given service in csv format" in {
 
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(
-        List(
-          LeadTimeResult(YearMonth.of(2016, 4), Some(5)),
-          LeadTimeResult(YearMonth.of(2016, 5), Some(6))
-        ))
-      )
-
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accept" -> "text/csv"))
-
-
-      val content = new String(contentAsBytes(result)).split("\n")
-
-      content.head mustBe "Name,2016-04,2016-05"
-      content.last mustBe "serviceName,5,6"
-
-      header("content-type", result).get mustBe "text/csv"
-      header(HeaderNames.CONTENT_DISPOSITION, result).get mustBe s"attachment; filename=serviceName.csv"
-    }
 
   }
 

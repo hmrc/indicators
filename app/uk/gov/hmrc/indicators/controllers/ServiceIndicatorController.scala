@@ -49,18 +49,12 @@ trait ServiceIndicatorController extends BaseController {
       ls =>
         render {
           case Accepts.Json() => Ok(Json.toJson(ls)).as("application/json")
-          case AcceptingCsv() => streamFile(LeadTimeCsv(ls, serviceName), serviceName)
+          case AcceptingCsv() => Ok.chunked(Enumerator(LeadTimeCsv(ls, serviceName))).as("text/csv")
         }
     }
 
   }
 
-  private def streamFile(data: String, filePrefix: String): Result = {
-    Ok.chunked(Enumerator.fromStream(new ByteArrayInputStream(data.getBytes)))
-      .as("text/csv")
-      .withHeaders(CONTENT_DISPOSITION -> s"attachment; filename=$filePrefix.csv", CONTENT_TYPE -> "text/csv")
-
-  }
 
   private def getLedTimeResults(serviceName: String) = {
     indicatorsService.getProductionDeploymentLeadTime(serviceName)
@@ -71,9 +65,9 @@ object LeadTimeCsv {
 
   def apply(leadTimes: List[LeadTimeResult], serviceName: String) = {
     leadTimes.flatMap(LeadTimeResult.unapply).unzip match {
-      case (months, leadTimes) =>
-        s"""|Name,${months.mkString(",")}
-            |$serviceName,${leadTimes.map(_.getOrElse("")).mkString(",")}""".stripMargin
+      case (m, lt) =>
+        s"""|Name,${m.mkString(",")}
+            |$serviceName,${lt.map(_.getOrElse("")).mkString(",")}""".stripMargin
     }
   }
 }
