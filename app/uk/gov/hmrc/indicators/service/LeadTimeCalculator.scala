@@ -49,39 +49,32 @@ object LeadTimeCalculator {
   import IndicatorTraversable._
 
   def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
-    val now = YearMonth.now(clock)
 
-    val months = Iterator.iterate(now)(_ minusMonths 1)
-      .take(periodInMonths).toList
+    val start = YearMonth.now(clock).minusMonths(periodInMonths-1)
+    val end   = YearMonth.now(clock)
 
-    val allReleasesInThePeriod = releases
-      .sortBy(_.releasedAt.toEpochSecond(ZoneOffset.UTC))
-      .dropWhile(r => YearMonth.from(r.releasedAt).isBefore(months.last))
-
-    val allReleaseLeadTimes =
-      allReleasesInThePeriod.flatMap { r => releaseLeadTime(r, tags) }
-
-    months.reverseMap { ym =>
-      val releaseLeadTimes = allReleaseLeadTimes.takeWhile {
-        case ReleaseLeadTime(release, days) =>
-          val rym = YearMonth.from(release.releasedAt)
-          rym.equals(ym) || rym.isBefore(ym)
-      }
-
-      LeadTimeResult.of(
-        ym,
-        releaseLeadTimes.map(_.daysSinceTag).median)
+    def releasesForYearMonth(ym: YearMonth): List[ReleaseLeadTime] = {
+      releases
+        .filter(r => YearMonth.from(r.releasedAt) == ym)
+        .map(r => releaseLeadTime(r, tags)).toList.flatten
     }
+
+    val timeSeries = YearMonthTimeSeries(start, end, bucketBuilder = releasesForYearMonth)
+
+    timeSeries.expandingWindow.map { window =>
+      val (leadTimeYearMonth, _) = window.last
+      LeadTimeResult.of(leadTimeYearMonth, window.flatMap(_._2).map(_.daysSinceTag).median)
+    }.toList
   }
 
   def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[ReleaseLeadTime] = {
 
     tags.find(t => t.name == r.version && t.createdAt.isDefined)
       .map {
-      t =>
-        val releaseLeadTimeInDays = daysBetweenTagAndRelease(t, r)
-        ReleaseLeadTime(r, releaseLeadTimeInDays)
-    }
+        t =>
+          val releaseLeadTimeInDays = daysBetweenTagAndRelease(t, r)
+          ReleaseLeadTime(r, releaseLeadTimeInDays)
+      }
   }
 
   def daysBetweenTagAndRelease(tag: RepoTag, release: Release): Long = {
@@ -89,5 +82,9 @@ object LeadTimeCalculator {
   }
 
   case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
-
 }
+
+
+
+
+
