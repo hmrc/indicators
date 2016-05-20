@@ -103,7 +103,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("2.0.0", Apr_10th) //6
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 2) shouldBe List(LeadTimeResult(YearMonth.from(Mar_1st), Some(3)), LeadTimeResult(YearMonth.from(Apr_1st) , Some(5)))
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 2) shouldBe List(
+        LeadTimeResult(YearMonth.from(Mar_1st), Some(3)),
+        LeadTimeResult(YearMonth.from(Apr_1st), Some(5)))
     }
 
 
