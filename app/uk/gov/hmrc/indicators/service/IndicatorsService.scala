@@ -23,7 +23,7 @@ import play.api.Logger
 import uk.gov.hmrc.indicators.service.LeadTimeCalculator.calculateLeadTime
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class LeadTimeResult(period: YearMonth, median: Option[Int])
 
@@ -41,18 +41,31 @@ object LeadTimeResult {
 
 }
 
-class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: ReleasesDataSource, clock: Clock = Clock.systemUTC()) {
+
+class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: ReleasesDataSource, catalogueClient: CatalogueClient, clock: Clock = Clock.systemUTC()) {
+
   implicit val c = clock
 
   def getProductionDeploymentLeadTime(serviceName: String, periodInMonths: Int = 9): Future[List[LeadTimeResult]] = {
-    val repoTagsF: Future[List[RepoTag]] = tagsDataSource.getServiceRepoTags(serviceName, "HMRC")
-    val releasesF: Future[List[Release]] = releasesDataSource.getServiceReleases(serviceName)
+
+
+    val repoTagsF = getServiceRepoReleaseTags(serviceName)
+
+    val releasesF = releasesDataSource.getServiceReleases(serviceName)
     for {
       tags <- repoTagsF
       releases <- releasesF
     } yield {
       Logger.debug(s"### Calculating production lead time for ${serviceName} , period : $periodInMonths months ###")
       calculateLeadTime(tags, releases, periodInMonths)
+    }
+  }
+
+  def getServiceRepoReleaseTags(serviceName: String): Future[List[RepoTag]] = {
+    import FutureImplicit._
+
+    catalogueClient.getServiceRepoInfo(serviceName).flatMap { repos =>
+      repos.map(tagsDataSource.getServiceRepoReleaseTags).futureList.map(_.flatten)
     }
   }
 }

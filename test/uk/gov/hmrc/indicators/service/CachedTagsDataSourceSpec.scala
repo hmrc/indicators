@@ -38,13 +38,15 @@ class CachedTagsDataSourceSpec extends WordSpec with Matchers with ScalaFutures 
 
       val result = List(RepoTag("tag1", None))
 
-      when(tagsDataSource.getServiceRepoTags("repoName", "owner")).thenReturn(Future.successful(result))
+      val serviceRepo = ServiceRepositoryInfo("repoName", "owner", RepoType.Enterprise)
 
-      cachedDataSource.getServiceRepoTags("repoName", "owner").futureValue should be(result)
+      when(tagsDataSource.getServiceRepoReleaseTags(serviceRepo)).thenReturn(Future.successful(result))
 
-      cachedDataSource.cache.get(("repoName", "owner")) shouldBe result
+      cachedDataSource.getServiceRepoReleaseTags(serviceRepo).futureValue should be(result)
 
-      verify(tagsDataSource, times(1)).getServiceRepoTags("repoName", "owner")
+      cachedDataSource.cache.get(serviceRepo) shouldBe result
+
+      verify(tagsDataSource, times(1)).getServiceRepoReleaseTags(serviceRepo)
     }
 
 

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.indicators.http
 
 import play.Logger
-import play.api.libs.json.{JsValue, Reads}
+import play.api.libs.json.{Json, JsValue, Reads}
 import play.api.libs.ws._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,31 +28,51 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object HttpClient {
 
-  def get[T](url: String, header : List[(String, String)] = List())(implicit r: Reads[T]): Future[T] = withErrorHandling("GET", url)(header) {
-    case s if s.status >= 200 && s.status < 300 =>
+  def get[T](url: String, header: List[(String, String)] = List())(implicit r: Reads[T]): Future[T] =
+    getResponseBody(url, header).map { rsp =>
       Try {
-        s.json.as[T]
+        Json.parse(rsp).as[T]
       } match {
         case Success(a) => a
         case Failure(e) =>
-          Logger.error(s"Error paring response failed body was: ${s.body} root url : $url")
+          Logger.error(s"Error paring response failed body was: $rsp root url : $url")
           throw e
       }
-    case res =>
-      throw new RuntimeException(s"Unexpected response status : ${res.status}  calling url : $url response body : ${res.body}")
-  }
 
-  private def withErrorHandling[T](method: String, url: String, body : Option[JsValue] = None)(headers : List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] = {
+    }
+
+  def getWithParsing[T](url: String, header: List[(String, String)] = List())(bodyParser: JsValue => T): Future[T] =
+    getResponseBody(url, header).map { rsp =>
+      Try {
+        bodyParser(Json.parse(rsp))
+      } match {
+        case Success(a) => a
+        case Failure(e) =>
+          Logger.error(s"Error paring response failed body was: $rsp root url : $url")
+          throw e
+      }
+
+    }
+
+
+  private def getResponseBody(url: String, header: List[(String, String)] = List()): Future[String] =
+    withErrorHandling("GET", url)(header) {
+      case s if s.status >= 200 && s.status < 300 => s.body
+      case res =>
+        throw new RuntimeException(s"Unexpected response status : ${res.status}  calling url : $url response body : ${res.body}")
+    }
+
+  private def withErrorHandling[T](method: String, url: String, body: Option[JsValue] = None)(headers: List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] =
     buildCall(method, url, body, headers).execute().transform(
       f,
       _ => throw new RuntimeException(s"Error connecting  $url")
     )
-  }
 
-  private def buildCall(method: String, url: String, body: Option[JsValue] = None, headers : List[(String, String)] = List()): WSRequestHolder = {
+
+  private def buildCall(method: String, url: String, body: Option[JsValue] = None, headers: List[(String, String)] = List()) = {
     val req = WS.client.url(url)
       .withMethod(method)
-      .withHeaders(headers :_*)
+      .withHeaders(headers: _*)
 
     body.map { b =>
       req.withBody(b)

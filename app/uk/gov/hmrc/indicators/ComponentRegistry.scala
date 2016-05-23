@@ -32,14 +32,19 @@ object ComponentRegistry extends ConfigProvider {
   }
 
 
-  val gitClient = Git(tempDirectory, gitEnterpriseToken, gitEnterpriseHost)
-  val tagsDataSource = new GitTagsDataSource(gitClient)
-  val cachedTagsDataSource = new CachedTagsDataSource(tagsDataSource)
+  val gitEnterpriseClient = Git(tempDirectory, gitEnterpriseToken, gitEnterpriseHost)
+  val gitOpenClient = Git(tempDirectory, gitOpenToken, gitOpenHost)
+
+  val enterpriseTagsDataSource = new GitTagsDataSource(gitEnterpriseClient)
+  val openTagsDataSource = new GitTagsDataSource(gitOpenClient)
+  val compositeTagsDataSource = new CompositeTagsDataSource(enterpriseTagsDataSource, openTagsDataSource)
+  val cachedTagsDataSource = new CachedTagsDataSource(compositeTagsDataSource)
 
   val releasesClient = new AppReleasesClient(releasesApiBase)
   val cachedReleasesClient = new CachedAppReleasesClient(releasesClient)
   val releasesDataSource = new AppReleasesDataSource(cachedReleasesClient)
+  val catalogueClient = new CatalogueServiceClient(catalogueApiBase)
 
-  val indicatorsService = new IndicatorsService(cachedTagsDataSource, releasesDataSource)
+  val indicatorsService = new IndicatorsService(cachedTagsDataSource, releasesDataSource, catalogueClient)
 
 }

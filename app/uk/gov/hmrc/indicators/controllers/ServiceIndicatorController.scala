@@ -45,7 +45,7 @@ trait ServiceIndicatorController extends BaseController {
 
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
-    getLedTimeResults(serviceName).map {
+    indicatorsService.getProductionDeploymentLeadTime(serviceName) map {
       ls =>
         render {
           case Accepts.Json() => Ok(Json.toJson(ls)).as("application/json")
@@ -53,11 +53,6 @@ trait ServiceIndicatorController extends BaseController {
         }
     }
 
-  }
-
-
-  private def getLedTimeResults(serviceName: String) = {
-    indicatorsService.getProductionDeploymentLeadTime(serviceName)
   }
 }
 

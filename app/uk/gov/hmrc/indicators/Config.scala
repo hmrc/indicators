@@ -22,9 +22,14 @@ trait IndicatorsConfigProvider {
   def configs:Configs
 
   lazy val releasesApiBase: String = requiredConf("releases.app.api.base")
+  lazy val catalogueApiBase: String = requiredConf("catalogue.api.base")
   lazy val gitClientStorePath: Option[String] = optionalConf("git.client.store.path")
   lazy val gitEnterpriseToken: String = requiredConf("git.enterprise.api.token")
   lazy val gitEnterpriseHost: String = requiredConf("git.enterprise.host")
+
+  lazy val gitOpenToken: String = requiredConf("git.open.api.token")
+  lazy val gitOpenHost: String = requiredConf("git.open.host")
+
 
   private def optionalConf(path:String) : Option[String] =  configs.config(path)
   private def requiredConf(path : String) : String = configs.config(path).getOrElse(throw new RuntimeException(s"No conf for key : $path"))

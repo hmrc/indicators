@@ -39,13 +39,16 @@ class GitTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar wit
     "return tags form gitClient with normalized tag name (i.e just the numbers)" in {
 
       val now: ZonedDateTime = ZonedDateTime.now()
+
+      val serviceRepoInfo = ServiceRepositoryInfo("repoName", "HMRC", RepoType.Enterprise)
+
       when(gitClient.getGitRepoTags("repoName", "HMRC")).thenReturn(Future.successful(List(
         GitTag("v1.0.0", Some(now)),
         GitTag("release/9.101.0", Some(now)),
         GitTag("someRandomtagName", Some(now))
       )))
 
-      dataSource.getServiceRepoTags("repoName", "HMRC").futureValue shouldBe List(
+      dataSource.getServiceRepoReleaseTags(serviceRepoInfo).futureValue shouldBe List(
         RepoTag("1.0.0", Some(now.toLocalDateTime)),
         RepoTag("9.101.0", Some(now.toLocalDateTime)),
         RepoTag("someRandomtagName", Some(now.toLocalDateTime))

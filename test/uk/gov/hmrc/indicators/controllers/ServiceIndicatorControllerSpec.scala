@@ -22,15 +22,13 @@ import akka.util.Timeout
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.PlaySpec
-import play.api.http.HeaderNames
 import play.api.libs.iteratee.Iteratee
-import play.api.mvc.{Result, Results, SimpleResult}
+import play.api.mvc.{Result, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.TestImplicits._
 import uk.gov.hmrc.indicators.service.{IndicatorsService, LeadTimeResult}
 
-import scala.Predef
 import scala.concurrent.{Await, Future}
 
 class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
@@ -39,14 +37,6 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
   val controller = new ServiceIndicatorController {
     override val indicatorsService: IndicatorsService = mockIndicatorsService
-  }
-
-
-  "ServiceIndicatorController" should {
-    "have correct UrlMapping for lead time json" in {
-      //not sure why it fails and passes sometime
-     // uk.gov.hmrc.indicators.controllers.routes.ServiceIndicatorController.frequentProdRelease("serviceName").url mustBe "/indicators/api/service/serviceName/fpr"
-    }
   }
 
 

@@ -18,8 +18,10 @@ package uk.gov.hmrc.indicators.service
 
 import java.time.{LocalDateTime, ZonedDateTime}
 
+import play.api.Logger
 import uk.gov.hmrc.gitclient.{GitClient, GitTag}
 import uk.gov.hmrc.indicators.Cache
+import uk.gov.hmrc.indicators.service.RepoType.{Open, Enterprise}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,24 +41,43 @@ object RepoTag {
 }
 
 trait TagsDataSource {
-  def getServiceRepoTags(repoName: String, owner: String): Future[List[RepoTag]]
+  def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoTag]]
 }
 
-class CachedTagsDataSource(tagsDataSource: TagsDataSource) extends TagsDataSource with Cache[(String, String), List[RepoTag]] {
+class CachedTagsDataSource(tagsDataSource: TagsDataSource) extends TagsDataSource with Cache[ServiceRepositoryInfo, List[RepoTag]] {
 
-  override def getServiceRepoTags(repoName: String, owner: String): Future[List[RepoTag]] = Future.successful(cache.get((repoName, owner)))
+  override def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoTag]] = Future.successful(cache.get(serviceRepositoryInfo))
 
-  override def refreshTimeInMillis: Duration = 24 hours
+  override def refreshTimeInMillis: Duration = 6 hours
 
-  override protected def cacheLoader: ((String, String)) => List[RepoTag] = {
-    case (repoName, owner) => Await.result(tagsDataSource.getServiceRepoTags(repoName, owner), 30 seconds)
+  override protected def cacheLoader: ServiceRepositoryInfo => List[RepoTag] = {
+    case serviceRepositoryInfo => Await.result(tagsDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo), 30 seconds)
   }
 }
 
+class CompositeTagsDataSource(gitEnterpriseTagDataSource: TagsDataSource, gitOpenTagDataSource: TagsDataSource) extends TagsDataSource {
+
+  override def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo) =
+    serviceRepositoryInfo.repoType match {
+
+      case Enterprise => {
+        Logger.debug(s"Enterprise Repo release tags for : ${serviceRepositoryInfo.name} org : ${serviceRepositoryInfo.org}")
+
+        gitEnterpriseTagDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo)
+      }
+      case Open => {
+        Logger.debug(s"Open Repo release tags for : ${serviceRepositoryInfo.name} org : ${serviceRepositoryInfo.org}")
+
+        gitOpenTagDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo)
+      }
+    }
+}
 
 class GitTagsDataSource(gitClient: GitClient) extends TagsDataSource {
 
-  def getServiceRepoTags(repoName: String, owner: String): Future[List[RepoTag]] = {
-    gitClient.getGitRepoTags(repoName, owner).map(x => x.map(RepoTag.gitTagToRepoTag))
+  def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoTag]] = {
+
+    gitClient.getGitRepoTags(serviceRepositoryInfo.name, serviceRepositoryInfo.org).map(x => x.map(RepoTag.gitTagToRepoTag))
+
   }
 }
