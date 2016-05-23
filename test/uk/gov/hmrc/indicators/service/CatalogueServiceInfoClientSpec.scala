@@ -56,7 +56,7 @@ class CatalogueServiceInfoClientSpec extends WordSpec with Matchers with WireMoc
             )
             )
         )
-        catalogueClient.getServiceRepoInfo("serviceName").futureValue shouldBe List(
+        catalogueClient.getServiceRepoInfo("serviceName").futureValue.get shouldBe List(
           ServiceRepositoryInfo("serviceName", "org1", RepoType.Enterprise),
           ServiceRepositoryInfo("serviceName", "org2", RepoType.Open)
         )
@@ -72,7 +72,7 @@ class CatalogueServiceInfoClientSpec extends WordSpec with Matchers with WireMoc
           url = s"$endpointMockUrl/services",
           willRespondWith = (400, None)
         )
-        catalogueClient.getServiceRepoInfo("serviceName").futureValue shouldBe List()
+        catalogueClient.getServiceRepoInfo("serviceName").futureValue shouldBe None
       }
     }
   }

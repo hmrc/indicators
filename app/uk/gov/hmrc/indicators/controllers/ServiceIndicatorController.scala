@@ -46,14 +46,16 @@ trait ServiceIndicatorController extends BaseController {
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
     indicatorsService.getProductionDeploymentLeadTime(serviceName) map {
-      ls =>
+      case Some(ls) =>
         render {
           case Accepts.Json() => Ok(Json.toJson(ls)).as("application/json")
           case AcceptingCsv() => Ok.chunked(Enumerator(LeadTimeCsv(ls, serviceName))).as("text/csv")
         }
+      case _ => NotFound
     }
 
   }
+
 }
 
 object LeadTimeCsv {

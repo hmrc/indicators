@@ -43,7 +43,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
   "ServiceIndicatorController.frequentProdRelease" should {
 
     "return deployment lead time in json by default" in {
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(List()))
+      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest())
 
@@ -54,7 +54,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
     "return deployment lead time in json when application/json is requested" in {
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(List()))
+      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accepts" -> "application/json"))
 
@@ -66,7 +66,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
     "return deployment lead time in csv when accept header is test/csv" in {
 
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(List()))
+      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accept" -> "text/csv"))
 
@@ -78,9 +78,9 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
     }
 
-    "returns unsupported statu when accepts header not recognized" in {
+    "returns unsupported status when accepts header not recognized" in {
 
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(List()))
+      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accept" -> "application/pdf"))
 
@@ -92,10 +92,10 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     "return deployment lead times for a given service in json format" in {
 
       when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(
-        List(
+        Some(List(
           LeadTimeResult(YearMonth.of(2016, 4), Some(5)),
           LeadTimeResult(YearMonth.of(2016, 5), Some(6))
-        ))
+        )))
       )
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest())
@@ -107,6 +107,17 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
           |]""".stripMargin.toJson
 
       header("content-type", result).get mustBe "application/json"
+    }
+
+
+    "return NotFound if None lead times returned" in {
+      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(None))
+
+      val result = controller.frequentProdRelease("serviceName")(FakeRequest())
+
+      status(result) mustBe NOT_FOUND
+
+
     }
 
 

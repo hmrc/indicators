@@ -42,32 +42,42 @@ object LeadTimeResult {
 }
 
 
-class IndicatorsService(tagsDataSource: TagsDataSource, releasesDataSource: ReleasesDataSource, catalogueClient: CatalogueClient, clock: Clock = Clock.systemUTC()) {
+class IndicatorsService(tagsDataSource: ReleaseTagsDataSource, releasesDataSource: ReleasesDataSource, catalogueClient: CatalogueClient, clock: Clock = Clock.systemUTC()) {
 
   implicit val c = clock
 
-  def getProductionDeploymentLeadTime(serviceName: String, periodInMonths: Int = 9): Future[List[LeadTimeResult]] = {
+  def getProductionDeploymentLeadTime(serviceName: String, periodInMonths: Int = 9): Future[Option[List[LeadTimeResult]]] = {
 
+    catalogueClient.getServiceRepoInfo(serviceName).flatMap {
 
-    val repoTagsF = getServiceRepoReleaseTags(serviceName)
+      case Some(srvs) =>
+        getDeploymentLeadTimes(serviceName, periodInMonths, srvs)
 
+      case _ => Future.successful(None)
+    }
+
+  }
+
+  private def getDeploymentLeadTimes(serviceName: String, periodInMonths: Int, srvs: List[ServiceRepositoryInfo]): Future[Some[List[LeadTimeResult]]] = {
+    import FutureImplicit._
+
+    val repoTagsF = srvs.map(releaseTags).futureList.map(_.flatten)
     val releasesF = releasesDataSource.getServiceReleases(serviceName)
+
     for {
       tags <- repoTagsF
       releases <- releasesF
     } yield {
-      Logger.debug(s"### Calculating production lead time for ${serviceName} , period : $periodInMonths months ###")
-      calculateLeadTime(tags, releases, periodInMonths)
+      Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
+      Some(calculateLeadTime(tags, releases, periodInMonths))
     }
   }
 
-  def getServiceRepoReleaseTags(serviceName: String): Future[List[RepoTag]] = {
-    import FutureImplicit._
+  def releaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]] = {
 
-    catalogueClient.getServiceRepoInfo(serviceName).flatMap { repos =>
-      repos.map(tagsDataSource.getServiceRepoReleaseTags).futureList.map(_.flatten)
-    }
+    tagsDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo)
   }
+
 }
 
 

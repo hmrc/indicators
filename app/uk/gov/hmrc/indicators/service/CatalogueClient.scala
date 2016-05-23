@@ -84,18 +84,18 @@ object CatalogueServiceInfo {
 
 trait CatalogueClient {
 
-  def getServiceRepoInfo(serviceName: String): Future[List[ServiceRepositoryInfo]]
+  def getServiceRepoInfo(serviceName: String): Future[Option[List[ServiceRepositoryInfo]]]
 
 }
 
 class CatalogueServiceClient(catalogueApiBase: String) extends CatalogueClient {
 
-  override def getServiceRepoInfo(serviceName: String): Future[List[ServiceRepositoryInfo]] =
+  override def getServiceRepoInfo(serviceName: String): Future[Option[List[ServiceRepositoryInfo]]] =
 
     getWithParsing(s"$catalogueApiBase/services")(toListOfCatalogueServiceInfo).map { serviceInfos =>
 
-      serviceInfos.find(_.name == serviceName).fold(List.empty[ServiceRepositoryInfo])(toServiceRepos)
-    }.recoverWith { case _ => Future.successful(List.empty[ServiceRepositoryInfo]) }
+      serviceInfos.find(_.name == serviceName).map(toServiceRepos)
+    }.recoverWith { case _ => Future.successful(None) }
 
   val toListOfCatalogueServiceInfo: (JsValue) => List[CatalogueServiceInfo] = jsV => (jsV \ "data").as[List[CatalogueServiceInfo]]
 }

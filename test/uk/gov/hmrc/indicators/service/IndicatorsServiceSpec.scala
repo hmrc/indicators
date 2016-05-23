@@ -29,7 +29,7 @@ import scala.concurrent.Future
 
 class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig {
 
-  val tagsDataSource = mock[TagsDataSource]
+  val tagsDataSource = mock[ReleaseTagsDataSource]
   val releasesClient = mock[ReleasesDataSource]
   val catalogueClient = mock[CatalogueClient]
 
@@ -44,7 +44,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     "calculates production deployment lead time" in {
 
       val tags = List(
-        RepoTag("1.0.0", Some(Feb_1st))
+        RepoReleaseTag("1.0.0", Some(Feb_1st))
       )
 
       val releases = List(
@@ -53,11 +53,22 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       val serviceRepoInfo: ServiceRepositoryInfo = ServiceRepositoryInfo("test-service", "HMRC", RepoType.Enterprise)
 
-      Mockito.when(catalogueClient.getServiceRepoInfo("test-service")).thenReturn(Future.successful(List(serviceRepoInfo)))
+      Mockito.when(catalogueClient.getServiceRepoInfo("test-service")).thenReturn(Future.successful(Some(List(serviceRepoInfo))))
       Mockito.when(tagsDataSource.getServiceRepoReleaseTags(serviceRepoInfo)).thenReturn(Future.successful(tags))
       Mockito.when(releasesClient.getServiceReleases("test-service")).thenReturn(Future.successful(releases))
 
-      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
+      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue.get shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
+
+    "returns None if the service is not found" in {
+
+
+      val serviceRepoInfo: ServiceRepositoryInfo = ServiceRepositoryInfo("test-service", "HMRC", RepoType.Enterprise)
+
+      Mockito.when(catalogueClient.getServiceRepoInfo("test-service")).thenReturn(Future.successful(None))
+
+      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue shouldBe None
+    }
+
   }
 }

@@ -48,7 +48,7 @@ object LeadTimeCalculator {
 
   import IndicatorTraversable._
 
-  def calculateLeadTime(tags: Seq[RepoTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
+  def calculateLeadTime(tags: Seq[RepoReleaseTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
 
     val start = YearMonth.now(clock).minusMonths(periodInMonths-1)
     val end   = YearMonth.now(clock)
@@ -67,7 +67,7 @@ object LeadTimeCalculator {
     }.toList
   }
 
-  def releaseLeadTime(r: Release, tags: Seq[RepoTag]): Option[ReleaseLeadTime] = {
+  def releaseLeadTime(r: Release, tags: Seq[RepoReleaseTag]): Option[ReleaseLeadTime] = {
 
     tags.find(t => t.name == r.version && t.createdAt.isDefined)
       .map {
@@ -77,7 +77,7 @@ object LeadTimeCalculator {
       }
   }
 
-  def daysBetweenTagAndRelease(tag: RepoTag, release: Release): Long = {
+  def daysBetweenTagAndRelease(tag: RepoReleaseTag, release: Release): Long = {
     ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.releasedAt)
   }
 

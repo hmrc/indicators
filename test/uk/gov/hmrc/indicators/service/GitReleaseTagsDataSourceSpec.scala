@@ -29,10 +29,10 @@ import uk.gov.hmrc.gitclient.{GitTag, GitClient}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class GitTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
+class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
 
   val gitClient = mock[GitClient]
-  val dataSource = new GitTagsDataSource(gitClient)
+  val dataSource = new GitReleaseTagsDataSource(gitClient)
 
 
   "GitTagsDataSource.getServiceRepoTags" should {
@@ -49,9 +49,9 @@ class GitTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar wit
       )))
 
       dataSource.getServiceRepoReleaseTags(serviceRepoInfo).futureValue shouldBe List(
-        RepoTag("1.0.0", Some(now.toLocalDateTime)),
-        RepoTag("9.101.0", Some(now.toLocalDateTime)),
-        RepoTag("someRandomtagName", Some(now.toLocalDateTime))
+        RepoReleaseTag("1.0.0", Some(now.toLocalDateTime)),
+        RepoReleaseTag("9.101.0", Some(now.toLocalDateTime)),
+        RepoReleaseTag("someRandomtagName", Some(now.toLocalDateTime))
       )
 
 

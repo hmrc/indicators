@@ -40,7 +40,7 @@ trait ReleasesClient {
 
 class CachedAppReleasesClient(releasesClient: ReleasesClient) extends ReleasesClient with Cache[String, List[AppRelease]] {
 
-  override val refreshTimeInMillis: FiniteDuration = 1 hour
+  override val refreshTimeInMillis: FiniteDuration = 3 hour
 
    def getAllReleases: Future[List[AppRelease]] = Future(cache.getUnchecked("appReleases"))
 
