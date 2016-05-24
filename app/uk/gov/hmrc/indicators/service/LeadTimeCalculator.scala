@@ -17,10 +17,9 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time.temporal.ChronoUnit
-import java.time.{ZoneOffset, Clock, LocalDate, YearMonth}
+import java.time.{Clock, YearMonth}
 
-import play.api.Logger
-import uk.gov.hmrc.gitclient.GitTag
+import uk.gov.hmrc.indicators.datasource.{Release, RepoReleaseTag}
 
 object IndicatorTraversable {
 
@@ -46,9 +45,9 @@ object IndicatorTraversable {
 
 object LeadTimeCalculator {
 
-  import IndicatorTraversable._
-
   def calculateLeadTime(tags: Seq[RepoReleaseTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
+
+    import IndicatorTraversable._
 
     val start = YearMonth.now(clock).minusMonths(periodInMonths-1)
     val end   = YearMonth.now(clock)

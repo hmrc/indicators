@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import org.scalatest.{OptionValues, Matchers, WordSpec}
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.scalatest.{Matchers, OptionValues, WordSpec}
 
 class IndicatorTraversableSpec extends WordSpec with Matchers with OptionValues{
 

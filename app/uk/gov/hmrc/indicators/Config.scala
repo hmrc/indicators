@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.indicators
 
-import play.api.Play
+import java.nio.file.{Files, Paths}
 
-trait IndicatorsConfigProvider {
-  def configs:Configs
+import play.api.{Logger, Play}
+
+trait ConfigProvider {
+  def configs: Configs
 
   lazy val releasesApiBase: String = requiredConf("releases.app.api.base")
   lazy val catalogueApiBase: String = requiredConf("catalogue.api.base")
@@ -31,12 +33,26 @@ trait IndicatorsConfigProvider {
   lazy val gitOpenHost: String = requiredConf("git.open.host")
 
 
-  private def optionalConf(path:String) : Option[String] =  configs.config(path)
-  private def requiredConf(path : String) : String = configs.config(path).getOrElse(throw new RuntimeException(s"No conf for key : $path"))
+  lazy val enterpriseGitStorePath = storePath("enterprise-local-git-store")
+  lazy val openGitStorePath = storePath("open-local-git-store")
+
+
+  def storePath(prefix: String) = {
+    val path = gitClientStorePath
+      .fold(Files.createTempDirectory(prefix).toString)(x => Paths.get(x).resolve(prefix).toString)
+
+    Logger.info(s"Store Path : $path")
+
+    path
+  }
+
+  private def optionalConf(path: String): Option[String] = configs.config(path)
+
+  private def requiredConf(path: String): String = configs.config(path).getOrElse(throw new RuntimeException(s"No conf for key : $path"))
 }
 
-trait ConfigProvider extends IndicatorsConfigProvider {
-  def configs:Configs = PlayConfigs
+trait IndicatorsConfigProvider extends ConfigProvider {
+  def configs: Configs = PlayConfigs
 }
 
 trait Configs {

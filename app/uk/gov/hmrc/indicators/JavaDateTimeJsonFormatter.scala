@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators
 
 import java.time._
-import java.time.format.DateTimeFormatter
-import java.time.temporal.Temporal
 
 import play.api.libs.json._
 

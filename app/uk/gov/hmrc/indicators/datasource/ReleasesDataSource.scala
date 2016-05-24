@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators.datasource
 
 import java.time.{ZoneOffset, LocalDateTime, LocalDate}
 

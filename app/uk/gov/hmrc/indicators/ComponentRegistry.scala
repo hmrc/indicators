@@ -21,19 +21,14 @@ import java.nio.file.{Path, Files, Paths}
 
 import play.api.Logger
 import uk.gov.hmrc.gitclient.Git
-import uk.gov.hmrc.indicators.service._
+import uk.gov.hmrc.indicators.datasource._
+import uk.gov.hmrc.indicators.service.IndicatorsService
 
-object ComponentRegistry extends ConfigProvider {
-
-  lazy private val tempDirectory = {
-    val localGitStore = gitClientStorePath.fold(Files.createTempDirectory("local-git-store").toString)(identity)
-    Logger.info("Local git store path : " + localGitStore)
-    localGitStore
-  }
+object ComponentRegistry extends IndicatorsConfigProvider {
 
 
-  val gitEnterpriseClient = Git(tempDirectory, gitEnterpriseToken, gitEnterpriseHost)
-  val gitOpenClient = Git(tempDirectory, gitOpenToken, gitOpenHost)
+  val gitEnterpriseClient = Git(enterpriseGitStorePath, gitEnterpriseToken, gitEnterpriseHost, withCleanUp = true)
+  val gitOpenClient = Git(openGitStorePath, gitOpenToken, gitOpenHost, withCleanUp = true)
 
   val enterpriseTagsDataSource = new GitReleaseTagsDataSource(gitEnterpriseClient)
   val openTagsDataSource = new GitReleaseTagsDataSource(gitOpenClient)

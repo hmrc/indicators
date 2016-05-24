@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators.datasource
 
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.indicators.http.HttpClient.getWithParsing
-import uk.gov.hmrc.indicators.service.CatalogueServiceInfo.toServiceRepos
+import uk.gov.hmrc.indicators.datasource.CatalogueServiceInfo.toServiceRepos
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

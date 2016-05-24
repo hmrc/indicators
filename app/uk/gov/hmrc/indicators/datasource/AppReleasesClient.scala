@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators.datasource
 
 import java.time.{LocalDateTime, LocalDate}
 
 import play.api.libs.json.Json
-import uk.gov.hmrc.indicators.{Cache, IndicatorsConfigProvider}
+import uk.gov.hmrc.indicators.{JavaDateTimeJsonFormatter, Cache, IndicatorsConfigProvider}
 import uk.gov.hmrc.indicators.http.HttpClient
 
 import scala.concurrent.duration._

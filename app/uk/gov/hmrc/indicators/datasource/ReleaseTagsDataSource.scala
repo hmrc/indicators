@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators.datasource
 
 import java.time.{LocalDateTime, ZonedDateTime}
 
 import play.api.Logger
 import uk.gov.hmrc.gitclient.{GitClient, GitTag}
 import uk.gov.hmrc.indicators.Cache
-import uk.gov.hmrc.indicators.service.RepoType.{Open, Enterprise}
+import uk.gov.hmrc.indicators.datasource.RepoType.{Open, Enterprise}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global

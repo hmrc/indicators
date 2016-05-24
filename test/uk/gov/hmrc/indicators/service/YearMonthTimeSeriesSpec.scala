@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators
+package uk.gov.hmrc.indicators.service
 
 import java.time.YearMonth
 
 import org.scalatest.{Matchers, WordSpec}
-import uk.gov.hmrc.indicators.service.YearMonthTimeSeries
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
 

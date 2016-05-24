@@ -19,11 +19,12 @@ package uk.gov.hmrc.indicators.service
 import java.time.{Clock, YearMonth}
 
 import play.api.Logger
-
+import uk.gov.hmrc.indicators.JavaDateTimeJsonFormatter
+import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.service.LeadTimeCalculator.calculateLeadTime
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 case class LeadTimeResult(period: YearMonth, median: Option[Int])
 

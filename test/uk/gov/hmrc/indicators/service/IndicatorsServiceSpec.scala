@@ -22,6 +22,7 @@ import org.mockito.Mockito
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
+import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.{DateHelper, DefaultPatienceConfig}
 
 import scala.concurrent.Future

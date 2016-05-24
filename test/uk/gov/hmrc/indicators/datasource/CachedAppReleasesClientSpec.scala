@@ -14,41 +14,44 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators.datasource
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
-import org.mockito.Mockito._
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, when, verify}
+import org.mockito.internal.verification.{Times, Only}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import scala.concurrent.duration._
+
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
-class CachedReleaseTagsDataSourceSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
+class CachedAppReleasesClientSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
 
-  val tagsDataSource = mock[ReleaseTagsDataSource]
-  val cachedDataSource = new CachedReleaseTagsDataSource(tagsDataSource) {
+  val releaseClient = mock[ReleasesClient]
+  val cachedClient = new CachedAppReleasesClient(releaseClient) {
     override val refreshTimeInMillis = 100.millis
   }
 
-  "getServiceRepoTags" should {
+  "getAllReleases" should {
     "load from the releases client and also cache the values" in {
 
-      val result = List(RepoReleaseTag("tag1", None))
+      val result = List(AppRelease("", "appName", "1.0.0", LocalDateTime.now()))
 
-      val serviceRepo = ServiceRepositoryInfo("repoName", "owner", RepoType.Enterprise)
+      when(releaseClient.getAllReleases).thenReturn(Future.successful(result))
 
-      when(tagsDataSource.getServiceRepoReleaseTags(serviceRepo)).thenReturn(Future.successful(result))
+      cachedClient.getAllReleases.futureValue should be(result)
 
-      cachedDataSource.getServiceRepoReleaseTags(serviceRepo).futureValue should be(result)
+      cachedClient.cache.get("appReleases") shouldBe result
 
-      cachedDataSource.cache.get(serviceRepo) shouldBe result
-
-      verify(tagsDataSource, times(1)).getServiceRepoReleaseTags(serviceRepo)
+      verify(releaseClient, times(1)).getAllReleases
     }
 
 
   }
+
+
 }

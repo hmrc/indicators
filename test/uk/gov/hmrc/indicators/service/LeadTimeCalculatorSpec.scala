@@ -20,6 +20,7 @@ import java.time._
 
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
+import uk.gov.hmrc.indicators.datasource.{Release, RepoReleaseTag}
 
 
 class LeadTimeCalculatorSpec extends WordSpec with Matchers {

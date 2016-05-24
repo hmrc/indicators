@@ -14,44 +14,41 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.service
+package uk.gov.hmrc.indicators.datasource
 
-import java.time.{LocalDateTime, LocalDate}
+import java.time.LocalDate
 
-import org.mockito.Mockito
-import org.mockito.Mockito.{times, when, verify}
-import org.mockito.internal.verification.{Times, Only}
+import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-
-
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class CachedAppReleasesClientSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
+import scala.concurrent.Future
 
-  val releaseClient = mock[ReleasesClient]
-  val cachedClient = new CachedAppReleasesClient(releaseClient) {
+class CachedReleaseTagsDataSourceSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
+
+  val tagsDataSource = mock[ReleaseTagsDataSource]
+  val cachedDataSource = new CachedReleaseTagsDataSource(tagsDataSource) {
     override val refreshTimeInMillis = 100.millis
   }
 
-  "getAllReleases" should {
+  "getServiceRepoTags" should {
     "load from the releases client and also cache the values" in {
 
-      val result = List(AppRelease("", "appName", "1.0.0", LocalDateTime.now()))
+      val result = List(RepoReleaseTag("tag1", None))
 
-      when(releaseClient.getAllReleases).thenReturn(Future.successful(result))
+      val serviceRepo = ServiceRepositoryInfo("repoName", "owner", RepoType.Enterprise)
 
-      cachedClient.getAllReleases.futureValue should be(result)
+      when(tagsDataSource.getServiceRepoReleaseTags(serviceRepo)).thenReturn(Future.successful(result))
 
-      cachedClient.cache.get("appReleases") shouldBe result
+      cachedDataSource.getServiceRepoReleaseTags(serviceRepo).futureValue should be(result)
 
-      verify(releaseClient, times(1)).getAllReleases
+      cachedDataSource.cache.get(serviceRepo) shouldBe result
+
+      verify(tagsDataSource, times(1)).getServiceRepoReleaseTags(serviceRepo)
     }
 
 
   }
-
-
 }
