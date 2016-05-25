@@ -68,19 +68,20 @@ object LeadTimeCalculator {
 
   def releaseLeadTime(r: Release, tags: Seq[RepoReleaseTag]): Option[ReleaseLeadTime] = {
 
-    tags.find(t => t.name == r.version && t.createdAt.isDefined)
+    tags.find(t => t.name == r.version)
       .map {
-        t =>
-          val releaseLeadTimeInDays = daysBetweenTagAndRelease(t, r)
-          ReleaseLeadTime(r, releaseLeadTimeInDays)
-      }
+      t =>
+        val releaseLeadTimeInDays = daysBetweenTagAndRelease(t, r)
+        ReleaseLeadTime(r, releaseLeadTimeInDays)
+    }
   }
 
   def daysBetweenTagAndRelease(tag: RepoReleaseTag, release: Release): Long = {
-    ChronoUnit.DAYS.between(tag.createdAt.get.toLocalDate, release.releasedAt)
+    ChronoUnit.DAYS.between(tag.createdAt.toLocalDate, release.releasedAt)
   }
 
   case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
+
 }
 
 

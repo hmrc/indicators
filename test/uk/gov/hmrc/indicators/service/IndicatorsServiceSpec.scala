@@ -45,7 +45,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     "calculates production deployment lead time" in {
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st))
+        RepoReleaseTag("1.0.0", Feb_1st)
       )
 
       val releases = List(

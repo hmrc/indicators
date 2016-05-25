@@ -63,7 +63,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_4th)
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st))
+        RepoReleaseTag("1.0.0", Feb_1st)
       )
 
       val releases = List(
@@ -77,8 +77,8 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_16th)
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st)),
-        RepoReleaseTag("2.0.0", Some(Feb_10th))
+        RepoReleaseTag("1.0.0", Feb_1st),
+        RepoReleaseTag("2.0.0", Feb_10th)
       )
 
       val releases = List(
@@ -94,8 +94,8 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Apr_10th)
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Mar_1st)),
-        RepoReleaseTag("2.0.0", Some(Apr_4th))
+        RepoReleaseTag("1.0.0", Mar_1st),
+        RepoReleaseTag("2.0.0", Apr_4th)
 
       )
 
@@ -115,9 +115,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st)),
-        RepoReleaseTag("2.0.0", Some(Feb_4th)),
-        RepoReleaseTag("3.0.0", Some(Feb_10th))
+        RepoReleaseTag("1.0.0", Feb_1st),
+        RepoReleaseTag("2.0.0", Feb_4th),
+        RepoReleaseTag("3.0.0", Feb_10th)
       )
 
       val releases = List(
@@ -134,10 +134,10 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st)),
-        RepoReleaseTag("2.0.0", Some(Feb_4th)),
-        RepoReleaseTag("3.0.0", Some(Feb_10th)),
-        RepoReleaseTag("4.0.0", Some(Feb_16th))
+        RepoReleaseTag("1.0.0", Feb_1st),
+        RepoReleaseTag("2.0.0", Feb_4th),
+        RepoReleaseTag("3.0.0", Feb_10th),
+        RepoReleaseTag("4.0.0", Feb_16th)
       )
 
 
@@ -156,8 +156,8 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_10th)
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st)),
-        RepoReleaseTag("2.0.0", Some(Feb_10th))
+        RepoReleaseTag("1.0.0", Feb_1st),
+        RepoReleaseTag("2.0.0", Feb_10th)
       )
 
       val releases = List(
@@ -166,33 +166,18 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
-
-    "ignore tags for releases with no tag date " in new SetUp {
-
-      override implicit val clock: Clock = clockFrom(Feb_10th)
-
-      val tags = List(
-        RepoReleaseTag("1.0.0", Some(Feb_1st)),
-        RepoReleaseTag("1.0.0", None)
-      )
-
-      val releases = List(
-        Release("1.0.0", Feb_4th)
-      )
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
-    }
 
     "calculate the rolling lead time for 9 months when provided tags and releases are not ordered" in new SetUp {
 
       val tags = List(
-        RepoReleaseTag("8.0.0", Some(Apr_4th)),
-        RepoReleaseTag("6.0.0", Some(Mar_4th)),
-        RepoReleaseTag("7.0.0", Some(Mar_27th)),
-        RepoReleaseTag("1.0.0", Some(Feb_1st)),
-        RepoReleaseTag("2.0.0", Some(Feb_4th)),
-        RepoReleaseTag("3.0.0", Some(Feb_10th)),
-        RepoReleaseTag("4.0.0", Some(Feb_16th)),
-        RepoReleaseTag("5.0.0", Some(Feb_18th))
+        RepoReleaseTag("8.0.0", Apr_4th),
+        RepoReleaseTag("6.0.0", Mar_4th),
+        RepoReleaseTag("7.0.0", Mar_27th),
+        RepoReleaseTag("1.0.0", Feb_1st),
+        RepoReleaseTag("2.0.0", Feb_4th),
+        RepoReleaseTag("3.0.0", Feb_10th),
+        RepoReleaseTag("4.0.0", Feb_16th),
+        RepoReleaseTag("5.0.0", Feb_18th)
 
       )
 

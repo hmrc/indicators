@@ -25,11 +25,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec, FunSuite}
 import uk.gov.hmrc.gitclient.{GitTag, GitClient}
+import uk.gov.hmrc.indicators.DefaultPatienceConfig
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures {
+class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig{
 
   val gitClient = mock[GitClient]
   val dataSource = new GitReleaseTagsDataSource(gitClient)
@@ -49,13 +50,32 @@ class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSu
       )))
 
       dataSource.getServiceRepoReleaseTags(serviceRepoInfo).futureValue shouldBe List(
-        RepoReleaseTag("1.0.0", Some(now.toLocalDateTime)),
-        RepoReleaseTag("9.101.0", Some(now.toLocalDateTime)),
-        RepoReleaseTag("someRandomtagName", Some(now.toLocalDateTime))
+        RepoReleaseTag("1.0.0", now.toLocalDateTime),
+        RepoReleaseTag("9.101.0", now.toLocalDateTime),
+        RepoReleaseTag("someRandomtagName", now.toLocalDateTime)
       )
 
+    }
+
+    "return only tags with createdAt defined form gitClient " in {
+
+      val now: ZonedDateTime = ZonedDateTime.now()
+
+      val serviceRepoInfo = ServiceRepositoryInfo("repoName", "HMRC", RepoType.Enterprise)
+
+      when(gitClient.getGitRepoTags("repoName", "HMRC")).thenReturn(Future.successful(List(
+        GitTag("v1.0.0", None),
+        GitTag("release/9.101.0", Some(now)),
+        GitTag("someRandomtagName", None)
+      )))
+
+      dataSource.getServiceRepoReleaseTags(serviceRepoInfo).futureValue shouldBe List(
+        RepoReleaseTag("9.101.0", now.toLocalDateTime)
+      )
 
     }
+
+
   }
 
 }

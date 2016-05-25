@@ -31,7 +31,7 @@ object YearMonthTimeSeries {
 
 trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, List[B])] {
   def expandingWindow: Seq[Iterable[(YearMonth, List[B])]] = {
-    Range(1, this.size+1).map { i =>
+    (1 to this.size).map { i =>
       this.take(i)
     }
   }

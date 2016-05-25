@@ -28,17 +28,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 
-case class RepoReleaseTag(name: String, createdAt: Option[LocalDateTime])
+case class RepoReleaseTag(name: String, createdAt: LocalDateTime)
 
-object RepoReleaseTag {
-  val versionNumber = "(?:(\\d+)\\.)?(?:(\\d+)\\.)?(\\*|\\d+)$".r
-
-  def gitTagToRepoTag(gitTag: GitTag): RepoReleaseTag = {
-    RepoReleaseTag(getVersionNumber(gitTag.name).getOrElse(gitTag.name), gitTag.createdAt.map(_.toLocalDateTime))
-  }
-
-  private def getVersionNumber(tag: String): Option[String] = versionNumber.findFirstIn(tag)
-}
 
 trait ReleaseTagsDataSource {
   def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]]
@@ -75,9 +66,25 @@ class CompositeReleaseTagsDataSource(gitEnterpriseTagDataSource: ReleaseTagsData
 
 class GitReleaseTagsDataSource(gitClient: GitClient) extends ReleaseTagsDataSource {
 
+  val versionNumber = "(?:(\\d+)\\.)?(?:(\\d+)\\.)?(\\*|\\d+)$".r
+
   def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]] = {
 
-    gitClient.getGitRepoTags(serviceRepositoryInfo.name, serviceRepositoryInfo.org).map(x => x.map(RepoReleaseTag.gitTagToRepoTag))
+    gitClient.getGitRepoTags(serviceRepositoryInfo.name, serviceRepositoryInfo.org).map {
+      x =>
+        val (withCreatedAt, withoutCreatedAt) = x.partition(_.createdAt.isDefined)
+
+        if (withoutCreatedAt.nonEmpty) {
+          Logger.warn(s"Invalid Release Tags Service : ${serviceRepositoryInfo.name} total : ${withoutCreatedAt.size} of : ${x.size}")
+        }
+
+        withCreatedAt.map(x => RepoReleaseTag(getVersionNumber(x.name), x.createdAt.get.toLocalDateTime))
+    }
 
   }
+
+
+  private def getVersionNumber(tag: String): String = versionNumber.findFirstIn(tag).getOrElse(tag)
 }
+
+

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import java.time.LocalDate
+import java.time.{LocalDateTime, LocalDate}
 
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
@@ -36,7 +36,7 @@ class CachedReleaseTagsDataSourceSpec extends WordSpec with Matchers with ScalaF
   "getServiceRepoTags" should {
     "load from the releases client and also cache the values" in {
 
-      val result = List(RepoReleaseTag("tag1", None))
+      val result = List(RepoReleaseTag("tag1", LocalDateTime.now()))
 
       val serviceRepo = ServiceRepositoryInfo("repoName", "owner", RepoType.Enterprise)
 
