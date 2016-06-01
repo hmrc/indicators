@@ -25,7 +25,7 @@ import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 
-class CatalogueServiceInfoClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig {
+class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig {
 
   val catalogueClient = new CatalogueServiceClient(endpointMockUrl)
 
@@ -38,7 +38,7 @@ class CatalogueServiceInfoClientSpec extends WordSpec with Matchers with WireMoc
           url = s"$endpointMockUrl/services",
           willRespondWith = (200,
             Some(
-              """|{"data":[{
+              """|[{
                 |			"name": "serviceName",
                 |			"githubUrls": [
                 |				{
@@ -50,7 +50,7 @@ class CatalogueServiceInfoClientSpec extends WordSpec with Matchers with WireMoc
                 |					"url": "https://someOtherGitHubHost/org2/serviceName"
                 |				}
                 |			]
-                |		}]}
+                |		}]
               """.stripMargin
 
             )
