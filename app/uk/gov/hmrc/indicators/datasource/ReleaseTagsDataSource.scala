@@ -17,14 +17,14 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.{LocalDateTime, ZonedDateTime}
+import java.util.concurrent.{Executors, Executor}
 
 import play.api.Logger
 import uk.gov.hmrc.gitclient.{GitClient, GitTag}
 import uk.gov.hmrc.indicators.Cache
 import uk.gov.hmrc.indicators.datasource.RepoType.{Open, Enterprise}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContextExecutor, ExecutionContext, Await, Future}
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 
@@ -69,6 +69,7 @@ class GitReleaseTagsDataSource(gitClient: GitClient) extends ReleaseTagsDataSour
   val versionNumber = "(?:(\\d+)\\.)?(?:(\\d+)\\.)?(\\*|\\d+)$".r
 
   def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]] = {
+    import BlockingIOExecutionContext.executionContext
 
     gitClient.getGitRepoTags(serviceRepositoryInfo.name, serviceRepositoryInfo.org).map {
       x =>
@@ -85,6 +86,12 @@ class GitReleaseTagsDataSource(gitClient: GitClient) extends ReleaseTagsDataSour
 
 
   private def getVersionNumber(tag: String): String = versionNumber.findFirstIn(tag).getOrElse(tag)
+}
+
+object BlockingIOExecutionContext {
+
+  implicit val executionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
+
 }
 
 

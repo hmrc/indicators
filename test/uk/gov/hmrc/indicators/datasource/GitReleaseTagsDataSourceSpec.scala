@@ -28,7 +28,7 @@ import uk.gov.hmrc.gitclient.{GitTag, GitClient}
 import uk.gov.hmrc.indicators.DefaultPatienceConfig
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+
 
 class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig{
 
@@ -39,11 +39,12 @@ class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSu
   "GitTagsDataSource.getServiceRepoTags" should {
     "return tags form gitClient with normalized tag name (i.e just the numbers)" in {
 
+
       val now: ZonedDateTime = ZonedDateTime.now()
 
       val serviceRepoInfo = ServiceRepositoryInfo("repoName", "HMRC", RepoType.Enterprise)
 
-      when(gitClient.getGitRepoTags("repoName", "HMRC")).thenReturn(Future.successful(List(
+      when(gitClient.getGitRepoTags("repoName", "HMRC")(BlockingIOExecutionContext.executionContext)).thenReturn(Future.successful(List(
         GitTag("v1.0.0", Some(now)),
         GitTag("release/9.101.0", Some(now)),
         GitTag("someRandomtagName", Some(now))
@@ -59,11 +60,12 @@ class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSu
 
     "return only tags with createdAt defined form gitClient " in {
 
+
       val now: ZonedDateTime = ZonedDateTime.now()
 
       val serviceRepoInfo = ServiceRepositoryInfo("repoName", "HMRC", RepoType.Enterprise)
 
-      when(gitClient.getGitRepoTags("repoName", "HMRC")).thenReturn(Future.successful(List(
+      when(gitClient.getGitRepoTags("repoName", "HMRC")(BlockingIOExecutionContext.executionContext)).thenReturn(Future.successful(List(
         GitTag("v1.0.0", None),
         GitTag("release/9.101.0", Some(now)),
         GitTag("someRandomtagName", None)

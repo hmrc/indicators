@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import java.time.{ZoneOffset, LocalDateTime, LocalDate}
+import java.time.{LocalDateTime, ZoneOffset}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
