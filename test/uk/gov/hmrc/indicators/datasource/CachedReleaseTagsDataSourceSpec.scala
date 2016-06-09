@@ -30,7 +30,7 @@ class CachedReleaseTagsDataSourceSpec extends WordSpec with Matchers with ScalaF
 
   val tagsDataSource = mock[ReleaseTagsDataSource]
   val cachedDataSource = new CachedReleaseTagsDataSource(tagsDataSource) {
-    override val refreshTimeInMillis = 1000.millis
+    override val refreshTimeInMillis = 10000.millis
   }
 
   "getServiceRepoTags" should {
@@ -44,7 +44,7 @@ class CachedReleaseTagsDataSourceSpec extends WordSpec with Matchers with ScalaF
 
       cachedDataSource.getServiceRepoReleaseTags(serviceRepo).futureValue should be(result)
 
-      cachedDataSource.cache.get(serviceRepo) shouldBe result
+      cachedDataSource.cache.get(serviceRepo).futureValue shouldBe result
 
       verify(tagsDataSource, times(1)).getServiceRepoReleaseTags(serviceRepo)
     }

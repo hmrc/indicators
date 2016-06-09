@@ -45,7 +45,7 @@ class CachedAppReleasesClientSpec extends WordSpec with Matchers with MockitoSug
 
       cachedClient.getAllReleases.futureValue should be(result)
 
-      cachedClient.cache.get("appReleases") shouldBe result
+      cachedClient.cache.get("appReleases").futureValue shouldBe result
 
       verify(releaseClient, times(1)).getAllReleases
     }

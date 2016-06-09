@@ -16,17 +16,16 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import java.time.{LocalDateTime, ZonedDateTime}
-import java.util.concurrent.{Executors, Executor}
+import java.time.LocalDateTime
+import java.util.concurrent.Executors
 
 import play.api.Logger
-import uk.gov.hmrc.gitclient.{GitClient, GitTag}
-import uk.gov.hmrc.indicators.Cache
-import uk.gov.hmrc.indicators.datasource.RepoType.{Open, Enterprise}
+import uk.gov.hmrc.gitclient.GitClient
+import uk.gov.hmrc.indicators.FuturesCache
+import uk.gov.hmrc.indicators.datasource.RepoType.{Enterprise, Open}
 
-import scala.concurrent.{ExecutionContextExecutor, ExecutionContext, Await, Future}
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 case class RepoReleaseTag(name: String, createdAt: LocalDateTime)
 
@@ -35,15 +34,16 @@ trait ReleaseTagsDataSource {
   def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]]
 }
 
-class CachedReleaseTagsDataSource(tagsDataSource: ReleaseTagsDataSource) extends ReleaseTagsDataSource with Cache[ServiceRepositoryInfo, List[RepoReleaseTag]] {
+class CachedReleaseTagsDataSource(tagsDataSource: ReleaseTagsDataSource) extends ReleaseTagsDataSource with FuturesCache[ServiceRepositoryInfo, List[RepoReleaseTag]] {
 
-  override def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]] = Future.successful(cache.get(serviceRepositoryInfo))
+  override def getServiceRepoReleaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]] = cache.getUnchecked(serviceRepositoryInfo)
 
   override def refreshTimeInMillis: Duration = 3 hours
 
-  override protected def cacheLoader: ServiceRepositoryInfo => List[RepoReleaseTag] = {
-    case serviceRepositoryInfo => Await.result(tagsDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo), 30 seconds)
-  }
+
+  override protected def cacheLoader: ServiceRepositoryInfo => Future[List[RepoReleaseTag]] = tagsDataSource.getServiceRepoReleaseTags
+
+
 }
 
 class CompositeReleaseTagsDataSource(gitEnterpriseTagDataSource: ReleaseTagsDataSource, gitOpenTagDataSource: ReleaseTagsDataSource) extends ReleaseTagsDataSource {
