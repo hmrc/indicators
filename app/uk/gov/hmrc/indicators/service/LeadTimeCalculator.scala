@@ -19,7 +19,7 @@ package uk.gov.hmrc.indicators.service
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, YearMonth}
 
-import uk.gov.hmrc.indicators.datasource.{Release, RepoReleaseTag}
+import uk.gov.hmrc.indicators.datasource.{ServiceReleaseTag, Release, ServiceReleaseTag$}
 
 object IndicatorTraversable {
 
@@ -45,7 +45,7 @@ object IndicatorTraversable {
 
 object LeadTimeCalculator {
 
-  def calculateLeadTime(tags: Seq[RepoReleaseTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
+  def calculateLeadTime(tags: Seq[ServiceReleaseTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
 
     import IndicatorTraversable._
 
@@ -66,7 +66,7 @@ object LeadTimeCalculator {
     }.toList
   }
 
-  def releaseLeadTime(r: Release, tags: Seq[RepoReleaseTag]): Option[ReleaseLeadTime] = {
+  def releaseLeadTime(r: Release, tags: Seq[ServiceReleaseTag]): Option[ReleaseLeadTime] = {
 
     tags.find(t => t.name == r.version)
       .map {
@@ -76,7 +76,7 @@ object LeadTimeCalculator {
     }
   }
 
-  def daysBetweenTagAndRelease(tag: RepoReleaseTag, release: Release): Long = {
+  def daysBetweenTagAndRelease(tag: ServiceReleaseTag, release: Release): Long = {
     ChronoUnit.DAYS.between(tag.createdAt.toLocalDate, release.releasedAt)
   }
 

@@ -52,14 +52,3 @@ trait ServiceIndicatorController extends BaseController {
   }
 
 }
-
-object LeadTimeCsv {
-
-  def apply(leadTimes: List[LeadTimeResult], serviceName: String) = {
-    leadTimes.flatMap(LeadTimeResult.unapply).unzip match {
-      case (m, lt) =>
-        s"""|Name,${m.mkString(",")}
-            |$serviceName,${lt.map(_.getOrElse("")).mkString(",")}""".stripMargin
-    }
-  }
-}

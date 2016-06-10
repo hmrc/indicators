@@ -43,7 +43,7 @@ object LeadTimeResult {
 }
 
 
-class IndicatorsService(tagsDataSource: ReleaseTagsDataSource, releasesDataSource: ReleasesDataSource, catalogueClient: CatalogueClient, clock: Clock = Clock.systemUTC()) {
+class IndicatorsService(tagsDataSource: ServiceReleaseTagDataSource, releasesDataSource: ReleasesDataSource, catalogueClient: CatalogueClient, clock: Clock = Clock.systemUTC()) {
 
   implicit val c = clock
 
@@ -70,11 +70,12 @@ class IndicatorsService(tagsDataSource: ReleaseTagsDataSource, releasesDataSourc
       releases <- releasesF
     } yield {
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
+      Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
       Some(calculateLeadTime(tags, releases, periodInMonths))
     }
   }
 
-  def releaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[RepoReleaseTag]] = {
+  def releaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[ServiceReleaseTag]] = {
 
     tagsDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo)
   }

@@ -64,9 +64,7 @@ object CatalogueServiceInfo {
 
   val org = "^.*://.*(?<!/)/(.*)/.*(?<!/)$".r
 
-  def toServiceRepos(cats: CatalogueServiceInfo): List[ServiceRepositoryInfo] = cats.githubUrls.flatMap { u =>
-    toServiceRepo(cats.name, u.name, u.url)
-  }
+  def toServiceRepos(cats: CatalogueServiceInfo) = cats.githubUrls.flatMap(u => toServiceRepo(cats.name, u.name, u.url))
 
   private def extractOrg(url: String) = url match {
     case org(o) => Some(o)

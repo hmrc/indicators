@@ -26,11 +26,15 @@ trait ConfigProvider {
   lazy val releasesApiBase: String = requiredConf("releases.app.api.base")
   lazy val catalogueApiBase: String = requiredConf("catalogue.api.base")
   lazy val gitClientStorePath: Option[String] = optionalConf("git.client.store.path")
+
   lazy val gitEnterpriseToken: String = requiredConf("git.enterprise.api.token")
   lazy val gitEnterpriseHost: String = requiredConf("git.enterprise.host")
 
   lazy val gitOpenToken: String = requiredConf("git.open.api.token")
   lazy val gitOpenHost: String = requiredConf("git.open.host")
+
+  lazy val gitHubEnterpriseApiUrl: String = requiredConf("github.enterprise.api.url")
+  lazy val gitHubOpenApiUrl: String = requiredConf("github.open.api.url")
 
 
   lazy val enterpriseGitStorePath = storePath("enterprise-local-git-store")

@@ -25,6 +25,7 @@ import play.api.Logger
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 
 trait FuturesCache[K, V] {
@@ -37,31 +38,29 @@ trait FuturesCache[K, V] {
 
   lazy val cache = {
 
+
     CacheBuilder.newBuilder()
       .expireAfterWrite(refreshTimeInMillis.toMillis, TimeUnit.MILLISECONDS)
       .build(
-        CacheLoader.asyncReloading(
-          new CacheLoader[K, Future[V]] {
-            override def load(k: K): Future[V] = cacheLoader(k)
+        new CacheLoader[K, Future[V]] {
+          override def load(k: K): Future[V] = cacheLoader(k)
 
-            override def reload(key: K, oldValue: Future[V]): ListenableFuture[Future[V]] = {
-              val p = Promise[V]()
+          override def reload(key: K, oldValue: Future[V]): ListenableFuture[Future[V]] = {
+            val p = Promise[V]()
 
-              val loadF: Future[V] = load(key)
+            val loadF: Future[V] = load(key)
 
-              loadF.onSuccess { case v => p.success(v) }
 
-              loadF.recover {
-                case e =>
-                  Logger.warn(s"Error while loading cache for Key :$key retaining the old value", e)
-                  p.completeWith(oldValue)
-
-              }
-              Futures.immediateFuture(p.future)
+            loadF.onComplete {
+              case Success(v) => p.success(v)
+              case Failure(t) =>
+                Logger.warn(s"Error while loading cache for Key :$key retaining the old value", t)
+                p.completeWith(oldValue)
             }
-          },
-          executor
-        )
+
+            Futures.immediateFuture(p.future)
+          }
+        }
       )
   }
 

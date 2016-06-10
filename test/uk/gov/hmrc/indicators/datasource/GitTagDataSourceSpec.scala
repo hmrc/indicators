@@ -17,6 +17,7 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.ZonedDateTime
+import java.util.Date
 
 import jdk.nashorn.internal.parser.TokenKind
 import org.mockito.Mockito
@@ -25,15 +26,17 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec, FunSuite}
 import uk.gov.hmrc.gitclient.{GitTag, GitClient}
+import uk.gov.hmrc.githubclient.{GhRepoRelease, GithubApiClient}
 import uk.gov.hmrc.indicators.DefaultPatienceConfig
 
 import scala.concurrent.Future
 
 
-class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig{
+class GitTagDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig {
 
   val gitClient = mock[GitClient]
-  val dataSource = new GitReleaseTagsDataSource(gitClient)
+  val gitHubClient = mock[GithubApiClient]
+  val dataSource = new GitTagDataSource(gitClient, gitHubClient)
 
 
   "GitTagsDataSource.getServiceRepoTags" should {
@@ -51,28 +54,39 @@ class GitReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSu
       )))
 
       dataSource.getServiceRepoReleaseTags(serviceRepoInfo).futureValue shouldBe List(
-        RepoReleaseTag("1.0.0", now.toLocalDateTime),
-        RepoReleaseTag("9.101.0", now.toLocalDateTime),
-        RepoReleaseTag("someRandomtagName", now.toLocalDateTime)
+        ServiceReleaseTag("1.0.0", now.toLocalDateTime),
+        ServiceReleaseTag("9.101.0", now.toLocalDateTime),
+        ServiceReleaseTag("someRandomtagName", now.toLocalDateTime)
       )
 
     }
 
-    "return only tags with createdAt defined form gitClient " in {
-
+    "try to lookup tag dates from the github releases if tag date is missing and only return tags which have dates" in {
 
       val now: ZonedDateTime = ZonedDateTime.now()
 
       val serviceRepoInfo = ServiceRepositoryInfo("repoName", "HMRC", RepoType.Enterprise)
 
+
+      when(gitHubClient.getReleases("HMRC", "repoName")(BlockingIOExecutionContext.executionContext)).thenReturn(
+        Future.successful(
+          List(
+          GhRepoRelease(123, "someRandomTagName", Date.from(now.toInstant)),
+          GhRepoRelease(124, "release/9.102.0", Date.from(now.toInstant))
+          )
+        ))
+
       when(gitClient.getGitRepoTags("repoName", "HMRC")(BlockingIOExecutionContext.executionContext)).thenReturn(Future.successful(List(
         GitTag("v1.0.0", None),
         GitTag("release/9.101.0", Some(now)),
-        GitTag("someRandomtagName", None)
+        GitTag("release/9.102.0", None),
+        GitTag("someRandomTagName", None)
       )))
 
       dataSource.getServiceRepoReleaseTags(serviceRepoInfo).futureValue shouldBe List(
-        RepoReleaseTag("9.101.0", now.toLocalDateTime)
+        ServiceReleaseTag("9.101.0", now.toLocalDateTime),
+        ServiceReleaseTag("9.102.0", now.toLocalDateTime),
+        ServiceReleaseTag("someRandomTagName", now.toLocalDateTime)
       )
 
     }

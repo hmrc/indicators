@@ -28,15 +28,15 @@ import scala.concurrent.Future
 
 class CachedReleaseTagsDataSourceSpec extends WordSpec with Matchers with ScalaFutures with MockitoSugar {
 
-  val tagsDataSource = mock[ReleaseTagsDataSource]
-  val cachedDataSource = new CachedReleaseTagsDataSource(tagsDataSource) {
-    override val refreshTimeInMillis = 10000.millis
+  val tagsDataSource = mock[ServiceReleaseTagDataSource]
+  val cachedDataSource = new CachedServiceReleaseTagDataSource(tagsDataSource) {
+    override val refreshTimeInMillis = 1000.millis
   }
 
   "getServiceRepoTags" should {
     "load from the releases client and also cache the values" in {
 
-      val result = List(RepoReleaseTag("tag1", LocalDateTime.now()))
+      val result = List(ServiceReleaseTag("tag1", LocalDateTime.now()))
 
       val serviceRepo = ServiceRepositoryInfo("repoName", "owner", RepoType.Enterprise)
 

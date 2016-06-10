@@ -30,7 +30,7 @@ import scala.concurrent.Future
 
 class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig {
 
-  val tagsDataSource = mock[ReleaseTagsDataSource]
+  val tagsDataSource = mock[ServiceReleaseTagDataSource]
   val releasesClient = mock[ReleasesDataSource]
   val catalogueClient = mock[CatalogueClient]
 
@@ -45,7 +45,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     "calculates production deployment lead time" in {
 
       val tags = List(
-        RepoReleaseTag("1.0.0", Feb_1st)
+        ServiceReleaseTag("1.0.0", Feb_1st)
       )
 
       val releases = List(

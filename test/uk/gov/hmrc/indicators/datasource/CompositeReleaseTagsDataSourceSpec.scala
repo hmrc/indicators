@@ -29,12 +29,12 @@ import scala.concurrent.Future
 class CompositeReleaseTagsDataSourceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures{
 
   trait SetUp {
-    val gitEnterpriseTagDataSource = mock[ReleaseTagsDataSource]
+    val gitEnterpriseTagDataSource = mock[ServiceReleaseTagDataSource]
 
-    val gitOpenTagDataSource = mock[ReleaseTagsDataSource]
+    val gitOpenTagDataSource = mock[ServiceReleaseTagDataSource]
 
 
-    val compositeTagsSource = new CompositeReleaseTagsDataSource(gitEnterpriseTagDataSource, gitOpenTagDataSource)
+    val compositeTagsSource = new CompositeServiceReleaseTagDataSource(gitEnterpriseTagDataSource, gitOpenTagDataSource)
   }
 
 
@@ -42,7 +42,7 @@ class CompositeReleaseTagsDataSourceSpec extends WordSpec with Matchers with Moc
     "use enterprise data source if RepoType is Enterprise" in new SetUp {
 
       val serviceRepoInfo = ServiceRepositoryInfo("service", "org", RepoType.Enterprise)
-      private val enterpriseRepoTags: List[RepoReleaseTag] = List(RepoReleaseTag("E", LocalDateTime.now()))
+      private val enterpriseRepoTags: List[ServiceReleaseTag] = List(ServiceReleaseTag("E", LocalDateTime.now()))
 
       when(gitEnterpriseTagDataSource.getServiceRepoReleaseTags(serviceRepoInfo)).thenReturn(Future.successful(enterpriseRepoTags))
 
@@ -58,7 +58,7 @@ class CompositeReleaseTagsDataSourceSpec extends WordSpec with Matchers with Moc
 
       val serviceRepoInfo = ServiceRepositoryInfo("service", "org", RepoType.Open)
 
-      private val repoTags: List[RepoReleaseTag] = List(RepoReleaseTag("E", LocalDateTime.now()))
+      private val repoTags: List[ServiceReleaseTag] = List(ServiceReleaseTag("E", LocalDateTime.now()))
 
       when(gitOpenTagDataSource.getServiceRepoReleaseTags(serviceRepoInfo)).thenReturn(Future.successful(repoTags))
 

@@ -21,6 +21,7 @@ import java.nio.file.{Path, Files, Paths}
 
 import play.api.Logger
 import uk.gov.hmrc.gitclient.Git
+import uk.gov.hmrc.githubclient.GithubApiClient
 import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.service.IndicatorsService
 
@@ -30,10 +31,13 @@ object ComponentRegistry extends IndicatorsConfigProvider {
   val gitEnterpriseClient = Git(enterpriseGitStorePath, gitEnterpriseToken, gitEnterpriseHost, withCleanUp = true)
   val gitOpenClient = Git(openGitStorePath, gitOpenToken, gitOpenHost, withCleanUp = true)
 
-  val enterpriseTagsDataSource = new GitReleaseTagsDataSource(gitEnterpriseClient)
-  val openTagsDataSource = new GitReleaseTagsDataSource(gitOpenClient)
-  val compositeTagsDataSource = new CompositeReleaseTagsDataSource(enterpriseTagsDataSource, openTagsDataSource)
-  val cachedTagsDataSource = new CachedReleaseTagsDataSource(compositeTagsDataSource)
+  val gitHubOpenApiClient = GithubApiClient(gitHubOpenApiUrl, gitOpenToken)
+  val gitHubEnterpriseApiClient = GithubApiClient(gitHubEnterpriseApiUrl, gitEnterpriseToken)
+
+  val enterpriseTagsDataSource = new GitTagDataSource(gitEnterpriseClient, gitHubEnterpriseApiClient)
+  val openTagsDataSource = new GitHubReleaseTagDataSource(gitHubOpenApiClient)
+  val compositeTagsDataSource = new CompositeServiceReleaseTagDataSource(enterpriseTagsDataSource, openTagsDataSource)
+  val cachedTagsDataSource = new CachedServiceReleaseTagDataSource(compositeTagsDataSource)
 
   val releasesClient = new AppReleasesClient(releasesApiBase)
   val cachedReleasesClient = new CachedAppReleasesClient(releasesClient)
