@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.indicators
 
+import java.util.concurrent.{TimeUnit, CountDownLatch}
+
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec, FunSuite}
 
@@ -26,17 +28,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class FuturesCacheSpec extends WordSpec with Matchers with ScalaFutures with DefaultPatienceConfig {
 
 
-  trait Setup extends FuturesCache[String, String] {
-    def refreshTimeInMillis: Duration = 1000 millis
+  trait DummyCache extends FuturesCache[String, String] {
+    def refreshTimeInMillis: Duration = 50 millis
   }
 
 
   "cache" should {
-    "retain the old value if the load fails" in new Setup {
+    "retain the old value if the load fails" in new DummyCache {
+
 
       import scala.collection.JavaConversions._
 
-      override protected def cacheLoader: (String) => Future[String] =
+      private val latch: CountDownLatch = new CountDownLatch(1)
+
+      override protected def cacheLoader: (String) => Future[String] = {
+        latch.countDown()
+
         scala.collection.immutable.Map(
           "key" -> Future.successful("newValue"),
           "key1" -> Future {
@@ -44,13 +51,15 @@ class FuturesCacheSpec extends WordSpec with Matchers with ScalaFutures with Def
           }
         )
 
+      }
+
+
       cache.putAll(Map(
         "key" -> Future.successful("value"),
         "key1" -> Future.successful("oldValue")
       ))
 
-      cache.refresh("key")
-      cache.refresh("key1")
+      latch.await(100, TimeUnit.MILLISECONDS)
 
       cache.get("key").futureValue shouldBe "newValue"
       cache.get("key1").futureValue shouldBe "oldValue"

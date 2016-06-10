@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.indicators
 
-import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
+import java.util.concurrent.{Callable, ExecutorService, Executors, TimeUnit}
 
+import com.google.common.base.Ticker
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{Futures, ListenableFuture}
+import com.google.common.util.concurrent.{ListenableFutureTask, Futures, ListenableFuture}
 import play.api.Logger
 
 import scala.concurrent.duration.Duration
@@ -35,30 +36,32 @@ trait FuturesCache[K, V] {
 
   protected def cacheLoader: K => Future[V]
 
-
   lazy val cache = {
 
-
     CacheBuilder.newBuilder()
-      .expireAfterWrite(refreshTimeInMillis.toMillis, TimeUnit.MILLISECONDS)
+      .refreshAfterWrite(refreshTimeInMillis.toMillis, TimeUnit.MILLISECONDS)
       .build(
         new CacheLoader[K, Future[V]] {
-          override def load(k: K): Future[V] = cacheLoader(k)
+          override def load(key: K): Future[V] = cacheLoader(key)
 
           override def reload(key: K, oldValue: Future[V]): ListenableFuture[Future[V]] = {
             val p = Promise[V]()
 
-            val loadF: Future[V] = load(key)
+            val task = ListenableFutureTask.create(new Callable[Future[V]]() {
+              def call(): Future[V] = {
+                val loadF: Future[V] = cacheLoader(key)
+                loadF.onComplete {
+                  case Success(v) => p.success(v)
+                  case Failure(t) =>
+                    Logger.warn(s"Error while loading cache for Key :$key retaining the old value", t)
+                    p.completeWith(oldValue)
+                }
 
-
-            loadF.onComplete {
-              case Success(v) => p.success(v)
-              case Failure(t) =>
-                Logger.warn(s"Error while loading cache for Key :$key retaining the old value", t)
-                p.completeWith(oldValue)
-            }
-
-            Futures.immediateFuture(p.future)
+                p.future
+              }
+            })
+            executor.execute(task)
+            task
           }
         }
       )
