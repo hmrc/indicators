@@ -45,12 +45,14 @@ object IndicatorTraversable {
 
 object LeadTimeCalculator {
 
+  val monthlyWindowSize: Int = 3
+
   def calculateLeadTime(tags: Seq[ServiceReleaseTag], releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): List[LeadTimeResult] = {
 
     import IndicatorTraversable._
 
-    val start = YearMonth.now(clock).minusMonths(periodInMonths-1)
-    val end   = YearMonth.now(clock)
+    val start = YearMonth.now(clock).minusMonths(periodInMonths - 1)
+    val end = YearMonth.now(clock)
 
     def releasesForYearMonth(ym: YearMonth): List[ReleaseLeadTime] = {
       releases
@@ -60,7 +62,7 @@ object LeadTimeCalculator {
 
     val timeSeries = YearMonthTimeSeries(start, end, bucketBuilder = releasesForYearMonth)
 
-    timeSeries.expandingWindow.map { window =>
+    timeSeries.slidingWindow(monthlyWindowSize).map { window =>
       val (leadTimeYearMonth, _) = window.last
       LeadTimeResult.of(leadTimeYearMonth, window.flatMap(_._2).map(_.daysSinceTag).median)
     }.toList

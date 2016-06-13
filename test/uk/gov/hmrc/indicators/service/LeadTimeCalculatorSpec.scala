@@ -50,6 +50,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
     val Apr_11th = LocalDateTime.of(LocalDate.of(2016, 4, 11), midNight)
     val May_1st = LocalDateTime.of(LocalDate.of(2016, 5, 1), midNight)
     val May_10th = LocalDateTime.of(LocalDate.of(2016, 5, 10), midNight)
+    val May_11th = LocalDateTime.of(LocalDate.of(2016, 5, 11), midNight)
+    val June_1st = LocalDateTime.of(LocalDate.of(2016, 6, 1), midNight)
+    val June_5th = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
 
     implicit val clock = clockFrom(May_10th)
   }
@@ -167,7 +170,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
     }
 
 
-    "calculate the rolling lead time for 9 months when provided tags and releases are not ordered" in new SetUp {
+    "calculate the rolling lead time for 7 months (3 months sliding window) when provided tags and releases are not ordered" in new SetUp {
+
+      override implicit val clock: Clock = clockFrom(June_5th)
 
       val tags = List(
         ServiceReleaseTag("8.0.0", Apr_4th),
@@ -177,8 +182,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         ServiceReleaseTag("2.0.0", Feb_4th),
         ServiceReleaseTag("3.0.0", Feb_10th),
         ServiceReleaseTag("4.0.0", Feb_16th),
-        ServiceReleaseTag("5.0.0", Feb_18th)
-
+        ServiceReleaseTag("5.0.0", Feb_18th),
+        ServiceReleaseTag("9.0.0", May_1st),
+        ServiceReleaseTag("10.0.0", June_1st)
       )
 
 
@@ -190,17 +196,22 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("3.0.0", Feb_16th), //  6 days
         Release("4.0.0", Feb_18th), //  2 days
         Release("5.0.0", Mar_1st), //   12 days
-        Release("6.0.0", Mar_27th) //  23 days
+        Release("6.0.0", Mar_27th), //  23 days
+        Release("9.0.0", May_11th), //  10 days //5,7,10,12,23
+        Release("10.0.0", June_5th) //  4 days
       )
 
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 6) shouldBe List(
+      LeadTimeCalculator.calculateLeadTime(tags, releases, 7) shouldBe List(
         LeadTimeResult(YearMonth.from(Dec_1st_2015), None),
         LeadTimeResult(YearMonth.from(Jan_1st), None),
         LeadTimeResult(YearMonth.from(Feb_1st), Some(5)),
         LeadTimeResult(YearMonth.from(Mar_1st), Some(6)),
         LeadTimeResult(YearMonth.from(Apr_1st), Some(6)),
-        LeadTimeResult(YearMonth.from(May_1st), Some(6))
+        LeadTimeResult(YearMonth.from(May_1st), Some(10)),
+        LeadTimeResult(YearMonth.from(June_1st), Some(6))
+
+
       )
 
     }

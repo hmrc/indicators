@@ -18,14 +18,13 @@ package uk.gov.hmrc.indicators
 
 import java.util.concurrent.{Callable, ExecutorService, Executors, TimeUnit}
 
-import com.google.common.base.Ticker
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{ListenableFutureTask, Futures, ListenableFuture}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
 import play.api.Logger
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 

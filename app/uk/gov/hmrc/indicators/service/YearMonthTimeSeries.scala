@@ -30,9 +30,18 @@ object YearMonthTimeSeries {
 }
 
 trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, List[B])] {
-  def expandingWindow: Seq[Iterable[(YearMonth, List[B])]] = {
-    (1 to this.size).map { i =>
-      this.take(i)
-    }
+  def slidingWindow(windowSize: Int): Seq[Iterable[(YearMonth, List[B])]] = {
+
+
+    val expanding =
+      (1 to Math.min(windowSize - 1, this.size)).map { i =>
+        this.take(windowSize - 1).take(i)
+      }
+
+    if (this.size < windowSize)
+      expanding
+    else
+      expanding ++ this.sliding(windowSize).toSeq
+
   }
 }

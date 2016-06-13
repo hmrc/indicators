@@ -35,21 +35,115 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
       )
     }
 
-    "produce an expanding window" in {
 
-      val timeSeries = YearMonthTimeSeries[Int](YearMonth.of(2016, 1), YearMonth.of(2016, 3), ym => List())
+    "produce a sliding window" in {
 
-      timeSeries.expandingWindow.toList shouldBe List(
+      val timeSeries = YearMonthTimeSeries[Int](
+        YearMonth.of(2016, 1),
+        YearMonth.of(2016, 9),
+        ym => List())
+
+      timeSeries.slidingWindow(3).toList shouldBe List(
         Iterable(
-          (YearMonth.of(2016, 1), List.empty[Int])),
+          (YearMonth.of(2016, 1), List.empty[Int])
+        ),
         Iterable(
           (YearMonth.of(2016, 1), List.empty[Int]),
-          (YearMonth.of(2016, 2), List.empty[Int])),
+          (YearMonth.of(2016, 2), List.empty[Int])
+        ),
         Iterable(
           (YearMonth.of(2016, 1), List.empty[Int]),
           (YearMonth.of(2016, 2), List.empty[Int]),
-          (YearMonth.of(2016, 3), List.empty[Int]))
+          (YearMonth.of(2016, 3), List.empty[Int])
+        ),
+        Iterable(
+
+          (YearMonth.of(2016, 2), List.empty[Int]),
+          (YearMonth.of(2016, 3), List.empty[Int]),
+          (YearMonth.of(2016, 4), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 3), List.empty[Int]),
+          (YearMonth.of(2016, 4), List.empty[Int]),
+          (YearMonth.of(2016, 5), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 4), List.empty[Int]),
+          (YearMonth.of(2016, 5), List.empty[Int]),
+          (YearMonth.of(2016, 6), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 5), List.empty[Int]),
+          (YearMonth.of(2016, 6), List.empty[Int]),
+          (YearMonth.of(2016, 7), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 6), List.empty[Int]),
+          (YearMonth.of(2016, 7), List.empty[Int]),
+          (YearMonth.of(2016, 8), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 7), List.empty[Int]),
+          (YearMonth.of(2016, 8), List.empty[Int]),
+          (YearMonth.of(2016, 9), List.empty[Int])
+        )
+
       )
     }
+
+    "produce sliding window when there are less months then the window size" in {
+
+      val timeSeries = YearMonthTimeSeries[Int](
+        YearMonth.of(2016, 1),
+        YearMonth.of(2016, 2),
+        ym => List())
+
+      timeSeries.slidingWindow(3).toList shouldBe List(
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int]),
+          (YearMonth.of(2016, 2), List.empty[Int])
+        )
+      )
+
+      timeSeries.slidingWindow(4).toList shouldBe List(
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int]),
+          (YearMonth.of(2016, 2), List.empty[Int])
+        )
+      )
+
+    }
+
+
+    "produce sliding window when there are same months then the window size" in {
+
+      val timeSeries = YearMonthTimeSeries[Int](
+        YearMonth.of(2016, 1),
+        YearMonth.of(2016, 3),
+        ym => List())
+
+      timeSeries.slidingWindow(3).toList shouldBe List(
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int]),
+          (YearMonth.of(2016, 2), List.empty[Int])
+        ),
+        Iterable(
+          (YearMonth.of(2016, 1), List.empty[Int]),
+          (YearMonth.of(2016, 2), List.empty[Int]),
+          (YearMonth.of(2016, 3), List.empty[Int])
+        )
+      )
+    }
+
+
   }
 }
