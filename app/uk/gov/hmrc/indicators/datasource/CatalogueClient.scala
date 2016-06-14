@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.indicators.datasource
 
+import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.indicators.datasource.CatalogueServiceInfo.toServiceRepos
 import uk.gov.hmrc.indicators.http.HttpClient
@@ -91,8 +92,12 @@ class CatalogueServiceClient(catalogueApiBase: String) extends CatalogueClient {
 
   override def getServiceRepoInfo(serviceName: String): Future[Option[List[ServiceRepositoryInfo]]] =
 
-    get[List[CatalogueServiceInfo]](s"$catalogueApiBase/services").map { serviceInfos =>
+    get[List[CatalogueServiceInfo]](s"$catalogueApiBase/service/$serviceName").map { serviceInfos =>
       serviceInfos.find(_.name == serviceName).map(toServiceRepos)
-    }.recoverWith { case _ => Future.successful(None) }
+    }.recoverWith {
+      case e =>
+        Logger.error(s"error while getting $serviceName details", e)
+        Future.successful(None)
+    }
 
 }

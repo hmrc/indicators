@@ -35,7 +35,7 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
 
         givenRequestExpects(
           method = GET,
-          url = s"$endpointMockUrl/services",
+          url = s"$endpointMockUrl/service/serviceName",
           willRespondWith = (200,
             Some(
               """|[{
