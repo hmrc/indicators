@@ -38,7 +38,7 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
           url = s"$endpointMockUrl/services/serviceName",
           willRespondWith = (200,
             Some(
-              """|[{
+              """|{
                 |			"name": "serviceName",
                 |			"githubUrls": [
                 |				{
@@ -50,7 +50,7 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
                 |					"url": "https://someOtherGitHubHost/org2/serviceName"
                 |				}
                 |			]
-                |		}]
+                |		}
               """.stripMargin
 
             )
@@ -69,7 +69,7 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
 
         givenRequestExpects(
           method = GET,
-          url = s"$endpointMockUrl/services",
+          url = s"$endpointMockUrl/services/serviceName",
           willRespondWith = (400, None)
         )
         catalogueClient.getServiceRepoInfo("serviceName").futureValue shouldBe None

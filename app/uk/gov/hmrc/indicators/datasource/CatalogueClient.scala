@@ -65,7 +65,7 @@ object CatalogueServiceInfo {
 
   val org = "^.*://.*(?<!/)/(.*)/.*(?<!/)$".r
 
-  def toServiceRepos(cats: CatalogueServiceInfo) = cats.githubUrls.flatMap(u => toServiceRepo(cats.name, u.name, u.url))
+  def toServiceRepos(cats: CatalogueServiceInfo): List[ServiceRepositoryInfo] = cats.githubUrls.flatMap(u => toServiceRepo(cats.name, u.name, u.url))
 
   private def extractOrg(url: String) = url match {
     case org(o) => Some(o)
@@ -73,7 +73,7 @@ object CatalogueServiceInfo {
   }
 
 
-  private def toServiceRepo(service: String, repoType: String, repoUrl: String) = {
+  private def toServiceRepo(service: String, repoType: String, repoUrl: String): Option[ServiceRepositoryInfo] = {
     extractOrg(repoUrl).flatMap { org =>
       RepoType.repoTypeFor(repoType).map { typ =>
         ServiceRepositoryInfo(service, org, typ)
@@ -92,9 +92,9 @@ class CatalogueServiceClient(catalogueApiBase: String) extends CatalogueClient {
 
   override def getServiceRepoInfo(serviceName: String): Future[Option[List[ServiceRepositoryInfo]]] =
 
-    get[List[CatalogueServiceInfo]](s"$catalogueApiBase/services/$serviceName").map { serviceInfos =>
-      serviceInfos.find(_.name == serviceName).map(toServiceRepos)
-    }.recoverWith {
+    get[CatalogueServiceInfo](s"$catalogueApiBase/services/$serviceName")
+      .map(x => Option(toServiceRepos(x)))
+      .recoverWith {
       case e =>
         Logger.error(s"error while getting $serviceName details", e)
         Future.successful(None)
