@@ -38,8 +38,8 @@ object RepoType {
 
   def repoTypeFor(st: String): Option[RepoType] = {
     st match {
-      case "github" => Some(Enterprise)
-      case "github-open" => Some(Open)
+      case "GitHub Enterprise" => Some(Enterprise)
+      case "GitHub.com" => Some(Open)
       case _ => {
         None
       }

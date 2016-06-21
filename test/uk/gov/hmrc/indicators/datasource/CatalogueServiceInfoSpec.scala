@@ -26,8 +26,8 @@ class CatalogueServiceInfoSpec extends WordSpec with Matchers {
       val catalogueService = CatalogueServiceInfo(
         "service-frontend",
         List(
-          CatalogueServiceGitUrl("github","https://github.some.host.url.gov.uk/org1-org/service-frontend"),
-          CatalogueServiceGitUrl("github-open", "http://github.com/org2/service-frontend")
+          CatalogueServiceGitUrl("GitHub Enterprise","https://github.some.host.url.gov.uk/org1-org/service-frontend"),
+          CatalogueServiceGitUrl("GitHub.com", "http://github.com/org2/service-frontend")
         )
       )
 
@@ -50,7 +50,7 @@ class CatalogueServiceInfoSpec extends WordSpec with Matchers {
       val catalogueService = CatalogueServiceInfo(
         "serviceName",
         List(
-          CatalogueServiceGitUrl("github-open", "https://someOtherGitHubHost/org2/serviceName")
+          CatalogueServiceGitUrl("GitHub.com", "https://someOtherGitHubHost/org2/serviceName")
         )
       )
 
@@ -69,7 +69,7 @@ class CatalogueServiceInfoSpec extends WordSpec with Matchers {
       val catalogueService = CatalogueServiceInfo(
         "serviceName",
         List(
-          CatalogueServiceGitUrl("github", "https://someOtherGitHubHost/org1/serviceName")
+          CatalogueServiceGitUrl("GitHub Enterprise", "https://someOtherGitHubHost/org1/serviceName")
         )
       )
 

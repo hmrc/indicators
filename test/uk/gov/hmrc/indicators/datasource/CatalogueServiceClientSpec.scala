@@ -30,7 +30,7 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
   val catalogueClient = new CatalogueServiceClient(endpointMockUrl)
 
   "getService" should {
-    "return service with gitEnterPriseOrg and gitOpenOrg" in {
+    "return service with gitEnterpriseOrg and gitOpenOrg" in {
       running(FakeApplication()) {
 
         givenRequestExpects(
@@ -42,11 +42,11 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
                 |			"name": "serviceName",
                 |			"githubUrls": [
                 |				{
-                |					"name": "github",
+                |					"name": "GitHub Enterprise",
                 |					"url": "https://someGitHubHost/org1/serviceName"
                 |				},
                 |    {
-                |					"name": "github-open",
+                |					"name": "GitHub.com",
                 |					"url": "https://someOtherGitHubHost/org2/serviceName"
                 |				}
                 |			]
