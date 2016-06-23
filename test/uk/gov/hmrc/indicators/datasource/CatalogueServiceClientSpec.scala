@@ -42,11 +42,11 @@ class CatalogueServiceClientSpec extends WordSpec with Matchers with WireMockSpe
                 |			"name": "serviceName",
                 |			"githubUrls": [
                 |				{
-                |					"name": "GitHub Enterprise",
+                |					"name": "github-enterprise",
                 |					"url": "https://someGitHubHost/org1/serviceName"
                 |				},
                 |    {
-                |					"name": "GitHub.com",
+                |					"name": "github-com",
                 |					"url": "https://someOtherGitHubHost/org2/serviceName"
                 |				}
                 |			]
