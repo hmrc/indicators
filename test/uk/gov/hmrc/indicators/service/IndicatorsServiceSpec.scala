@@ -36,20 +36,24 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
   val Feb_1st = LocalDateTime.of(2000, 2, 1, 0, 0, 0)
   val Feb_4th = LocalDateTime.of(2000, 2, 4, 0, 0, 0)
+  val Feb_5th = LocalDateTime.of(2000, 2, 5, 0, 0, 0)
+  val Feb_6th = LocalDateTime.of(2000, 2, 6, 0, 0, 0)
   val fixedClock = DateHelper.clockFrom(Feb_1st)
 
   val indicatorsService = new IndicatorsService(tagsDataSource, releasesClient, catalogueClient, fixedClock)
 
 
-  "IndicatorService getProductionDeploymentLeadTime" should {
-    "calculates production deployment lead time" in {
+  "IndicatorService getFrequentReleaseMetric" should {
+    "calculates FrequentReleaseMetricResult" in {
 
       val tags = List(
-        ServiceReleaseTag("1.0.0", Feb_1st)
+        ServiceReleaseTag("1.0.0", Feb_1st),
+        ServiceReleaseTag("2.0.0", Feb_5th)
       )
 
       val releases = List(
-        Release("1.0.0", Feb_4th)
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_6th)
       )
 
       val serviceRepoInfo: ServiceRepositoryInfo = ServiceRepositoryInfo("test-service", "HMRC", RepoType.Enterprise)
@@ -58,7 +62,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       Mockito.when(tagsDataSource.getServiceRepoReleaseTags(serviceRepoInfo)).thenReturn(Future.successful(tags))
       Mockito.when(releasesClient.getServiceReleases("test-service")).thenReturn(Future.successful(releases))
 
-      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue.get shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
+      indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), Some(2), Some(2)))
     }
 
     "returns None if the service is not found" in {
@@ -68,7 +72,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       Mockito.when(catalogueClient.getServiceRepoInfo("test-service")).thenReturn(Future.successful(None))
 
-      indicatorsService.getProductionDeploymentLeadTime("test-service", 1).futureValue shouldBe None
+      indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue shouldBe None
     }
 
   }

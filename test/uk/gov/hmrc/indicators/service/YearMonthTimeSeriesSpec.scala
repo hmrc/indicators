@@ -35,6 +35,24 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
       )
     }
 
+    "map monthly bucket items to given function" in {
+      val timeSeries = YearMonthTimeSeries[Int](YearMonth.of(2016, 1), YearMonth.of(2016, 3), ym => List(1, 2, 3))
+
+
+      timeSeries.toList shouldBe List(
+        (YearMonth.of(2016, 1), List(1, 2, 3)),
+        (YearMonth.of(2016, 2), List(1, 2, 3)),
+        (YearMonth.of(2016, 3), List(1, 2, 3))
+      )
+
+      timeSeries.mapBucketItems(_ * 2).toList shouldBe List(
+        (YearMonth.of(2016, 1), List(2, 4, 6)),
+        (YearMonth.of(2016, 2), List(2, 4, 6)),
+        (YearMonth.of(2016, 3), List(2, 4, 6))
+      )
+    }
+
+
 
     "produce a sliding window" in {
 

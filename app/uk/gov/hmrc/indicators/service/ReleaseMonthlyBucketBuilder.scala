@@ -14,18 +14,27 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.indicators.controllers
+package uk.gov.hmrc.indicators.service
 
-import uk.gov.hmrc.indicators.service.LeadTimeResult
+import java.time.{Clock, YearMonth}
 
-object LeadTimeCsv {
+import uk.gov.hmrc.indicators.datasource.Release
 
-  def apply(leadTimes: List[LeadTimeResult], serviceName: String) = {
-    leadTimes.flatMap(LeadTimeResult.unapply).unzip match {
-      case (m, lt) =>
-        s"""|Name,${m.mkString(",")}
-            |$serviceName,${lt.map(_.getOrElse("")).mkString(",")}""".stripMargin
+object ReleaseMonthlyBucketBuilder {
+
+  def apply(releases: Seq[Release], months: Int)(implicit clock: Clock): YearMonthTimeSeries[Release] = {
+
+    val start = YearMonth.now(clock).minusMonths(months - 1)
+    val end = YearMonth.now(clock)
+
+    def releasesForYearMonth(ym: YearMonth): Seq[Release] = {
+      releases
+        .filter(r => YearMonth.from(r.releasedAt) == ym)
     }
+
+    YearMonthTimeSeries(start, end, bucketBuilder = releasesForYearMonth)
+
   }
+
 
 }

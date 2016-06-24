@@ -20,10 +20,10 @@ import java.time._
 
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
-import uk.gov.hmrc.indicators.datasource.{ServiceReleaseTag, Release, ServiceReleaseTag$}
+import uk.gov.hmrc.indicators.datasource.{Release, ServiceReleaseTag}
 
 
-class LeadTimeCalculatorSpec extends WordSpec with Matchers {
+class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
   trait SetUp {
     private val midNight: LocalTime = LocalTime.of(0, 0)
@@ -58,7 +58,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
   }
 
 
-  "LeadTimeCalculator.calculateRollingLeadTime" should {
+  "ReleaseMetricCalculator.calculateLeadTime" should {
 
     "calculate the correct median lead time for one tag and release in the same month 3 days apart" in new SetUp {
 
@@ -73,7 +73,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("1.0.0", Feb_4th)
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
     "calculate the correct median lead time for two tags" in new SetUp {
@@ -89,7 +89,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("2.0.0", Feb_16th)
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
     }
 
     "calculate the correct median lead time for releases that spans two months" in new SetUp {
@@ -107,9 +107,9 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("2.0.0", Apr_10th) //6
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 2) shouldBe List(
-        LeadTimeResult(YearMonth.from(Mar_1st), Some(3)),
-        LeadTimeResult(YearMonth.from(Apr_1st), Some(5)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 2) shouldBe List(
+        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), Some(3)),
+        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), Some(5)))
     }
 
 
@@ -128,7 +128,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("2.0.0", Feb_10th),
         Release("3.0.0", Feb_18th)
       )
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(6)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(6)))
     }
 
 
@@ -151,7 +151,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
         Release("4.0.0", Feb_18th) //2 days
       )
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
     }
 
     "ignore tags without any release" in new SetUp {
@@ -166,7 +166,7 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       val releases = List(
         Release("1.0.0", Feb_4th)
       )
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 1) shouldBe List(LeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
 
 
@@ -202,14 +202,117 @@ class LeadTimeCalculatorSpec extends WordSpec with Matchers {
       )
 
 
-      LeadTimeCalculator.calculateLeadTime(tags, releases, 7) shouldBe List(
-        LeadTimeResult(YearMonth.from(Dec_1st_2015), None),
-        LeadTimeResult(YearMonth.from(Jan_1st), None),
-        LeadTimeResult(YearMonth.from(Feb_1st), Some(5)),
-        LeadTimeResult(YearMonth.from(Mar_1st), Some(6)),
-        LeadTimeResult(YearMonth.from(Apr_1st), Some(6)),
-        LeadTimeResult(YearMonth.from(May_1st), Some(10)),
-        LeadTimeResult(YearMonth.from(June_1st), Some(6))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(tags, releases, 7) shouldBe List(
+        ReleaseLeadTimeResult(YearMonth.from(Dec_1st_2015), None),
+        ReleaseLeadTimeResult(YearMonth.from(Jan_1st), None),
+        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)),
+        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), Some(6)),
+        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), Some(6)),
+        ReleaseLeadTimeResult(YearMonth.from(May_1st), Some(10)),
+        ReleaseLeadTimeResult(YearMonth.from(June_1st), Some(6))
+
+
+      )
+
+    }
+  }
+
+  "ReleaseMetricCalculator.calculateReleaseInterval" should {
+
+    "calculate the correct median release interval for release in the same month 3 days apart" in new SetUp {
+
+
+      override implicit val clock: Clock = clockFrom(Feb_4th)
+
+      val releases = List(
+        Release("1.0.0", Feb_4th)
+      )
+
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Feb_1st), None))
+    }
+
+    "calculate the correct median release interval for two releases" in new SetUp {
+      override implicit val clock: Clock = clockFrom(Feb_16th)
+
+      val releases = List(
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_16th)
+      )
+
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(12)))
+    }
+
+    "calculate the correct median release interval for releases that spans two months" in new SetUp {
+
+      override implicit val clock: Clock = clockFrom(Apr_10th)
+
+      val releases = List(
+        Release("1.0.0", Mar_4th),
+        Release("2.0.0", Apr_10th)
+      )
+
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 2) shouldBe List(
+        ReleaseIntervalResult(YearMonth.from(Mar_1st), None),
+        ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(37)))
+    }
+
+
+    "calculate the correctmedian release interval for 3 releases" in new SetUp {
+
+      override implicit val clock: Clock = clockFrom(Feb_18th)
+
+      val releases = List(
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_10th),
+        Release("3.0.0", Feb_18th)
+      )
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(7)))
+    }
+
+
+    "calculate the correct median release interval for 4 releases (3, 6, 6, 2)" in new SetUp {
+
+      override implicit val clock: Clock = clockFrom(Feb_18th)
+
+      //6,6,2
+      val releases = List(
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_10th),
+        Release("3.0.0", Feb_16th),
+        Release("4.0.0", Feb_18th)
+      )
+
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(6)))
+    }
+
+
+    "calculate the median release interval for 7 months (3 months sliding window) when provided releases are not ordered" in new SetUp {
+
+      override implicit val clock: Clock = clockFrom(June_5th)
+
+
+      val releases = List(
+        Release("7.0.0", Apr_1st),
+        Release("8.0.0", Apr_11th),
+        Release("1.0.0", Feb_4th),
+        Release("2.0.0", Feb_10th),
+        Release("3.0.0", Feb_16th),
+        Release("4.0.0", Feb_18th),
+        Release("5.0.0", Mar_1st),
+        Release("6.0.0", Mar_27th),
+        Release("9.0.0", May_11th),
+        Release("10.0.0", June_5th)
+      )
+
+
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 7) shouldBe List(
+        ReleaseIntervalResult(YearMonth.from(Dec_1st_2015), None),
+        ReleaseIntervalResult(YearMonth.from(Jan_1st), None),
+        ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(6)),
+        ReleaseIntervalResult(YearMonth.from(Mar_1st), Some(6)),
+        ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(6)),
+        ReleaseIntervalResult(YearMonth.from(May_1st), Some(18)), // 26,4,10,29 (4,10,26,29)
+        ReleaseIntervalResult(YearMonth.from(June_1st), Some(25)) //10,29,25 (10,25,29)
 
 
       )

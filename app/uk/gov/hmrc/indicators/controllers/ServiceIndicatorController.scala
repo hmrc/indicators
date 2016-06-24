@@ -20,7 +20,7 @@ import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.indicators.ComponentRegistry
-import uk.gov.hmrc.indicators.service.{IndicatorsService, LeadTimeResult}
+import uk.gov.hmrc.indicators.service.IndicatorsService
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,19 +33,14 @@ object ServiceIndicatorController extends ServiceIndicatorController {
 
 trait ServiceIndicatorController extends BaseController {
 
-  val AcceptingCsv = Accepting("text/csv")
 
   def indicatorsService: IndicatorsService
 
 
   def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
 
-    indicatorsService.getProductionDeploymentLeadTime(serviceName) map {
-      case Some(ls) =>
-        render {
-          case Accepts.Json() => Ok(Json.toJson(ls)).as("application/json")
-          case AcceptingCsv() => Ok.chunked(Enumerator(LeadTimeCsv(ls, serviceName))).as("text/csv")
-        }
+    indicatorsService.getFrequentReleaseMetric(serviceName) map {
+      case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
       case _ => NotFound
     }
 

@@ -27,7 +27,7 @@ import play.api.mvc.{Result, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.TestImplicits._
-import uk.gov.hmrc.indicators.service.{IndicatorsService, LeadTimeResult}
+import uk.gov.hmrc.indicators.service.{FrequentReleaseMetricResult, IndicatorsService, ReleaseLeadTimeResult}
 
 import scala.concurrent.{Await, Future}
 
@@ -43,7 +43,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
   "ServiceIndicatorController.frequentProdRelease" should {
 
     "return deployment lead time in json by default" in {
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
+      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(Some(List())))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest())
 
@@ -54,7 +54,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
     "return deployment lead time in json when application/json is requested" in {
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
+      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(Some(List())))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accepts" -> "application/json"))
 
@@ -64,37 +64,13 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
     }
 
-    "return deployment lead time in csv when accept header is test/csv" in {
 
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
+    "return Frequent release metric for a given service in json format" in {
 
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accept" -> "text/csv"))
-
-      new String(contentAsBytes(result)) mustBe
-        """|Name,
-          |serviceName,""".stripMargin
-
-      header("content-type", result).get mustBe "text/csv"
-
-    }
-
-    "returns unsupported status when accepts header not recognized" in {
-
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(Some(List())))
-
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accept" -> "application/pdf"))
-
-      status(result) mustBe 406
-
-    }
-
-
-    "return deployment lead times for a given service in json format" in {
-
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(
+      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(
         Some(List(
-          LeadTimeResult(YearMonth.of(2016, 4), Some(5)),
-          LeadTimeResult(YearMonth.of(2016, 5), Some(6))
+          FrequentReleaseMetricResult(YearMonth.of(2016, 4), Some(5),Some(4)),
+          FrequentReleaseMetricResult(YearMonth.of(2016, 5), Some(6), None)
         )))
       )
 
@@ -102,8 +78,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       contentAsJson(result) mustBe
         """[
-          |{"period" : "2016-04", "median" : 5},
-          |{"period" : "2016-05", "median" : 6}
+          |{"period" : "2016-04", "medianLeadTime" : 5, "medianReleaseInterval" : 4},
+          |{"period" : "2016-05", "medianLeadTime" : 6}
           |]""".stripMargin.toJson
 
       header("content-type", result).get mustBe "application/json"
@@ -111,7 +87,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
 
     "return NotFound if None lead times returned" in {
-      when(mockIndicatorsService.getProductionDeploymentLeadTime("serviceName")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(None))
 
       val result = controller.frequentProdRelease("serviceName")(FakeRequest())
 

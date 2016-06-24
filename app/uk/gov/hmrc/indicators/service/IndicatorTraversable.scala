@@ -16,21 +16,24 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.YearMonth
+object IndicatorTraversable {
 
-import org.scalatest.{Matchers, WordSpec}
+  implicit class TravOnce[A](self: TraversableOnce[A]) {
+    def median[B >: A](implicit num: scala.Numeric[B], ord: Ordering[A]): Option[BigDecimal] = {
+      val sorted = self.toList.sorted
 
-class LeadTimeResultSpec extends WordSpec with Matchers{
+      sorted.size match {
+        case 0 => None
+        case n if n % 2 == 0 =>
+          val idx = (n - 1) / 2
+          Some(sorted.drop(idx).dropRight(idx).average(num))
+        case n => Some(BigDecimal(num.toDouble(sorted(n / 2))))
+      }
+    }
 
-  "LeadTimeResult.of" should {
-    "construct LeadTimeResult by rounding" in {
-      val now: YearMonth = YearMonth.now()
-      ReleaseLeadTimeResult.of(now, Some(BigDecimal(4.5))) shouldBe ReleaseLeadTimeResult(now, Some(5))
-      ReleaseLeadTimeResult.of(now, Some(BigDecimal(4))) shouldBe ReleaseLeadTimeResult(now, Some(4))
-      ReleaseLeadTimeResult.of(now, Some(BigDecimal(4.3))) shouldBe ReleaseLeadTimeResult(now, Some(4))
+    def average[B >: A](implicit num: scala.Numeric[B]): BigDecimal = {
+      BigDecimal(self.map(n => num.toDouble(n)).sum) / BigDecimal(self.size)
     }
   }
-
-
 
 }

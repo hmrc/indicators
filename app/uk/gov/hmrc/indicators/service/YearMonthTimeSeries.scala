@@ -18,20 +18,40 @@ package uk.gov.hmrc.indicators.service
 
 import java.time.YearMonth
 
-object  YearMonthTimeSeries {
+object YearMonthTimeSeries {
 
-  def apply[B](start: YearMonth, endInclusive: YearMonth, bucketBuilder: (YearMonth) => List[B]) = {
-    new YearMonthTimeSeries[B]() {
-      override def iterator: Iterator[(YearMonth, List[B])] =
-        Iterator.iterate(start)(_.plusMonths(1)).takeWhile(a => a.isBefore(endInclusive) || a.equals(endInclusive))
+  def apply[B](start: YearMonth, endInclusive: YearMonth, bucketBuilder: (YearMonth) => Seq[B]): YearMonthTimeSeries[B] = {
+    new YearMonthTimeSeries[B] {
+      override def iterator: Iterator[(YearMonth, Seq[B])] = {
+
+        val map: Iterator[(YearMonth, Seq[B])] = Iterator.iterate(start)(_.plusMonths(1)).takeWhile(a => a.isBefore(endInclusive) || a.equals(endInclusive))
           .map(ym => ym -> bucketBuilder(ym))
+        map
+
+      }
+
     }
   }
 }
 
-trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, List[B])] {
+trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, Seq[B])] {
+  self =>
 
-  def slidingWindow(windowSize: Int): Seq[Iterable[(YearMonth, List[B])]] = {
+
+  def mapBucketItems[T](f: B => T): YearMonthTimeSeries[T] =
+
+    new YearMonthTimeSeries[T] {
+
+      override def iterator: Iterator[(YearMonth, Seq[T])] = {
+        self.map { case (month, items) =>
+          (month, items.map(f))
+        }.toIterator
+
+      }
+
+    }
+
+  def slidingWindow(windowSize: Int): Seq[Iterable[(YearMonth, Seq[B])]] = {
 
     val expanding =
       (1 to Math.min(windowSize - 1, this.size)).map { i =>
