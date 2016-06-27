@@ -32,8 +32,8 @@ object ReleaseMetricCalculator {
 
     monthlyReleaseLeadTimeBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (leadTimeYearMonth, _) = window.last
-      val map = window.flatMap(_._2.flatten).map(x => x.daysSinceTag)
-      ReleaseLeadTimeResult.of(leadTimeYearMonth, map.median)
+      val releaseLeadTimes = window.flatMap(_._2.flatten).map(x => x.daysSinceTag)
+      ReleaseLeadTimeResult.of(leadTimeYearMonth, releaseLeadTimes.median)
     }
   }
 
