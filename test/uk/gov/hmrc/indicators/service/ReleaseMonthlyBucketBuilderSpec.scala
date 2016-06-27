@@ -22,9 +22,7 @@ import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
 import uk.gov.hmrc.indicators.datasource.Release
 
-
 class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
-
 
   trait SetUp {
     private val midNight: LocalTime = LocalTime.of(0, 0)
@@ -59,36 +57,41 @@ class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
      val clock = clockFrom(May_10th)
   }
 
-
   "MonthlyReleaseBucketBuilder" should {
-    "create YearMonthTimeSeries with release in each monthly buckets" in new SetUp {
+    val serviceName = "test-service"
+
+    "create YearMonthTimeSeries with release in each monthly buckets based on release date" in new SetUp {
 
       val releases = List(
-        Release("7.0.0", Apr_1st),
-        Release("8.0.0", Apr_11th),
-        Release("1.0.0", Feb_4th),
-        Release("2.0.0", Feb_10th),
-        Release("3.0.0", Feb_16th),
-        Release("4.0.0", Feb_18th),
-        Release("5.0.0", Mar_1st),
-        Release("6.0.0", Mar_27th),
-        Release("9.0.0", May_11th),
-        Release("10.0.0", June_5th)
-      )
+        Release(serviceName, "7.0.0", None, Apr_1st),
+        Release(serviceName, "8.0.0", None, Apr_11th),
+        Release(serviceName, "1.0.0", None, Feb_4th),
+        Release(serviceName, "2.0.0", None, Feb_10th),
+        Release(serviceName, "3.0.0", None, Feb_16th),
+        Release(serviceName, "4.0.0", None, Feb_18th),
+        Release(serviceName, "5.0.0", None, Mar_1st),
+        Release(serviceName, "6.0.0", None, Mar_27th),
+        Release(serviceName, "9.0.0", None, May_11th),
+        Release(serviceName, "10.0.0", None, June_5th))
 
-
-
-      MonthlyBucketBuilder(releases, 7)(_.releasedAt)(clock).toSeq shouldBe Seq(
+      MonthlyBucketBuilder(releases, 7)(_.productionDate)(clock).toSeq shouldBe Seq(
         (Nov_2015, Seq()),
         (YearMonth.from(Dec_1st_2015), Seq()),
         (YearMonth.from(Jan_1st), Seq()),
-        (YearMonth.from(Feb_1st), Seq(Release("1.0.0", Feb_4th),Release("2.0.0", Feb_10th), Release("3.0.0", Feb_16th), Release("4.0.0", Feb_18th))),
-        (YearMonth.from(Mar_1st), Seq(Release("5.0.0", Mar_1st),Release("6.0.0", Mar_27th))),
-        (YearMonth.from(Apr_1st), Seq(Release("7.0.0", Apr_1st),Release("8.0.0", Apr_11th))),
-        (YearMonth.from(May_1st), Seq(Release("9.0.0", May_11th)))
+        (YearMonth.from(Feb_1st), Seq(
+          Release(serviceName, "1.0.0", None, Feb_4th),
+          Release(serviceName, "2.0.0", None, Feb_10th),
+          Release(serviceName, "3.0.0", None, Feb_16th),
+          Release(serviceName, "4.0.0", None, Feb_18th))),
+        (YearMonth.from(Mar_1st), Seq(
+          Release(serviceName, "5.0.0", None, Mar_1st),
+          Release(serviceName, "6.0.0", None, Mar_27th))),
+        (YearMonth.from(Apr_1st), Seq(
+          Release(serviceName, "7.0.0", None, Apr_1st),
+          Release(serviceName, "8.0.0", None, Apr_11th))),
+        (YearMonth.from(May_1st), Seq(
+          Release(serviceName, "9.0.0", None, May_11th)))
       )
     }
-
   }
-
 }

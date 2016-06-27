@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.indicators
 
-import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 
 class ConfigProviderSpec extends WordSpec with Matchers with MockitoSugar {
-
-
   private val mockConfigs: Configs = mock[Configs]
 
   val configProvider = new ConfigProvider {
@@ -30,22 +27,6 @@ class ConfigProviderSpec extends WordSpec with Matchers with MockitoSugar {
   }
 
   "ConfigProvider" should {
-
-    "get enterpriseGitStorePath when specified in conf" in {
-
-      Mockito.when(mockConfigs.config("git.client.store.path")).thenReturn(Some("/some/path"))
-
-      configProvider.enterpriseGitStorePath shouldBe "/some/path/enterprise-local-git-store"
-
-    }
-
-    "get openGitStorePath when specified in conf" in {
-
-      Mockito.when(mockConfigs.config("git.client.store.path")).thenReturn(Some("/some/path"))
-
-      configProvider.openGitStorePath shouldBe "/some/path/open-local-git-store"
-
-    }
 
   }
 

@@ -26,24 +26,6 @@ import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.service.IndicatorsService
 
 object ComponentRegistry extends IndicatorsConfigProvider {
-
-
-  val gitEnterpriseClient = Git(enterpriseGitStorePath, gitEnterpriseToken, gitEnterpriseHost, withCleanUp = true)
-  val gitOpenClient = Git(openGitStorePath, gitOpenToken, gitOpenHost, withCleanUp = true)
-
-  val gitHubOpenApiClient = GithubApiClient(gitHubOpenApiUrl, gitOpenToken)
-  val gitHubEnterpriseApiClient = GithubApiClient(gitHubEnterpriseApiUrl, gitEnterpriseToken)
-
-  val enterpriseTagsDataSource = new GitTagDataSource(gitEnterpriseClient, gitHubEnterpriseApiClient)
-  val openTagsDataSource = new GitHubReleaseTagDataSource(gitHubOpenApiClient)
-  val compositeTagsDataSource = new CompositeServiceReleaseTagDataSource(enterpriseTagsDataSource, openTagsDataSource)
-  val cachedTagsDataSource = new CachedServiceReleaseTagDataSource(compositeTagsDataSource)
-
-  val releasesClient = new AppReleasesClient(releasesApiBase)
-  val cachedReleasesClient = new CachedAppReleasesClient(releasesClient)
-  val releasesDataSource = new AppReleasesDataSource(cachedReleasesClient)
-  val catalogueClient = new CatalogueServiceClient(catalogueApiBase)
-
-  val indicatorsService = new IndicatorsService(cachedTagsDataSource, releasesDataSource, catalogueClient)
-
+  val releasesDataSource = new ReleasesClient(releasesApiBase)
+  val indicatorsService = new IndicatorsService(releasesDataSource)
 }

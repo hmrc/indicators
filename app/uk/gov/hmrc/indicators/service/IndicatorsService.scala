@@ -26,110 +26,60 @@ import uk.gov.hmrc.indicators.service.ReleaseMetricCalculator._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
 case class FrequentReleaseMetricResult(period: YearMonth, medianLeadTime: Option[Int], medianReleaseInterval: Option[Int])
 
 object FrequentReleaseMetricResult {
-
   import play.api.libs.json.Json
   import JavaDateTimeJsonFormatter._
 
   implicit val writes = Json.writes[FrequentReleaseMetricResult]
 
   def from(leadTimes: Seq[ReleaseLeadTimeResult], intervals: Seq[ReleaseIntervalResult]): Seq[FrequentReleaseMetricResult] = {
-
     val ymToReleaseLeadTime = leadTimes.map(x => x.period -> x.median).toMap
-
     val ymToReleaseInterval = intervals.map(x => x.period -> x.median).toMap
 
     (ymToReleaseLeadTime.keySet ++ ymToReleaseInterval.keySet).map { ym =>
       FrequentReleaseMetricResult(ym, ymToReleaseLeadTime.get(ym).flatten, ymToReleaseInterval.get(ym).flatten)
     }.toSeq.sortBy(_.period)
   }
-
 }
 
 abstract class MetricsResult {
-
   val period: YearMonth
   val median: Option[Int]
-
 }
 
 case class ReleaseLeadTimeResult(period: YearMonth, median: Option[Int]) extends MetricsResult
-
 case class ReleaseIntervalResult(period: YearMonth, median: Option[Int]) extends MetricsResult
 
 object ReleaseIntervalResult {
-
-  def of(period: YearMonth, median: Option[BigDecimal]): ReleaseIntervalResult = {
-
+  def of(period: YearMonth, median: Option[BigDecimal]): ReleaseIntervalResult =
     ReleaseIntervalResult(period, median.map(x => Math.round(x.toDouble).toInt))
-  }
-
-
 }
 
 object ReleaseLeadTimeResult {
-
   import play.api.libs.json.Json
   import JavaDateTimeJsonFormatter._
 
   implicit val writes = Json.writes[ReleaseLeadTimeResult]
 
-  def of(period: YearMonth, median: Option[BigDecimal]): ReleaseLeadTimeResult = {
-
+  def of(period: YearMonth, median: Option[BigDecimal]): ReleaseLeadTimeResult =
     ReleaseLeadTimeResult(period, median.map(x => Math.round(x.toDouble).toInt))
-  }
-
 }
 
-
-class IndicatorsService(tagsDataSource: ServiceReleaseTagDataSource, releasesDataSource: ReleasesDataSource, catalogueClient: CatalogueClient, clock: Clock = Clock.systemUTC()) {
-
+class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = Clock.systemUTC()) {
   implicit val c = clock
 
-  def getFrequentReleaseMetric(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[FrequentReleaseMetricResult]]] = {
-
-    catalogueClient.getServiceRepoInfo(serviceName).flatMap {
-
-      case Some(srvs) =>
-        getFrequentReleaseMetricResults(serviceName, periodInMonths, srvs)
-
-      case _ => Future.successful(None)
-    }
-
-  }
-
-  private def getFrequentReleaseMetricResults(serviceName: String, periodInMonths: Int, srvs: List[ServiceRepositoryInfo]): Future[Some[Seq[FrequentReleaseMetricResult]]] = {
-    import FutureImplicit._
-
-    val repoTagsF: Future[List[ServiceReleaseTag]] = srvs.map(releaseTags).futureList.map(_.flatten)
-    val releasesF: Future[List[Release]] = releasesDataSource.getServiceReleases(serviceName)
-
-    for {
-      tags <- repoTagsF
-      releases <- releasesF
-    } yield {
+  def getFrequentReleaseMetric(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[FrequentReleaseMetricResult]]] =
+    releasesDataSource.getForService(serviceName).map { releases =>
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
       Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
 
       Some(
-
         FrequentReleaseMetricResult.from(
-          calculateLeadTimeMetric(tags, releases, periodInMonths),
-          calculateReleaseIntervalMetric(releases, periodInMonths)
-        )
-
-      )
-    }
-  }
-
-  def releaseTags(serviceRepositoryInfo: ServiceRepositoryInfo): Future[List[ServiceReleaseTag]] = {
-
-    tagsDataSource.getServiceRepoReleaseTags(serviceRepositoryInfo)
-  }
-
+          calculateLeadTimeMetric(releases, periodInMonths),
+          calculateReleaseIntervalMetric(releases, periodInMonths)))
+    }.recoverWith { case ex => Future.successful(None) }
 }
 
 
