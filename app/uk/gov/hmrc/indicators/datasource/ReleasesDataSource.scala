@@ -19,7 +19,7 @@ package uk.gov.hmrc.indicators.datasource
 import java.time.LocalDateTime
 
 import play.api.libs.json.{Json, Reads}
-import uk.gov.hmrc.indicators.{FuturesCache, JavaDateTimeJsonFormatter}
+import uk.gov.hmrc.indicators.JavaDateTimeJsonFormatter
 import uk.gov.hmrc.indicators.http.HttpClient
 
 import scala.concurrent.Future
