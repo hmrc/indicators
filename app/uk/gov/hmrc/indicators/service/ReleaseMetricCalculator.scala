@@ -17,7 +17,7 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time.temporal.ChronoUnit
-import java.time.{Clock, LocalDateTime}
+import java.time.{Clock, LocalDateTime, ZoneOffset}
 
 import uk.gov.hmrc.indicators.datasource.Release
 import play.api.Logger
@@ -41,7 +41,8 @@ object ReleaseMetricCalculator {
                                       periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
     import IndicatorTraversable._
 
-    val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(getReleaseIntervals(releases), periodInMonths)(_.releasedAt)
+    val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(
+      getReleaseIntervals(releases), periodInMonths)(_.releasedAt)
 
     monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (yearMonth, _) = window.last
@@ -54,9 +55,13 @@ object ReleaseMetricCalculator {
     }
   }
 
-  private def getReleaseIntervals(releases: Seq[Release]): Seq[ReleaseInterval] =
-    (releases, releases drop 1).zipped.map { case (r1, r2) =>
-      ReleaseInterval(r2, daysBetween(r1.productionDate, r2.productionDate))}
+  private def getReleaseIntervals(releases: Seq[Release]): Seq[ReleaseInterval] = {
+    val sortedReleases = releases.sortBy(_.productionDate.toEpochSecond(ZoneOffset.UTC))
+
+    (sortedReleases, sortedReleases drop 1).zipped.map { case (r1, r2) =>
+      ReleaseInterval(r2, daysBetween(r1.productionDate, r2.productionDate))
+    }
+  }
 
   private def releaseLeadTime(r: Release): Option[ReleaseLeadTime] =
      daysBetweenTagAndRelease(r).map { releaseLeadTimeInDays =>

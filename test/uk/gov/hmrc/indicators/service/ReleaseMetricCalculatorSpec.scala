@@ -229,15 +229,15 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(June_5th)
 
       val releases = List(
-        Release("test-service", "1.0.0", None, Feb_4th),// interval None
-        Release("test-service", "2.0.0", None, Feb_10th),// interval 6
-        Release("test-service", "3.0.0", None, Feb_16th),// interval 6
-        Release("test-service", "4.0.0", None, Feb_18th),// interval 2
-        Release("test-service", "5.0.0", None, Mar_1st),//interval 12
-        Release("test-service", "6.0.0", None, Mar_27th),//interval 26
-        Release("test-service", "7.0.0", None, Apr_1st),//interval 5
-        Release("test-service", "8.0.0", None, Apr_11th),//interval 10
         Release("test-service", "9.0.0", None, May_11th),//interval 30
+        Release("test-service", "5.0.0", None, Mar_1st),//interval 12
+        Release("test-service", "2.0.0", None, Feb_10th),// interval 6
+        Release("test-service", "4.0.0", None, Feb_18th),// interval 2
+        Release("test-service", "6.0.0", None, Mar_27th),//interval 26
+        Release("test-service", "8.0.0", None, Apr_11th),//interval 10
+        Release("test-service", "7.0.0", None, Apr_1st),//interval 5
+        Release("test-service", "3.0.0", None, Feb_16th),// interval 6
+        Release("test-service", "1.0.0", None, Feb_4th),// interval None
         Release("test-service", "10.0.0", None, June_5th)//interval 25
       )
 

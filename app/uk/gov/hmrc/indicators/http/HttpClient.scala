@@ -59,7 +59,9 @@ object HttpClient {
     withErrorHandling("GET", url)(header) {
       case s if s.status >= 200 && s.status < 300 => s.body
       case res =>
-        throw new RuntimeException(s"Unexpected response status : ${res.status}  calling url : $url response body : ${res.body}")
+        val msg = s"Unexpected response status : ${res.status}  calling url : $url response body : ${res.body}"
+        Logger.error(msg)
+        throw new RuntimeException(msg)
     }
 
   private def withErrorHandling[T](method: String, url: String, body: Option[JsValue] = None)(headers: List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] =
