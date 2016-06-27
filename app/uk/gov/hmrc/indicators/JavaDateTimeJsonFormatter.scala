@@ -22,7 +22,6 @@ import play.api.libs.json._
 
 object JavaDateTimeJsonFormatter {
 
-
   implicit val localDateTime = new Reads[LocalDateTime] {
     override def reads(json: JsValue): JsResult[LocalDateTime] = json match {
       case JsNumber(v) => JsSuccess(
@@ -35,6 +34,5 @@ object JavaDateTimeJsonFormatter {
   implicit val yearMonthWrite = new Writes[YearMonth] {
     override def writes(o: YearMonth): JsValue = JsString(o.toString)
   }
-
 
 }

@@ -16,41 +16,26 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import java.time.{LocalDateTime, ZoneOffset}
+import java.time.LocalDateTime
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.json.{Json, Reads}
+import uk.gov.hmrc.indicators.{FuturesCache, JavaDateTimeJsonFormatter}
+import uk.gov.hmrc.indicators.http.HttpClient
+
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
-
-case class Release(version: String, releasedAt: LocalDateTime)
+case class Release(name: String, version: String, creationDate: Option[LocalDateTime], productionDate: LocalDateTime)
 
 trait ReleasesDataSource {
-
-  def getServiceReleases(serviceName: String): Future[List[Release]]
-
+  def getForService(serviceName: String): Future[List[Release]]
 }
 
-class AppReleasesDataSource(releasesClient: ReleasesClient) extends ReleasesDataSource {
-  def getServiceReleases(serviceName: String): Future[List[Release]] =
-    releasesClient.getAllReleases.map(ReleasesByService(serviceName))
+class ReleasesClient(releasesApiBase: String) extends ReleasesDataSource {
+  import JavaDateTimeJsonFormatter._
 
+  implicit val reads = Json.reads[Release]
+
+  def getForService(serviceName: String): Future[List[Release]] =
+    HttpClient.get[List[Release]](s"$releasesApiBase/releases/$serviceName")
 }
-
-object ReleasesByService {
-  def apply(serviceName: String)(allReleases: List[AppRelease]): List[Release] = {
-    allReleases.sortBy(_.fs.toEpochSecond(ZoneOffset.UTC)).foldLeft(List.empty[Release]) { case (rss, ar) =>
-      if (!rss.exists(_.version == ar.ver) && byServiceNameAndEnv(serviceName)(ar))
-        Release(ar.ver, ar.fs) :: rss
-      else rss
-    }.reverse
-  }
-
-  def byServiceNameAndEnv(serviceName: String): (AppRelease) => Boolean = {
-    r => r.an == serviceName && (r.env.startsWith("production") || r.env.startsWith("prod"))
-  }
-}
-
-
-
-
-

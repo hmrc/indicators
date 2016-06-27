@@ -29,7 +29,7 @@ object ReleaseMonthlyBucketBuilder {
 
     def releasesForYearMonth(ym: YearMonth): Seq[Release] = {
       releases
-        .filter(r => YearMonth.from(r.releasedAt) == ym)
+        .filter(r => YearMonth.from(r.productionDate) == ym)
     }
 
     YearMonthTimeSeries(start, end, bucketBuilder = releasesForYearMonth)
