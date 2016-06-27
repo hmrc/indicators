@@ -292,17 +292,25 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
 
       val releases = List(
-        Release("7.0.0", Apr_1st),
-        Release("8.0.0", Apr_11th),
-        Release("1.0.0", Feb_4th),
-        Release("2.0.0", Feb_10th),
-        Release("3.0.0", Feb_16th),
-        Release("4.0.0", Feb_18th),
-        Release("5.0.0", Mar_1st),
-        Release("6.0.0", Mar_27th),
-        Release("9.0.0", May_11th),
-        Release("10.0.0", June_5th)
+        Release("1.0.0", Feb_4th),// interval None
+        Release("2.0.0", Feb_10th),// interval 6
+        Release("3.0.0", Feb_16th),// interval 6
+        Release("4.0.0", Feb_18th),// interval 2
+        Release("5.0.0", Mar_1st),//interval 12
+        Release("6.0.0", Mar_27th),//interval 26
+        Release("7.0.0", Apr_1st),//interval 5
+        Release("8.0.0", Apr_11th),//interval 10
+        Release("9.0.0", May_11th),//interval 30
+        Release("10.0.0", June_5th)//interval 25
       )
+
+      //dec None
+      //jan None
+      //feb 2,6,6 = 6
+      //march 2,6,6,12,26 =6
+      //april 2,6,6,12,26,5,10 => 2,5,6,6,10,12,26 = 6
+      //may 12,26,4,7,29 => 4,7,12,26,20 =12
+      //june 5,10,30,25 => 5,10,25,30
 
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 7) shouldBe List(
@@ -311,9 +319,8 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(6)),
         ReleaseIntervalResult(YearMonth.from(Mar_1st), Some(6)),
         ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(May_1st), Some(18)), // 26,4,10,29 (4,10,26,29)
-        ReleaseIntervalResult(YearMonth.from(June_1st), Some(25)) //10,29,25 (10,25,29)
-
+        ReleaseIntervalResult(YearMonth.from(May_1st), Some(12)),
+        ReleaseIntervalResult(YearMonth.from(June_1st), Some(18))
 
       )
 

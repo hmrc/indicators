@@ -37,7 +37,6 @@ object YearMonthTimeSeries {
 trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, Seq[B])] {
   self =>
 
-
   def mapBucketItems[T](f: B => T): YearMonthTimeSeries[T] =
 
     new YearMonthTimeSeries[T] {

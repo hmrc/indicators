@@ -16,23 +16,22 @@
 
 package uk.gov.hmrc.indicators.service
 
+import java.time.temporal.TemporalAccessor
 import java.time.{Clock, YearMonth}
 
-import uk.gov.hmrc.indicators.datasource.Release
+object MonthlyBucketBuilder {
 
-object ReleaseMonthlyBucketBuilder {
-
-  def apply(releases: Seq[Release], months: Int)(implicit clock: Clock): YearMonthTimeSeries[Release] = {
+  def apply[T](items: Seq[T], months: Int)(dateExtractor: T => TemporalAccessor)(implicit clock: Clock): YearMonthTimeSeries[T] = {
 
     val start = YearMonth.now(clock).minusMonths(months - 1)
     val end = YearMonth.now(clock)
 
-    def releasesForYearMonth(ym: YearMonth): Seq[Release] = {
-      releases
-        .filter(r => YearMonth.from(r.releasedAt) == ym)
+    def itemsForYearMonth(ym: YearMonth): Seq[T] = {
+      items
+        .filter(r => YearMonth.from(dateExtractor(r)) == ym)
     }
 
-    YearMonthTimeSeries(start, end, bucketBuilder = releasesForYearMonth)
+    YearMonthTimeSeries(start, end, bucketBuilder = itemsForYearMonth)
 
   }
 

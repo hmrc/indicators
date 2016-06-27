@@ -19,6 +19,7 @@ package uk.gov.hmrc.indicators.service
 import java.time.{LocalDateTime, LocalDate, YearMonth, Clock}
 import java.time.temporal.ChronoUnit
 
+import play.api.Logger
 import uk.gov.hmrc.indicators.datasource.{Release, ServiceReleaseTag}
 
 
@@ -31,7 +32,7 @@ object ReleaseMetricCalculator {
 
     import IndicatorTraversable._
 
-    val monthlyReleaseLeadTimeBuckets = ReleaseMonthlyBucketBuilder(releases, periodInMonths).mapBucketItems(releaseLeadTime(_, tags))
+    val monthlyReleaseLeadTimeBuckets = MonthlyBucketBuilder(releases, periodInMonths)(dateExtractor = _.releasedAt).mapBucketItems(releaseLeadTime(_, tags))
 
     monthlyReleaseLeadTimeBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (leadTimeYearMonth, _) = window.last
@@ -44,23 +45,23 @@ object ReleaseMetricCalculator {
   def calculateReleaseIntervalMetric(releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
     import IndicatorTraversable._
 
-    val monthlyReleaseBuckets = ReleaseMonthlyBucketBuilder(releases, periodInMonths)
+    val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(getReleaseIntervals(releases), periodInMonths)(_.releasedAt)
 
-    monthlyReleaseBuckets.slidingWindow(monthlyWindowSize).map { window =>
-
+    monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (yearMonth, _) = window.last
-
-      val allReleaseDatesInWindow = window.flatMap { case (_, rs) =>
-        rs.map(_.releasedAt)
-      }
-
+      val windowReleaseIntervals = window.flatMap(_._2)
+      Logger.debug(s"$yearMonth -> ${windowReleaseIntervals.map(ReleaseInterval.unapply).toList}")
       ReleaseIntervalResult.of(
         yearMonth,
-        if (allReleaseDatesInWindow.size > 1)
-          allReleaseDatesInWindow.sliding(2).map(x => daysBetween(x.head, x.last)).median
-        else None
+        windowReleaseIntervals.map(x => x.interval).median
       )
+    }
+  }
 
+  private def getReleaseIntervals(releases: Seq[Release]): Seq[ReleaseInterval] = {
+
+    (releases, releases drop 1).zipped.map { case (r1, r2) =>
+      ReleaseInterval(r2, daysBetween(r1.releasedAt, r2.releasedAt))
     }
   }
 
@@ -84,6 +85,10 @@ object ReleaseMetricCalculator {
   }
 
   case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
+
+  case class ReleaseInterval(release: Release, interval: Long) {
+    def releasedAt = release.releasedAt
+  }
 
 }
 

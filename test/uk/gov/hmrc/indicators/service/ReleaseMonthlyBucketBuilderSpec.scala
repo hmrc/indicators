@@ -78,7 +78,7 @@ class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
 
 
 
-      ReleaseMonthlyBucketBuilder(releases, 7)(clock).toSeq shouldBe Seq(
+      MonthlyBucketBuilder(releases, 7)(_.releasedAt)(clock).toSeq shouldBe Seq(
         (Nov_2015, Seq()),
         (YearMonth.from(Dec_1st_2015), Seq()),
         (YearMonth.from(Jan_1st), Seq()),
