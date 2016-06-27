@@ -41,7 +41,7 @@ class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with S
 
         givenRequestExpects(
           method = GET,
-          url = s"$endpointMockUrl/releases/$serviceName",
+          url = s"$endpointMockUrl/$serviceName",
           willRespondWith = (200,
             Some(
               s"""

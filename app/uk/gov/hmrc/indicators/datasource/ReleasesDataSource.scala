@@ -37,5 +37,5 @@ class ReleasesClient(releasesApiBase: String) extends ReleasesDataSource {
   implicit val reads = Json.reads[Release]
 
   def getForService(serviceName: String): Future[List[Release]] =
-    HttpClient.get[List[Release]](s"$releasesApiBase/releases/$serviceName")
+    HttpClient.get[List[Release]](s"$releasesApiBase/$serviceName")
 }
