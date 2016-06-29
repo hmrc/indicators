@@ -38,7 +38,7 @@ object ReleaseMetricCalculator {
   }
 
   def calculateReleaseIntervalMetric(releases: Seq[Release],
-                                      periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
+                                     periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
     import IndicatorTraversable._
 
     val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(
@@ -64,21 +64,24 @@ object ReleaseMetricCalculator {
   }
 
   private def releaseLeadTime(r: Release): Option[ReleaseLeadTime] =
-     daysBetweenTagAndRelease(r).map { releaseLeadTimeInDays =>
-       ReleaseLeadTime(r, releaseLeadTimeInDays) }
+    daysBetweenTagAndRelease(r).map { releaseLeadTimeInDays =>
+      ReleaseLeadTime(r, releaseLeadTimeInDays)
+    }
 
   private def daysBetweenTagAndRelease(release: Release): Option[Long] =
     release.creationDate.map { cd =>
-      daysBetween(cd, release.productionDate) }
+      daysBetween(cd, release.productionDate)
+    }
 
   private def daysBetween(before: LocalDateTime, after: LocalDateTime): Long =
-    ChronoUnit.DAYS.between(before, after)
+    ChronoUnit.DAYS.between(before.toLocalDate, after.toLocalDate)
 
   case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
 
   case class ReleaseInterval(release: Release, interval: Long) {
     def releasedAt = release.productionDate
   }
+
 }
 
 
