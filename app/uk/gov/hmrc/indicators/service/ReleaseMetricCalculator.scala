@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.indicators.service
 
+import java.time.chrono.ChronoPeriod
 import java.time.temporal.ChronoUnit
-import java.time.{Clock, LocalDateTime, ZoneOffset}
+import java.time.{Duration, Clock, LocalDateTime, ZoneOffset}
+import java.util.concurrent.TimeUnit
 
 import uk.gov.hmrc.indicators.datasource.Release
 import play.api.Logger
@@ -33,6 +35,8 @@ object ReleaseMetricCalculator {
     monthlyReleaseLeadTimeBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (leadTimeYearMonth, _) = window.last
       val releaseLeadTimes = window.flatMap(_._2.flatten).map(x => x.daysSinceTag)
+
+      Logger.debug(s"$leadTimeYearMonth -> ${window.flatMap(_._2.flatten).toList}")
       ReleaseLeadTimeResult.of(leadTimeYearMonth, releaseLeadTimes.median)
     }
   }
@@ -73,8 +77,10 @@ object ReleaseMetricCalculator {
       daysBetween(cd, release.productionDate)
     }
 
-  private def daysBetween(before: LocalDateTime, after: LocalDateTime): Long =
-    ChronoUnit.DAYS.between(before.toLocalDate, after.toLocalDate)
+  private def daysBetween(before: LocalDateTime, after: LocalDateTime): Long = {
+
+    Math.round(Duration.between(before, after).toHours / 24d)
+  }
 
   case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
 
