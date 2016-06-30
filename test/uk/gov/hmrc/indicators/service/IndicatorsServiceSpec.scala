@@ -52,7 +52,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
       indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe
-        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), Some(2), Some(2)))
+        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), Some(MeasureResult(2)), Some(MeasureResult(2))))
     }
 
     "return only the release interval if no tag creation dates are available" in {
@@ -63,7 +63,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
       indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe
-        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), None, Some(2)))
+        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), None, Some(MeasureResult(2))))
     }
 
     "returns None if the service is not found" in {

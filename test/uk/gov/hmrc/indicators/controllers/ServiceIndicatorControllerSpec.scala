@@ -27,7 +27,7 @@ import play.api.mvc.{Result, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.TestImplicits._
-import uk.gov.hmrc.indicators.service.{FrequentReleaseMetricResult, IndicatorsService, ReleaseLeadTimeResult}
+import uk.gov.hmrc.indicators.service.{MeasureResult, FrequentReleaseMetricResult, IndicatorsService, ReleaseLeadTimeResult}
 
 import scala.concurrent.{Await, Future}
 
@@ -69,8 +69,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(
         Some(List(
-          FrequentReleaseMetricResult(YearMonth.of(2016, 4), Some(5),Some(4)),
-          FrequentReleaseMetricResult(YearMonth.of(2016, 5), Some(6), None)
+          FrequentReleaseMetricResult(YearMonth.of(2016, 4), Some(MeasureResult(5)),Some(MeasureResult(4))),
+          FrequentReleaseMetricResult(YearMonth.of(2016, 5), Some(MeasureResult(6)), None)
         )))
       )
 
@@ -78,8 +78,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       contentAsJson(result) mustBe
         """[
-          |{"period" : "2016-04", "medianLeadTime" : 5, "medianReleaseInterval" : 4},
-          |{"period" : "2016-05", "medianLeadTime" : 6}
+          |{"period" : "2016-04", "leadTime" : {"median" : 5}, "interval" : {"median" : 4}},
+          |{"period" : "2016-05", "leadTime" : {"median" : 6}}
           |]""".stripMargin.toJson
 
       header("content-type", result).get mustBe "application/json"

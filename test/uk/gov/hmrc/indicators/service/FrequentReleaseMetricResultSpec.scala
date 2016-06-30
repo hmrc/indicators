@@ -49,10 +49,10 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       FrequentReleaseMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        FrequentReleaseMetricResult(Jan_2016, Some(1), Some(5)),
-        FrequentReleaseMetricResult(Feb_2016, Some(2), Some(6)),
-        FrequentReleaseMetricResult(March_2016, Some(3), Some(7)),
-        FrequentReleaseMetricResult(April_2016, Some(4), Some(8))
+        FrequentReleaseMetricResult(Jan_2016, Some(MeasureResult(1)), Some(MeasureResult(5))),
+        FrequentReleaseMetricResult(Feb_2016, Some(MeasureResult(2)), Some(MeasureResult(6))),
+        FrequentReleaseMetricResult(March_2016, Some(MeasureResult(3)), Some(MeasureResult(7))),
+        FrequentReleaseMetricResult(April_2016, Some(MeasureResult(4)), Some(MeasureResult(8)))
       )
     }
 
@@ -75,11 +75,11 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       FrequentReleaseMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        FrequentReleaseMetricResult(Jan_2016, None, Some(5)),
-        FrequentReleaseMetricResult(Feb_2016, Some(2), Some(6)),
-        FrequentReleaseMetricResult(March_2016, Some(3), None),
-        FrequentReleaseMetricResult(April_2016, Some(4), Some(8)),
-        FrequentReleaseMetricResult(May_2016, None, Some(9))
+        FrequentReleaseMetricResult(Jan_2016, None, Some(MeasureResult(5))),
+        FrequentReleaseMetricResult(Feb_2016, Some(MeasureResult(2)), Some(MeasureResult(6))),
+        FrequentReleaseMetricResult(March_2016, Some(MeasureResult(3)), None),
+        FrequentReleaseMetricResult(April_2016, Some(MeasureResult(4)), Some(MeasureResult(8))),
+        FrequentReleaseMetricResult(May_2016, None, Some(MeasureResult(9)))
       )
     }
 

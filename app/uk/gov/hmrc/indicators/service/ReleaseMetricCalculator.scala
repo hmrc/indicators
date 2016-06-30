@@ -36,7 +36,7 @@ object ReleaseMetricCalculator {
       val (leadTimeYearMonth, _) = window.last
       val releaseLeadTimes = window.flatMap(_._2.flatten).map(x => x.daysSinceTag)
 
-      Logger.debug(s"$leadTimeYearMonth -> ${window.flatMap(_._2.flatten).toList}")
+      //Logger.debug(s"$leadTimeYearMonth -> ${window.flatMap(_._2.flatten).toList}")
       ReleaseLeadTimeResult.of(leadTimeYearMonth, releaseLeadTimes.median)
     }
   }
@@ -51,7 +51,9 @@ object ReleaseMetricCalculator {
     monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (yearMonth, _) = window.last
       val windowReleaseIntervals = window.flatMap(_._2)
-      Logger.debug(s"$yearMonth -> ${windowReleaseIntervals.map(ReleaseInterval.unapply).toList}")
+
+      //Logger.debug(s"$yearMonth -> ${windowReleaseIntervals.map(ReleaseInterval.unapply).toList.mkString("\n")}")
+
       ReleaseIntervalResult.of(
         yearMonth,
         windowReleaseIntervals.map(x => x.interval).median

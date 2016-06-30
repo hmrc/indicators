@@ -16,9 +16,12 @@
 
 package uk.gov.hmrc.indicators.service
 
+import java.io.Serializable
 import java.time.{Clock, YearMonth}
 
+import com.sun.xml.internal.ws.developer.MemberSubmissionEndpointReference
 import play.api.Logger
+import play.api.libs.json.{JsObject, JsValue, Writes}
 import uk.gov.hmrc.indicators.JavaDateTimeJsonFormatter
 import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.service.ReleaseMetricCalculator._
@@ -26,11 +29,16 @@ import uk.gov.hmrc.indicators.service.ReleaseMetricCalculator._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class FrequentReleaseMetricResult(period: YearMonth, medianLeadTime: Option[Int], medianReleaseInterval: Option[Int])
+case class FrequentReleaseMetricResult(period: YearMonth, leadTime: Option[MeasureResult], interval: Option[MeasureResult])
+
+case class MeasureResult(median: Int)
 
 object FrequentReleaseMetricResult {
+
   import play.api.libs.json.Json
   import JavaDateTimeJsonFormatter._
+
+  implicit val measureResultWrites: Writes[MeasureResult] = Json.writes[MeasureResult]
 
   implicit val writes = Json.writes[FrequentReleaseMetricResult]
 
@@ -39,9 +47,11 @@ object FrequentReleaseMetricResult {
     val ymToReleaseInterval = intervals.map(x => x.period -> x.median).toMap
 
     (ymToReleaseLeadTime.keySet ++ ymToReleaseInterval.keySet).map { ym =>
-      FrequentReleaseMetricResult(ym, ymToReleaseLeadTime.get(ym).flatten, ymToReleaseInterval.get(ym).flatten)
+      FrequentReleaseMetricResult(ym, ymToReleaseLeadTime.get(ym).flatten.map(x => MeasureResult(x)), ymToReleaseInterval.get(ym).flatten.map(x => MeasureResult(x)))
     }.toSeq.sortBy(_.period)
   }
+
+
 }
 
 abstract class MetricsResult {
@@ -50,18 +60,22 @@ abstract class MetricsResult {
 }
 
 case class ReleaseLeadTimeResult(period: YearMonth, median: Option[Int]) extends MetricsResult
+
 case class ReleaseIntervalResult(period: YearMonth, median: Option[Int]) extends MetricsResult
 
 object ReleaseIntervalResult {
+
   def of(period: YearMonth, median: Option[BigDecimal]): ReleaseIntervalResult =
     ReleaseIntervalResult(period, median.map(x => Math.round(x.toDouble).toInt))
+
+
 }
 
 object ReleaseLeadTimeResult {
-  import play.api.libs.json.Json
-  import JavaDateTimeJsonFormatter._
 
-  implicit val writes = Json.writes[ReleaseLeadTimeResult]
+  import play.api.libs.json._
+
+  import JavaDateTimeJsonFormatter._
 
   def of(period: YearMonth, median: Option[BigDecimal]): ReleaseLeadTimeResult =
     ReleaseLeadTimeResult(period, median.map(x => Math.round(x.toDouble).toInt))
