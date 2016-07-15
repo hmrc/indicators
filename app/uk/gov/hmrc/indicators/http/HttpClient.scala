@@ -67,7 +67,10 @@ object HttpClient {
   private def withErrorHandling[T](method: String, url: String, body: Option[JsValue] = None)(headers: List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] =
     buildCall(method, url, body, headers).execute().transform(
       f,
-      _ => throw new RuntimeException(s"Error connecting  $url")
+      e => {
+        Logger.error(s"error connecting to $url", e)
+        throw new RuntimeException(s"Error connecting  $url", e)
+      }
     )
 
 
