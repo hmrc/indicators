@@ -50,12 +50,15 @@ class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with S
               |        "name": "$serviceName",
               |        "version": "11.0.0",
               |        "creationDate": ${`release 11.0.0 creation date`},
-              |        "productionDate": ${`release 11.0.0 production date`}
+              |        "productionDate": ${`release 11.0.0 production date`},
+              |        "leadTime": 5
               |    },
               |    {
               |        "name": "$serviceName",
               |        "version": "8.3.0",
-              |        "productionDate": ${`release 8.3.0 production date`}
+              |        "productionDate": ${`release 8.3.0 production date`},
+              |        "leadTime": 20,
+              |        "interval": 10
               |    }
               |]
             """.stripMargin
@@ -65,16 +68,21 @@ class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with S
         results.size shouldBe 2
 
         results.head shouldBe Release(
-          serviceName,
-          "11.0.0",
-          Some(LocalDateTime.ofEpochSecond(`release 11.0.0 creation date`, 0, ZoneOffset.UTC)),
-          LocalDateTime.ofEpochSecond(`release 11.0.0 production date`, 0, ZoneOffset.UTC))
+          name = serviceName,
+          version = "11.0.0",
+          creationDate = Some(LocalDateTime.ofEpochSecond(`release 11.0.0 creation date`, 0, ZoneOffset.UTC)),
+          productionDate = LocalDateTime.ofEpochSecond(`release 11.0.0 production date`, 0, ZoneOffset.UTC),
+          leadTime = Some(5)
+        )
 
         results.last shouldBe Release(
-          serviceName,
-          "8.3.0",
-          None,
-          LocalDateTime.ofEpochSecond(`release 8.3.0 production date`, 0, ZoneOffset.UTC))
+          name = serviceName,
+          version = "8.3.0",
+          creationDate = None,
+          productionDate = LocalDateTime.ofEpochSecond(`release 8.3.0 production date`, 0, ZoneOffset.UTC),
+          leadTime = Some(20),
+          interval = Some(10)
+        )
       }
     }
   }

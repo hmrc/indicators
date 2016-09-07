@@ -68,7 +68,7 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_4th)
 
       val releases = List(
-        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th))
+        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th, Some(3)))
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
     }
@@ -77,8 +77,8 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_16th)
 
       val releases = List(
-        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th),
-        Release("test-service", "2.0.0", Some(Feb_10th), Feb_16th))
+        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th, Some(3)),
+        Release("test-service", "2.0.0", Some(Feb_10th), Feb_16th, Some(6)))
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
     }
@@ -87,8 +87,8 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Apr_10th)
 
       val releases = List(
-        Release("test-service", "1.0.0", Some(Mar_1st), Mar_4th), //3
-        Release("test-service", "2.0.0", Some(Apr_4th), Apr_10th) //6
+        Release("test-service", "1.0.0", Some(Mar_1st), Mar_4th, Some(3)),
+        Release("test-service", "2.0.0", Some(Apr_4th), Apr_10th, Some(6))
       )
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 2) shouldBe List(
@@ -99,18 +99,10 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
     "calculate the correct median lead time for 3 releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
-      //      val releases = List(
-      //        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th),
-      //        Release("test-service", "2.0.0", Some(Feb_4th), Feb_10th),
-      //        Release("test-service", "3.0.0", Some(Feb_10th), Feb_18th)
-      //      )
-      //
-      //      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(6)))
-
       val releases = List(
-        Release("test-service", "1.0.0", Some(Feb_1st), Feb_6th), // 5 days
-        Release("test-service", "2.0.0", Some(Feb_6th), Feb_12th), // 6 days
-        Release("test-service", "3.0.0", Some(Feb_12th), Feb_20st)) // 8 days
+        Release("test-service", "1.0.0", Some(Feb_1st), Feb_6th, Some(5)),
+        Release("test-service", "2.0.0", Some(Feb_6th), Feb_12th, Some(6)),
+        Release("test-service", "3.0.0", Some(Feb_12th), Feb_20st, Some(8)))
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe
         List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(6)))
@@ -120,9 +112,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val releases = List(
-        Release("test-service", "1.0.0", Some(Feb_1st), Feb_6th), // 5 days
-        Release("test-service", "2.0.0", None, Feb_12th), // N/A
-        Release("test-service", "3.0.0", Some(Feb_12th), Feb_20st)) // 8 days
+        Release("test-service", "1.0.0", Some(Feb_1st), Feb_6th, Some(5)),
+        Release("test-service", "2.0.0", None, Feb_12th, None), // N/A
+        Release("test-service", "3.0.0", Some(Feb_12th), Feb_20st, Some(8)))
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe
         List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(7)))
@@ -132,10 +124,10 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val releases = List(
-        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th), // 3 days
-        Release("test-service", "2.0.0", Some(Feb_4th), Feb_10th), //6 days
-        Release("test-service", "3.0.0", Some(Feb_10th), Feb_16th), //6 days
-        Release("test-service", "4.0.0", Some(Feb_16th), Feb_18th) //2 days
+        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th, Some(3)),
+        Release("test-service", "2.0.0", Some(Feb_4th), Feb_10th, Some(6)),
+        Release("test-service", "3.0.0", Some(Feb_10th), Feb_16th, Some(6)),
+        Release("test-service", "4.0.0", Some(Feb_16th), Feb_18th, Some(2))
       )
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
@@ -145,16 +137,16 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(June_5th)
 
       val releases = List(
-        Release("test-service", "7.0.0", Some(Mar_27th), Apr_1st), //   5 days
-        Release("test-service", "8.0.0", Some(Apr_4th), Apr_11th), //   7 days
-        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th), //  3 days
-        Release("test-service", "2.0.0", Some(Feb_4th), Feb_10th), //  6 days
-        Release("test-service", "3.0.0", Some(Feb_10th), Feb_16th), //  6 days
-        Release("test-service", "4.0.0", Some(Feb_16th), Feb_18th), //  2 days
-        Release("test-service", "5.0.0", Some(Feb_18th), Mar_1st), //   12 days
-        Release("test-service", "6.0.0", Some(Mar_4th), Mar_27th), //  23 days
-        Release("test-service", "9.0.0", Some(May_1st), May_11th), //  10 days //5,7,10,12,23
-        Release("test-service", "10.0.0", Some(June_1st), June_5th) //  4 days
+        Release("test-service", "7.0.0", Some(Mar_27th), Apr_1st, Some(5)),
+        Release("test-service", "8.0.0", Some(Apr_4th), Apr_11th, Some(7)),
+        Release("test-service", "1.0.0", Some(Feb_1st), Feb_4th, Some(3)),
+        Release("test-service", "2.0.0", Some(Feb_4th), Feb_10th, Some(6)),
+        Release("test-service", "3.0.0", Some(Feb_10th), Feb_16th, Some(6)),
+        Release("test-service", "4.0.0", Some(Feb_16th), Feb_18th, Some(2)),
+        Release("test-service", "5.0.0", Some(Feb_18th), Mar_1st, Some(12)),
+        Release("test-service", "6.0.0", Some(Mar_4th), Mar_27th, Some(23)),
+        Release("test-service", "9.0.0", Some(May_1st), May_11th, Some(10)),
+        Release("test-service", "10.0.0", Some(June_1st), June_5th, Some(4))
       )
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 7) shouldBe List(

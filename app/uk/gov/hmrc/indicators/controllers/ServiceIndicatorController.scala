@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.indicators.controllers
 
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.indicators.ComponentRegistry

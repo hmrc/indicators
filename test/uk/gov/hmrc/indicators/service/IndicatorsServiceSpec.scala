@@ -46,8 +46,8 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
     "calculates FrequentReleaseMetricResult" in {
       val releases = List(
-        Release(serviceName, "1.0.0", Some(Feb_1st), Feb_4th),
-        Release(serviceName, "2.0.0", Some(Feb_5th), Feb_6th))
+        Release(serviceName, "1.0.0", Some(Feb_1st), Feb_4th, Some(3)),
+        Release(serviceName, "2.0.0", Some(Feb_5th), Feb_6th, Some(1)))
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 

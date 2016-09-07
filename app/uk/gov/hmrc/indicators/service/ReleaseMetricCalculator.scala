@@ -30,11 +30,11 @@ object ReleaseMetricCalculator {
   def calculateLeadTimeMetric(releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseLeadTimeResult] = {
     import IndicatorTraversable._
 
-    val monthlyReleaseLeadTimeBuckets = MonthlyBucketBuilder(releases, periodInMonths)(dateExtractor = _.productionDate).mapBucketItems(releaseLeadTime)
+    val monthlyReleaseLeadTimeBuckets = MonthlyBucketBuilder(releases, periodInMonths)(dateExtractor = _.productionDate)
 
     monthlyReleaseLeadTimeBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (leadTimeYearMonth, _) = window.last
-      val releaseLeadTimes = window.flatMap(_._2.flatten).map(x => x.daysSinceTag)
+      val releaseLeadTimes = window.flatMap(x => x._2).flatMap(x => x.leadTime)
 
       //Logger.debug(s"$leadTimeYearMonth -> ${window.flatMap(_._2.flatten).toList}")
       ReleaseLeadTimeResult.of(leadTimeYearMonth, releaseLeadTimes.median)
@@ -68,16 +68,6 @@ object ReleaseMetricCalculator {
       ReleaseInterval(r2, daysBetween(r1.productionDate, r2.productionDate))
     }
   }
-
-  private def releaseLeadTime(r: Release): Option[ReleaseLeadTime] =
-    daysBetweenTagAndRelease(r).map { releaseLeadTimeInDays =>
-      ReleaseLeadTime(r, releaseLeadTimeInDays)
-    }
-
-  private def daysBetweenTagAndRelease(release: Release): Option[Long] =
-    release.creationDate.map { cd =>
-      daysBetween(cd, release.productionDate)
-    }
 
   private def daysBetween(before: LocalDateTime, after: LocalDateTime): Long = {
 
