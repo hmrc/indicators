@@ -45,41 +45,18 @@ object ReleaseMetricCalculator {
                                      periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
     import IndicatorTraversable._
 
-    val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(
-      getReleaseIntervals(releases), periodInMonths)(_.releasedAt)
+    val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(releases, periodInMonths)(_.productionDate)
 
     monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize).map { window =>
       val (yearMonth, _) = window.last
       val windowReleaseIntervals = window.flatMap(_._2)
 
-      //Logger.debug(s"$yearMonth -> ${windowReleaseIntervals.map(ReleaseInterval.unapply).toList.mkString("\n")}")
-
       ReleaseIntervalResult.of(
         yearMonth,
-        windowReleaseIntervals.map(x => x.interval).median
+        windowReleaseIntervals.flatMap(x => x.interval).median
       )
     }
   }
-
-  private def getReleaseIntervals(releases: Seq[Release]): Seq[ReleaseInterval] = {
-    val sortedReleases = releases.sortBy(_.productionDate.toEpochSecond(ZoneOffset.UTC))
-
-    (sortedReleases, sortedReleases drop 1).zipped.map { case (r1, r2) =>
-      ReleaseInterval(r2, daysBetween(r1.productionDate, r2.productionDate))
-    }
-  }
-
-  private def daysBetween(before: LocalDateTime, after: LocalDateTime): Long = {
-
-    Math.round(Duration.between(before, after).toHours / 24d)
-  }
-
-  case class ReleaseLeadTime(release: Release, daysSinceTag: Long)
-
-  case class ReleaseInterval(release: Release, interval: Long) {
-    def releasedAt = release.productionDate
-  }
-
 }
 
 

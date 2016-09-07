@@ -178,12 +178,12 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(Jan_29th)
 
       val Jan_7th = LocalDateTime.of(LocalDate.of(2016, 1, 7), LocalTime.of(12, 16, 3))
-      val Jan_28th = LocalDateTime.of(LocalDate.of(2016, 1, 28),LocalTime.of(11, 16, 3))
+      val Jan_28th = LocalDateTime.of(LocalDate.of(2016, 1, 28), LocalTime.of(11, 16, 3))
 
 
       val releases = List(
         Release("test-service", "1.0.0", None, Jan_7th),
-        Release("test-service", "2.0.0", None, Jan_28th)
+        Release("test-service", "2.0.0", None, Jan_28th, interval = Some(21))
       )
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Jan_1st), Some(21)))
@@ -194,20 +194,20 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
       val releases = List(
         Release("test-service", "1.0.0", None, Mar_4th),
-        Release("test-service", "2.0.0", None, Apr_10th))
+        Release("test-service", "2.0.0", None, Apr_10th, interval = Some(37)))
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 2) shouldBe List(
         ReleaseIntervalResult(YearMonth.from(Mar_1st), None),
         ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(37)))
     }
 
-    "calculate the correctmedian release interval for 3 releases" in new SetUp {
+    "calculate the correct median release interval for 3 releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       val releases = List(
         Release("test-service", "1.0.0", None, Feb_4th),
-        Release("test-service", "2.0.0", None, Feb_10th),
-        Release("test-service", "3.0.0", None, Feb_18th))
+        Release("test-service", "2.0.0", None, Feb_10th, interval = Some(6)),
+        Release("test-service", "3.0.0", None, Feb_18th, interval = Some(8)))
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe
         List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(7)))
@@ -219,9 +219,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       //6,6,2
       val releases = List(
         Release("test-service", "1.0.0", None, Feb_4th),
-        Release("test-service", "2.0.0", None, Feb_10th),
-        Release("test-service", "3.0.0", None, Feb_16th),
-        Release("test-service", "4.0.0", None, Feb_18th))
+        Release("test-service", "2.0.0", None, Feb_10th, interval = Some(6)),
+        Release("test-service", "3.0.0", None, Feb_16th, interval = Some(6)),
+        Release("test-service", "4.0.0", None, Feb_18th, interval = Some(2)))
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(6)))
     }
@@ -230,16 +230,16 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       override implicit val clock: Clock = clockFrom(June_5th)
 
       val releases = List(
-        Release("test-service", "9.0.0", None, May_11th), //interval 30
-        Release("test-service", "5.0.0", None, Mar_1st), //interval 12
-        Release("test-service", "2.0.0", None, Feb_10th), // interval 6
-        Release("test-service", "4.0.0", None, Feb_18th), // interval 2
-        Release("test-service", "6.0.0", None, Mar_27th), //interval 26
-        Release("test-service", "8.0.0", None, Apr_11th), //interval 10
-        Release("test-service", "7.0.0", None, Apr_1st), //interval 5
-        Release("test-service", "3.0.0", None, Feb_16th), // interval 6
-        Release("test-service", "1.0.0", None, Feb_4th), // interval None
-        Release("test-service", "10.0.0", None, June_5th) //interval 25
+        Release("test-service", "9.0.0", None, May_11th, interval = Some(30)), //interval 30
+        Release("test-service", "5.0.0", None, Mar_1st, interval = Some(12)), //interval 12
+        Release("test-service", "2.0.0", None, Feb_10th, interval = Some(6)), // interval 6
+        Release("test-service", "4.0.0", None, Feb_18th, interval = Some(2)), // interval 2
+        Release("test-service", "6.0.0", None, Mar_27th, interval = Some(26)), //interval 26
+        Release("test-service", "8.0.0", None, Apr_11th, interval = Some(10)), //interval 10
+        Release("test-service", "7.0.0", None, Apr_1st, interval = Some(5)), //interval 5
+        Release("test-service", "3.0.0", None, Feb_16th, interval = Some(6)), // interval 6
+        Release("test-service", "1.0.0", None, Feb_4th, interval = None), // interval None
+        Release("test-service", "10.0.0", None, June_5th, interval = Some(25)) //interval 25
       )
 
       //dec None
