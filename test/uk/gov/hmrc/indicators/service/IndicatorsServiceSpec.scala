@@ -46,8 +46,8 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
     "calculates FrequentReleaseMetricResult" in {
       val releases = List(
-        Release(serviceName, "1.0.0", Some(Feb_1st), Feb_4th, leadTime = Some(3)),
-        Release(serviceName, "2.0.0", Some(Feb_5th), Feb_6th, leadTime = Some(1), interval = Some(2)))
+        Release(serviceName, Feb_4th, leadTime = Some(3)),
+        Release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
@@ -57,8 +57,8 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
     "return only the release interval if no tag creation dates are available" in {
       val releases = List(
-        Release(serviceName, "1.0.0", None, Feb_4th),
-        Release(serviceName, "2.0.0", None, Feb_6th, interval = Some(2)))
+        Release(serviceName, Feb_4th),
+        Release(serviceName, Feb_6th, interval = Some(2)))
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 

@@ -67,22 +67,9 @@ class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with S
         val results = releasesClient.getForService(serviceName).futureValue
         results.size shouldBe 2
 
-        results.head shouldBe Release(
-          name = serviceName,
-          version = "11.0.0",
-          creationDate = Some(LocalDateTime.ofEpochSecond(`release 11.0.0 creation date`, 0, ZoneOffset.UTC)),
-          productionDate = LocalDateTime.ofEpochSecond(`release 11.0.0 production date`, 0, ZoneOffset.UTC),
-          leadTime = Some(5)
-        )
+        results.head shouldBe Release(name = serviceName, productionDate = LocalDateTime.ofEpochSecond(`release 11.0.0 production date`, 0, ZoneOffset.UTC), leadTime = Some(5))
 
-        results.last shouldBe Release(
-          name = serviceName,
-          version = "8.3.0",
-          creationDate = None,
-          productionDate = LocalDateTime.ofEpochSecond(`release 8.3.0 production date`, 0, ZoneOffset.UTC),
-          leadTime = Some(20),
-          interval = Some(10)
-        )
+        results.last shouldBe Release(name = serviceName, productionDate = LocalDateTime.ofEpochSecond(`release 8.3.0 production date`, 0, ZoneOffset.UTC), leadTime = Some(20), interval = Some(10))
       }
     }
   }
