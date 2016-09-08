@@ -54,7 +54,7 @@ class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
     val June_1st = LocalDateTime.of(LocalDate.of(2016, 6, 1), midNight)
     val June_5th = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
 
-     val clock = clockFrom(May_10th)
+    val clock = clockFrom(May_10th)
   }
 
   "MonthlyReleaseBucketBuilder" should {

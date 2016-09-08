@@ -18,7 +18,7 @@ package uk.gov.hmrc.indicators.datasource
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.{Json, Reads}
+import play.api.libs.json.Json
 import uk.gov.hmrc.indicators.JavaDateTimeJsonFormatter
 import uk.gov.hmrc.indicators.http.HttpClient
 

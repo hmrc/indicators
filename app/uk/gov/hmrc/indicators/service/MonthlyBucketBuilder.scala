@@ -24,6 +24,7 @@ object MonthlyBucketBuilder {
   def apply[T](items: Seq[T], months: Int)(dateExtractor: T => TemporalAccessor)(implicit clock: Clock): YearMonthTimeSeries[T] = {
 
     val start = YearMonth.now(clock).minusMonths(months - 1)
+
     val end = YearMonth.now(clock)
 
     def itemsForYearMonth(ym: YearMonth): Seq[T] = {
