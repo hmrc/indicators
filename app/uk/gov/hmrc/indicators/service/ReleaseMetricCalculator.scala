@@ -16,46 +16,52 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.chrono.ChronoPeriod
-import java.time.temporal.ChronoUnit
-import java.time.{Duration, Clock, LocalDateTime, ZoneOffset}
-import java.util.concurrent.TimeUnit
+import java.time.Clock
 
 import uk.gov.hmrc.indicators.datasource.Release
-import play.api.Logger
 
 object ReleaseMetricCalculator {
   val monthlyWindowSize: Int = 3
+  val monthsToLookBack = 3
 
-  def calculateLeadTimeMetric(releases: Seq[Release], periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseLeadTimeResult] = {
+  def calculateLeadTimeMetric(releases: Seq[Release], requiredPeriodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseLeadTimeResult] = {
     import IndicatorTraversable._
 
-    val monthlyReleaseLeadTimeBuckets = MonthlyBucketBuilder(releases, periodInMonths)(dateExtractor = _.productionDate)
+    withLookBack(requiredPeriodInMonths){ period =>
+      val monthlyReleaseLeadTimeBuckets = MonthlyBucketBuilder(releases, period)(dateExtractor = _.productionDate)
 
-    monthlyReleaseLeadTimeBuckets.slidingWindow(monthlyWindowSize).map { window =>
-      val (leadTimeYearMonth, _) = window.last
-      val releaseLeadTimes = window.flatMap(x => x._2).flatMap(x => x.leadTime)
-
-      //Logger.debug(s"$leadTimeYearMonth -> ${window.flatMap(_._2.flatten).toList}")
-      ReleaseLeadTimeResult.of(leadTimeYearMonth, releaseLeadTimes.median)
+      monthlyReleaseLeadTimeBuckets.slidingWindow(monthlyWindowSize).map { window =>
+        val (leadTimeYearMonth, _) = window.last
+        val releaseLeadTimes = window.flatMap(x => x._2).flatMap(x => x.leadTime)
+        ReleaseLeadTimeResult.of(leadTimeYearMonth, releaseLeadTimes.median)
+      }
     }
+
   }
 
   def calculateReleaseIntervalMetric(releases: Seq[Release],
-                                     periodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
+                                     requiredPeriodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
     import IndicatorTraversable._
 
-    val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(releases, periodInMonths)(_.productionDate)
+    withLookBack(requiredPeriodInMonths) { period =>
 
-    monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize).map { window =>
-      val (yearMonth, _) = window.last
-      val windowReleaseIntervals = window.flatMap(_._2)
+      val monthlyReleaseIntervalBuckets = MonthlyBucketBuilder(releases, period)(_.productionDate)
 
-      ReleaseIntervalResult.of(
-        yearMonth,
-        windowReleaseIntervals.flatMap(x => x.interval).median
-      )
+      monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize).map { window =>
+        val (yearMonth, _) = window.last
+        val windowReleaseIntervals = window.flatMap(_._2)
+
+        ReleaseIntervalResult.of(
+          yearMonth,
+          windowReleaseIntervals.flatMap(x => x.interval).median
+        )
+      }
     }
+
+  }
+
+  def withLookBack[T](requiredPeriod: Int)(f: Int => Seq[T]): Seq[T] = {
+    f(requiredPeriod + monthsToLookBack).takeRight(requiredPeriod)
   }
 }
 
