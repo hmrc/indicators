@@ -16,38 +16,49 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.io.Serializable
-import java.time.{Clock, YearMonth}
+import java.time.{Clock, LocalDate, YearMonth}
 
-import com.sun.xml.internal.ws.developer.MemberSubmissionEndpointReference
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue, Writes}
-import uk.gov.hmrc.indicators.JavaDateTimeJsonFormatter
+import play.api.libs.json.Writes
 import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.service.ReleaseMetricCalculator._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class FrequentReleaseMetricResult(period: YearMonth, leadTime: Option[MeasureResult], interval: Option[MeasureResult])
+case class FrequentReleaseMetricResult(period: YearMonth, from: LocalDate, to: LocalDate, leadTime: Option[MeasureResult], interval: Option[MeasureResult])
 
 case class MeasureResult(median: Int)
 
 object FrequentReleaseMetricResult {
 
   import play.api.libs.json.Json
-  import JavaDateTimeJsonFormatter._
+  import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
 
   implicit val measureResultWrites: Writes[MeasureResult] = Json.writes[MeasureResult]
 
   implicit val writes = Json.writes[FrequentReleaseMetricResult]
 
   def from(leadTimes: Seq[ReleaseLeadTimeResult], intervals: Seq[ReleaseIntervalResult]): Seq[FrequentReleaseMetricResult] = {
+    val ymToRLT = leadTimes.map(x => x.period -> x).toMap
+    val ymToRI = intervals.map(x => x.period -> x).toMap
+
     val ymToReleaseLeadTime = leadTimes.map(x => x.period -> x.median).toMap
     val ymToReleaseInterval = intervals.map(x => x.period -> x.median).toMap
 
     (ymToReleaseLeadTime.keySet ++ ymToReleaseInterval.keySet).map { ym =>
-      FrequentReleaseMetricResult(ym, ymToReleaseLeadTime.get(ym).flatten.map(x => MeasureResult(x)), ymToReleaseInterval.get(ym).flatten.map(x => MeasureResult(x)))
+      val leadTimeResult = ymToRLT.get(ym)
+      val intervalResult = ymToRI.get(ym)
+      val from = Seq(leadTimeResult.map(_.from), intervalResult.map(_.from)).flatten.head
+      val to = Seq(leadTimeResult.map(_.to), intervalResult.map(_.to)).flatten.head
+
+      FrequentReleaseMetricResult(
+        ym,
+        from,
+        to,
+        leadTimeResult.flatMap(x => x.median.map(MeasureResult.apply)),
+        intervalResult.flatMap(x => x.median.map(MeasureResult.apply))
+      )
     }.toSeq.sortBy(_.period)
   }
 
@@ -56,29 +67,26 @@ object FrequentReleaseMetricResult {
 
 abstract class MetricsResult {
   val period: YearMonth
+  val from: LocalDate
+  val to: LocalDate
+
   val median: Option[Int]
 }
 
-case class ReleaseLeadTimeResult(period: YearMonth, median: Option[Int]) extends MetricsResult
+case class ReleaseLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
 
-case class ReleaseIntervalResult(period: YearMonth, median: Option[Int]) extends MetricsResult
+case class ReleaseIntervalResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
 
 object ReleaseIntervalResult {
 
-  def of(period: YearMonth, median: Option[BigDecimal]): ReleaseIntervalResult =
-    ReleaseIntervalResult(period, median.map(x => Math.round(x.toDouble).toInt))
-
-
+  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseIntervalResult =
+    ReleaseIntervalResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
 }
 
 object ReleaseLeadTimeResult {
 
-  import play.api.libs.json._
-
-  import JavaDateTimeJsonFormatter._
-
-  def of(period: YearMonth, median: Option[BigDecimal]): ReleaseLeadTimeResult =
-    ReleaseLeadTimeResult(period, median.map(x => Math.round(x.toDouble).toInt))
+  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseLeadTimeResult =
+    ReleaseLeadTimeResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
 }
 
 class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = Clock.systemUTC()) {

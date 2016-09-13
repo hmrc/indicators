@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{LocalDateTime, YearMonth}
+import java.time.{LocalDate, LocalDateTime, YearMonth}
 
 import org.mockito.Mockito
 import org.scalatest.concurrent.ScalaFutures
@@ -37,9 +37,11 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
   val Feb_4th = LocalDateTime.of(2000, 2, 4, 0, 0, 0)
   val Feb_5th = LocalDateTime.of(2000, 2, 5, 0, 0, 0)
   val Feb_6th = LocalDateTime.of(2000, 2, 6, 0, 0, 0)
-  val fixedClock = DateHelper.clockFrom(Feb_1st)
 
-  val indicatorsService = new IndicatorsService(releasesClient, fixedClock)
+  val Feb_18th = LocalDateTime.of(2000, 2, 18, 0, 0, 0)
+  val now = DateHelper.clockFrom(Feb_18th)
+
+  val indicatorsService = new IndicatorsService(releasesClient, now)
 
   "IndicatorService getFrequentReleaseMetric" should {
     val serviceName = "test-service"
@@ -51,8 +53,10 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
+      val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
+
       indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe
-        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), Some(MeasureResult(2)), Some(MeasureResult(2))))
+        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, Some(MeasureResult(2)), Some(MeasureResult(2))))
     }
 
     "return only the release interval if no tag creation dates are available" in {
@@ -62,8 +66,10 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
+      val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
+
       indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe
-        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), None, Some(MeasureResult(2))))
+        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, None, Some(MeasureResult(2))))
     }
 
     "returns None if the service is not found" in {

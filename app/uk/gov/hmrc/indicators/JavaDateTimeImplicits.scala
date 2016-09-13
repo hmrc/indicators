@@ -17,10 +17,11 @@
 package uk.gov.hmrc.indicators
 
 import java.time._
+import java.time.format.DateTimeFormatter
 
 import play.api.libs.json._
 
-object JavaDateTimeJsonFormatter {
+object JavaDateTimeImplicits {
 
   implicit val localDateTime = new Reads[LocalDateTime] {
     override def reads(json: JsValue): JsResult[LocalDateTime] = json match {
@@ -29,6 +30,10 @@ object JavaDateTimeJsonFormatter {
       )
       case v => JsError(s"invalid value for epoch second '$v'")
     }
+  }
+
+  implicit val localDate = new Writes[LocalDate] {
+    override def writes(date: LocalDate): JsValue = JsString(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
   }
 
   implicit val yearMonthWrite = new Writes[YearMonth] {

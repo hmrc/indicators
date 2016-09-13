@@ -18,8 +18,8 @@ package uk.gov.hmrc.indicators.datasource
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.Json
-import uk.gov.hmrc.indicators.JavaDateTimeJsonFormatter
+import play.api.libs.json.{Json, Reads}
+import uk.gov.hmrc.indicators.JavaDateTimeImplicits
 import uk.gov.hmrc.indicators.http.HttpClient
 
 import scala.concurrent.Future
@@ -32,7 +32,7 @@ trait ReleasesDataSource {
 }
 
 class ReleasesClient(releasesApiBase: String) extends ReleasesDataSource {
-  import JavaDateTimeJsonFormatter._
+  import JavaDateTimeImplicits._
 
   implicit val reads = Json.reads[Release]
 

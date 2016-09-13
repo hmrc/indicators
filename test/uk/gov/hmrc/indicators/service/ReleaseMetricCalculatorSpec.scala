@@ -28,16 +28,14 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
   trait SetUp {
     private val midNight: LocalTime = LocalTime.of(0, 0)
 
-
+    val Oct_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 10, 1), midNight)
+    val Nov_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 11, 1), midNight)
     val Nov_26th_2015 = LocalDateTime.of(LocalDate.of(2015, 11, 26), midNight)
     val Dec_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 12, 1), midNight)
     val Dec_2nd_2015 = LocalDateTime.of(LocalDate.of(2015, 12, 2), midNight)
 
     val Jan_1st = LocalDateTime.of(LocalDate.of(2016, 1, 1), midNight)
-
     val Jan_10th = LocalDateTime.of(LocalDate.of(2016, 1, 10), midNight)
-
-
     val Feb_1st = LocalDateTime.of(LocalDate.of(2016, 2, 1), midNight)
     val Feb_4th = LocalDateTime.of(LocalDate.of(2016, 2, 4), midNight)
     val Feb_6th = LocalDateTime.of(LocalDate.of(2016, 2, 6), midNight)
@@ -47,12 +45,10 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
     val Feb_16th = LocalDateTime.of(LocalDate.of(2016, 2, 16), midNight)
     val Feb_18th = LocalDateTime.of(LocalDate.of(2016, 2, 18), midNight)
     val Feb_20st = LocalDateTime.of(LocalDate.of(2016, 2, 20), midNight)
-
     val Mar_1st = LocalDateTime.of(LocalDate.of(2016, 3, 1), midNight)
     val Mar_4th = LocalDateTime.of(LocalDate.of(2016, 3, 4), midNight)
     val March_10th = LocalDateTime.of(LocalDate.of(2016, 3, 10), midNight)
     val Mar_27th = LocalDateTime.of(LocalDate.of(2016, 3, 27), midNight)
-
     val Apr_1st = LocalDateTime.of(LocalDate.of(2016, 4, 1), midNight)
     val Apr_4th = LocalDateTime.of(LocalDate.of(2016, 4, 4), midNight)
     val Apr_10th = LocalDateTime.of(LocalDate.of(2016, 4, 10), midNight)
@@ -62,8 +58,8 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
     val May_11th = LocalDateTime.of(LocalDate.of(2016, 5, 11), midNight)
     val June_1st = LocalDateTime.of(LocalDate.of(2016, 6, 1), midNight)
     val June_5th = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
-
     implicit val clock = clockFrom(May_10th)
+
   }
 
   "ReleaseMetricCalculator.calculateLeadTime" should {
@@ -74,7 +70,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       val releases = List(
         Release("test-service", Feb_4th, Some(3)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(3)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(
+        ReleaseLeadTimeResult(period = YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_4th.toLocalDate, median = Some(3))
+      )
     }
 
     "calculate the correct median lead time for two tags" in new SetUp {
@@ -84,7 +82,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Feb_4th, Some(3)),
         Release("test-service", Feb_16th, Some(6)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(
+        ReleaseLeadTimeResult(period = YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_16th.toLocalDate, median = Some(5))
+      )
     }
 
     "calculate the correct median lead time for releases that spans two months" in new SetUp {
@@ -96,8 +96,8 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       )
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 2) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), Some(3)),
-        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), Some(5)))
+        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(3)),
+        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = Apr_10th.toLocalDate, Some(5)))
     }
 
     "calculate the correct median lead time for 3 releases" in new SetUp {
@@ -106,10 +106,11 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       val releases = List(
         Release("test-service", Feb_6th, Some(5)),
         Release("test-service", Feb_12th, Some(6)),
-        Release("test-service", Feb_20st, Some(8)))
+        Release("test-service", Feb_18th, Some(8)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe
-        List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(6)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(
+        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(6))
+      )
     }
 
     "calculate the correct median lead time for 3 releases with one missing tag date" in new SetUp {
@@ -120,8 +121,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Feb_12th, None), // N/A
         Release("test-service", Feb_20st, Some(8)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe
-        List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(7)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(
+        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(7))
+      )
     }
 
     "calculate the correct median lead time for 4 releases (3, 6, 6, 2)" in new SetUp {
@@ -134,7 +136,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Feb_18th, Some(2))
       )
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)))
+      ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 1) shouldBe List(
+        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(5))
+      )
     }
 
     "calculate the rolling lead time for 7 months (3 months sliding window) when provided tags and releases are not ordered" in new SetUp {
@@ -154,13 +158,14 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
       )
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 7) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Dec_1st_2015), None),
-        ReleaseLeadTimeResult(YearMonth.from(Jan_1st), None),
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(5)),
-        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), Some(6)),
-        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), Some(6)),
-        ReleaseLeadTimeResult(YearMonth.from(May_1st), Some(10)),
-        ReleaseLeadTimeResult(YearMonth.from(June_1st), Some(6)))
+        ReleaseLeadTimeResult(YearMonth.from(Dec_1st_2015), from = Oct_1st_2015.toLocalDate, to = toEndOfMonth(Dec_1st_2015), None),
+        ReleaseLeadTimeResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = toEndOfMonth(Jan_1st), None),
+        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(5)),
+        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(6)),
+        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(6)),
+        ReleaseLeadTimeResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(10)),
+        ReleaseLeadTimeResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(6))
+      )
     }
 
     "calculate the median release lead time for 5 months (3 months sliding window) looking back 8 months" in new SetUp {
@@ -194,11 +199,11 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
 
       ReleaseMetricCalculator.calculateLeadTimeMetric(releases, 5) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), Some(7)),
-        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), Some(12)),
-        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), Some(8)),
-        ReleaseLeadTimeResult(YearMonth.from(May_1st), Some(12)),
-        ReleaseLeadTimeResult(YearMonth.from(June_1st), Some(18)))
+        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(7)),
+        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(12)),
+        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(8)),
+        ReleaseLeadTimeResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(12)),
+        ReleaseLeadTimeResult(YearMonth.from(June_1st),from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(18)))
     }
 
   }
@@ -210,8 +215,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
       val releases = List(Release("test-service", Feb_4th))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe
-        List(ReleaseIntervalResult(YearMonth.from(Feb_1st), None))
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(
+        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_4th.toLocalDate, None)
+      )
     }
 
     "calculate the correct median release interval for two releases" in new SetUp {
@@ -229,7 +235,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Jan_28th, interval = Some(21))
       )
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Jan_1st), Some(21)))
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(
+        ReleaseIntervalResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = Jan_29th.toLocalDate, Some(21))
+      )
     }
 
     "calculate the correct median release interval for releases that spans two months" in new SetUp {
@@ -240,8 +248,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Apr_10th, interval = Some(37)))
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 2) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Mar_1st), None),
-        ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(37)))
+        ReleaseIntervalResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), None),
+        ReleaseIntervalResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = Apr_10th.toLocalDate, Some(37))
+      )
     }
 
     "calculate the correct median release interval for 3 releases" in new SetUp {
@@ -252,8 +261,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Feb_10th, interval = Some(6)),
         Release("test-service", Feb_18th, interval = Some(8)))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe
-        List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(7)))
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(
+        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(7))
+      )
     }
 
     "calculate the correct median release interval for 4 releases (3, 6, 6, 2)" in new SetUp {
@@ -266,7 +276,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
         Release("test-service", Feb_16th, interval = Some(6)),
         Release("test-service", Feb_18th, interval = Some(2)))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(6)))
+      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 1) shouldBe List(
+        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(6))
+      )
     }
 
     "calculate the median release interval for 7 months (3 months sliding window) when provided releases are not ordered" in new SetUp {
@@ -295,13 +307,14 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 7) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Dec_1st_2015), None),
-        ReleaseIntervalResult(YearMonth.from(Jan_1st), None),
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(Mar_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(May_1st), Some(12)),
-        ReleaseIntervalResult(YearMonth.from(June_1st), Some(18)))
+        ReleaseIntervalResult(YearMonth.from(Dec_1st_2015), from = Oct_1st_2015.toLocalDate, to = toEndOfMonth(Dec_1st_2015), None),
+        ReleaseIntervalResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = toEndOfMonth(Jan_1st), None),
+        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(6)),
+        ReleaseIntervalResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(6)),
+        ReleaseIntervalResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(6)),
+        ReleaseIntervalResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(12)),
+        ReleaseIntervalResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(18))
+      )
     }
 
     "calculate the median release interval for 5 months (3 months sliding window) looking back 8 months" in new SetUp {
@@ -335,11 +348,13 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
 
 
       ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases, 5) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), Some(7)),
-        ReleaseIntervalResult(YearMonth.from(Mar_1st), Some(12)),
-        ReleaseIntervalResult(YearMonth.from(Apr_1st), Some(8)),
-        ReleaseIntervalResult(YearMonth.from(May_1st), Some(12)),
-        ReleaseIntervalResult(YearMonth.from(June_1st), Some(18)))
+        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(7)),
+        ReleaseIntervalResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(12)),
+        ReleaseIntervalResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(8)),
+        ReleaseIntervalResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(12)),
+        ReleaseIntervalResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(18)))
     }
   }
+
+  def toEndOfMonth(date: LocalDateTime): LocalDate = YearMonth.from(date).atEndOfMonth()
 }
