@@ -1,4 +1,5 @@
 # microservice specific routes
 
-GET        /service/:serviceName/fpr    uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.frequentProdRelease(serviceName)
+GET        /service/:serviceName/releases    uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.frequentProdRelease(serviceName)
+
 
