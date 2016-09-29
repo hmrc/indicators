@@ -27,7 +27,7 @@ import play.api.mvc.{Result, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.TestImplicits._
-import uk.gov.hmrc.indicators.service.{FrequentReleaseMetricResult, IndicatorsService, MeasureResult}
+import uk.gov.hmrc.indicators.service.{ReleaseThroughputMetricResult, IndicatorsService, MeasureResult}
 
 import scala.concurrent.{Await, Future}
 
@@ -40,44 +40,39 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
   }
 
 
+  "ServiceIndicatorController.releaseStability" should {
 
-  "ServiceIndicatorController.frequentProdRelease" should {
+    "return release stability metrics" in {
 
-    "return deployment lead time in json by default" in {
-      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(Some(Seq())))
+      val date = LocalDate.of(2016, 9, 13)
 
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest())
+      when(mockIndicatorsService.getReleaseStabilityMetrics("serviceName")).thenReturn(Future.successful(Some(List())))
 
-      contentAsJson(result) mustBe """[]""".toJson
+      val result = controller.releaseStability("serviceName")(FakeRequest())
 
-      header("content-type", result).get mustBe "application/json"
-
-    }
-
-    "return deployment lead time in json when application/json is requested" in {
-      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(Some(List())))
-
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest().withHeaders("Accepts" -> "application/json"))
-
-      contentAsJson(result) mustBe """[]""".toJson
+      contentAsJson(result) mustBe
+        """[]""".stripMargin.toJson
 
       header("content-type", result).get mustBe "application/json"
-
     }
+
+  }
+
+  "ServiceIndicatorController.releaseThroughput" should {
 
 
     "return Frequent release metric for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(
+      when(mockIndicatorsService.getReleaseThroughputMetrics("serviceName")).thenReturn(Future.successful(
         Some(List(
-          FrequentReleaseMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(5)), Some(MeasureResult(4))),
-          FrequentReleaseMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(6)), None)
+          ReleaseThroughputMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(5)), Some(MeasureResult(4))),
+          ReleaseThroughputMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(6)), None)
         )))
       )
 
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest())
+      val result = controller.releaseThroughput("serviceName")(FakeRequest())
 
       contentAsJson(result) mustBe
         """[
@@ -90,9 +85,9 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
 
     "return NotFound if None lead times returned" in {
-      when(mockIndicatorsService.getFrequentReleaseMetric("serviceName")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getReleaseThroughputMetrics("serviceName")).thenReturn(Future.successful(None))
 
-      val result = controller.frequentProdRelease("serviceName")(FakeRequest())
+      val result = controller.releaseThroughput("serviceName")(FakeRequest())
 
       status(result) mustBe NOT_FOUND
 

@@ -25,21 +25,21 @@ import uk.gov.hmrc.indicators.service.ReleaseMetricCalculator._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import play.api.libs.json.Json
+import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
 
-case class FrequentReleaseMetricResult(period: YearMonth, from: LocalDate, to: LocalDate, leadTime: Option[MeasureResult], interval: Option[MeasureResult])
+case class ReleaseThroughputMetricResult(period: YearMonth,
+                                         from: LocalDate,
+                                         to: LocalDate,
+                                         leadTime: Option[MeasureResult],
+                                         interval: Option[MeasureResult])
 
-case class MeasureResult(median: Int)
 
-object FrequentReleaseMetricResult {
+object ReleaseThroughputMetricResult {
 
-  import play.api.libs.json.Json
-  import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
+  implicit val writes = Json.writes[ReleaseThroughputMetricResult]
 
-  implicit val measureResultWrites: Writes[MeasureResult] = Json.writes[MeasureResult]
-
-  implicit val writes = Json.writes[FrequentReleaseMetricResult]
-
-  def from(leadTimes: Seq[ReleaseLeadTimeResult], intervals: Seq[ReleaseIntervalResult]): Seq[FrequentReleaseMetricResult] = {
+  def from(leadTimes: Seq[ReleaseLeadTimeResult], intervals: Seq[ReleaseIntervalResult]): Seq[ReleaseThroughputMetricResult] = {
     val ymToRLT = leadTimes.map(x => x.period -> x).toMap
     val ymToRI = intervals.map(x => x.period -> x).toMap
 
@@ -52,7 +52,7 @@ object FrequentReleaseMetricResult {
       val from = Seq(leadTimeResult.map(_.from), intervalResult.map(_.from)).flatten.head
       val to = Seq(leadTimeResult.map(_.to), intervalResult.map(_.to)).flatten.head
 
-      FrequentReleaseMetricResult(
+      ReleaseThroughputMetricResult(
         ym,
         from,
         to,
@@ -62,7 +62,24 @@ object FrequentReleaseMetricResult {
     }.toSeq.sortBy(_.period)
   }
 
+}
 
+case class ReleaseStabilityMetricResult(period: YearMonth,
+                                        from: LocalDate,
+                                        to: LocalDate,
+                                        hotfixRate: HotFixRate,
+                                        hotfixLeadTime: Option[MeasureResult])
+
+object ReleaseStabilityMetricResult {
+  implicit val writes = Json.writes[ReleaseStabilityMetricResult]
+
+}
+
+case class MeasureResult(median: Int)
+
+object MeasureResult {
+
+  implicit val measureResultWrites: Writes[MeasureResult] = Json.writes[MeasureResult]
 }
 
 abstract class MetricsResult {
@@ -72,6 +89,7 @@ abstract class MetricsResult {
 
   val median: Option[Int]
 }
+
 
 case class ReleaseLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
 
@@ -89,19 +107,35 @@ object ReleaseLeadTimeResult {
     ReleaseLeadTimeResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
 }
 
+
 class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = Clock.systemUTC()) {
+
   implicit val c = clock
 
-  def getFrequentReleaseMetric(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[FrequentReleaseMetricResult]]] =
-    releasesDataSource.getForService(serviceName).map { releases =>
+  def getReleaseThroughputMetrics(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[ReleaseThroughputMetricResult]]] =
+    withReleases(serviceName) { releases =>
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
       Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
 
       Some(
-        FrequentReleaseMetricResult.from(
+        ReleaseThroughputMetricResult.from(
           calculateLeadTimeMetric(releases, periodInMonths),
           calculateReleaseIntervalMetric(releases, periodInMonths)))
+    }
+
+
+  def getReleaseStabilityMetrics(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[ReleaseStabilityMetricResult]]] =
+    withReleases(serviceName)(releases => Some(calculateReleaseStabilityMetric(releases, periodInMonths)))
+
+
+  private def withReleases[T](serviceName: String)(f: (Seq[Release] => Option[T])): Future[Option[T]] = {
+    releasesDataSource.getForService(serviceName).map { releases =>
+
+      f(releases)
+
     }.recoverWith { case ex => Future.successful(None) }
+  }
+
 }
 
 

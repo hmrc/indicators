@@ -23,10 +23,12 @@ import uk.gov.hmrc.indicators.service.IndicatorsService
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object ServiceIndicatorController extends ServiceIndicatorController {
 
   override val indicatorsService: IndicatorsService = ComponentRegistry.indicatorsService
+
 }
 
 
@@ -35,10 +37,16 @@ trait ServiceIndicatorController extends BaseController {
 
   def indicatorsService: IndicatorsService
 
+  def releaseStability(serviceName: String) =  Action.async { implicit request =>
+    indicatorsService.getReleaseStabilityMetrics(serviceName) map {
+      case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
+      case _ => NotFound
+    }
+  }
 
-  def frequentProdRelease(serviceName: String) = Action.async { implicit request =>
+  def releaseThroughput(serviceName: String) = Action.async { implicit request =>
 
-    indicatorsService.getFrequentReleaseMetric(serviceName) map {
+    indicatorsService.getReleaseThroughputMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
       case _ => NotFound
     }

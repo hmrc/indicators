@@ -43,39 +43,70 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
   val indicatorsService = new IndicatorsService(releasesClient, now)
 
-  "IndicatorService getFrequentReleaseMetric" should {
-    val serviceName = "test-service"
+  val serviceName = "test-service"
 
-    "calculates FrequentReleaseMetricResult" in {
+
+
+  "IndicatorService getReleaseStabilityMetrics" should {
+    "calculates ReleaseStabilityMetrics when there has been no hotfix releases" in {
+
       val releases = List(
-        Release(serviceName, Feb_4th, leadTime = Some(3)),
-        Release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
+        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
+        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2), version = "2.0.0"))
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
       val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
 
-      indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe
-        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, Some(MeasureResult(2)), Some(MeasureResult(2))))
+      indicatorsService.getReleaseStabilityMetrics("test-service", 1).futureValue.get shouldBe
+        List(ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, Some(0) , None))
+    }
+
+
+    "returns None if the service is not found" in {
+      Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.failed(new RuntimeException("404")))
+
+      indicatorsService.getReleaseStabilityMetrics("test-service", 1).futureValue shouldBe None
+    }
+
+  }
+
+  def release(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Release = {
+    Release(name, version, creationDate, leadTime, interval)
+  }
+
+  "IndicatorService getFrequentReleaseMetric" should {
+
+    "calculates FrequentReleaseMetricResult" in {
+      val releases = List(
+        release(serviceName, Feb_4th, leadTime = Some(3)),
+        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
+
+      Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
+
+      val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
+
+      indicatorsService.getReleaseThroughputMetrics("test-service", 1).futureValue.get shouldBe
+        List(ReleaseThroughputMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, Some(MeasureResult(2)), Some(MeasureResult(2))))
     }
 
     "return only the release interval if no tag creation dates are available" in {
       val releases = List(
-        Release(serviceName, Feb_4th),
-        Release(serviceName, Feb_6th, interval = Some(2)))
+        release(serviceName, Feb_4th),
+        release(serviceName, Feb_6th, interval = Some(2)))
 
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
 
       val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
 
-      indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue.get shouldBe
-        List(FrequentReleaseMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, None, Some(MeasureResult(2))))
+      indicatorsService.getReleaseThroughputMetrics("test-service", 1).futureValue.get shouldBe
+        List(ReleaseThroughputMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, None, Some(MeasureResult(2))))
     }
 
     "returns None if the service is not found" in {
       Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.failed(new RuntimeException("404")))
 
-      indicatorsService.getFrequentReleaseMetric("test-service", 1).futureValue shouldBe None
+      indicatorsService.getReleaseThroughputMetrics("test-service", 1).futureValue shouldBe None
     }
   }
 }

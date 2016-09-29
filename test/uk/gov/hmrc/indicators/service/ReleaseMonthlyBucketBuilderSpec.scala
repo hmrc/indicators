@@ -57,40 +57,46 @@ class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
     val clock = clockFrom(May_10th)
   }
 
+
+  def release(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Release = {
+    Release(name, version, creationDate, leadTime, interval)
+  }
+
+
   "MonthlyReleaseBucketBuilder" should {
     val serviceName = "test-service"
 
     "create YearMonthTimeSeries with release in each monthly buckets based on release date" in new SetUp {
 
       val releases = List(
-        Release(serviceName, Apr_1st),
-        Release(serviceName, Apr_11th),
-        Release(serviceName, Feb_4th),
-        Release(serviceName, Feb_10th),
-        Release(serviceName, Feb_16th),
-        Release(serviceName, Feb_18th),
-        Release(serviceName, Mar_1st),
-        Release(serviceName, Mar_27th),
-        Release(serviceName, May_11th),
-        Release(serviceName, June_5th))
+        release(serviceName, Apr_1st),
+        release(serviceName, Apr_11th),
+        release(serviceName, Feb_4th),
+        release(serviceName, Feb_10th),
+        release(serviceName, Feb_16th),
+        release(serviceName, Feb_18th),
+        release(serviceName, Mar_1st),
+        release(serviceName, Mar_27th),
+        release(serviceName, May_11th),
+        release(serviceName, June_5th))
 
       MonthlyBucketBuilder(releases, 7)(_.productionDate)(clock).toSeq shouldBe Seq(
         (Nov_2015, Seq()),
         (YearMonth.from(Dec_1st_2015), Seq()),
         (YearMonth.from(Jan_1st), Seq()),
         (YearMonth.from(Feb_1st), Seq(
-          Release(serviceName, Feb_4th),
-          Release(serviceName, Feb_10th),
-          Release(serviceName, Feb_16th),
-          Release(serviceName, Feb_18th))),
+          release(serviceName, Feb_4th),
+          release(serviceName, Feb_10th),
+          release(serviceName, Feb_16th),
+          release(serviceName, Feb_18th))),
         (YearMonth.from(Mar_1st), Seq(
-          Release(serviceName, Mar_1st),
-          Release(serviceName, Mar_27th))),
+          release(serviceName, Mar_1st),
+          release(serviceName, Mar_27th))),
         (YearMonth.from(Apr_1st), Seq(
-          Release(serviceName, Apr_1st),
-          Release(serviceName, Apr_11th))),
+          release(serviceName, Apr_1st),
+          release(serviceName, Apr_11th))),
         (YearMonth.from(May_1st), Seq(
-          Release(serviceName, May_11th)))
+          release(serviceName, May_11th)))
       )
     }
   }

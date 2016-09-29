@@ -25,13 +25,14 @@ import uk.gov.hmrc.indicators.http.HttpClient
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class Release(name: String, productionDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None)
+case class Release(name: String, version: String, productionDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None)
 
 trait ReleasesDataSource {
   def getForService(serviceName: String): Future[List[Release]]
 }
 
 class ReleasesClient(releasesApiBase: String) extends ReleasesDataSource {
+
   import JavaDateTimeImplicits._
 
   implicit val reads = Json.reads[Release]
