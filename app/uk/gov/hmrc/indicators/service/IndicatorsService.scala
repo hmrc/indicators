@@ -67,7 +67,7 @@ object ReleaseThroughputMetricResult {
 case class ReleaseStabilityMetricResult(period: YearMonth,
                                         from: LocalDate,
                                         to: LocalDate,
-                                        hotfixRate: HotFixRate,
+                                        hotfixRate: Option[Int],
                                         hotfixLeadTime: Option[MeasureResult])
 
 object ReleaseStabilityMetricResult {

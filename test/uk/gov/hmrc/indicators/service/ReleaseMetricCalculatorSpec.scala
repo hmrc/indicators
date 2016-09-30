@@ -18,12 +18,9 @@ package uk.gov.hmrc.indicators.service
 
 import java.time._
 
-import org.mockito.Mockito
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
 import uk.gov.hmrc.indicators.datasource.Release
-
-import scala.concurrent.Future
 
 
 class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
@@ -72,6 +69,15 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers {
   private val serviceName: String = "test-service"
 
   "ReleaseMetricCalculator.getReleaseStabilityMetrics" should {
+
+    "calculates ReleaseStabilityMetrics's when there has been no release" in new SetUp {
+      override implicit val clock: Clock = clockFrom(Feb_18th)
+      val releases = List()
+
+      ReleaseMetricCalculator.calculateReleaseStabilityMetric(releases, 1) shouldBe
+        List(ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, None, None))
+    }
+
     "calculates ReleaseStabilityMetrics's hotfix rate when there has been some hotfix releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
       val releases = List(
