@@ -72,13 +72,10 @@ case class ReleaseStabilityMetricResult(period: YearMonth,
 
 object ReleaseStabilityMetricResult {
   implicit val writes = Json.writes[ReleaseStabilityMetricResult]
-
 }
 
 case class MeasureResult(median: Int)
-
 object MeasureResult {
-
   implicit val measureResultWrites: Writes[MeasureResult] = Json.writes[MeasureResult]
 }
 

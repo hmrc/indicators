@@ -29,7 +29,6 @@ object ReleaseMetricCalculator {
   def calculateLeadTimeMetric(releases: Seq[Release], requiredPeriodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseLeadTimeResult] = {
 
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
-
       withRollingAverageOf(releases, requiredMonths, _.leadTime)(ReleaseLeadTimeResult.of)
     }
 
@@ -39,67 +38,84 @@ object ReleaseMetricCalculator {
                                      requiredPeriodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseIntervalResult] = {
 
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
-
       withRollingAverageOf(releases, requiredMonths, _.interval)(ReleaseIntervalResult.of)
     }
   }
 
+  import IndicatorTraversable._
+
   def calculateReleaseStabilityMetric(releases: Seq[Release],
                                       requiredPeriodInMonths: Int = 9)(implicit clock: Clock): Seq[ReleaseStabilityMetricResult] = {
-    import IndicatorTraversable._
 
     withLookBack(requiredPeriodInMonths) { requiredPeriod =>
       val releaseBuckets = getReleaseBuckets(releases, requiredPeriod)
+
+      val releaseBucketSize: Int = releaseBuckets.size
+
       releaseBuckets.zipWithIndex.map { case (releaseBucket, index) =>
+        val dateData = DateData(releaseBucketSize, releaseBucket, index )
 
-        val from = releaseBucket.head._1
-        val period = releaseBucket.last._1
-        val (baseReleases, hotfixReleases) = releaseBucket.flatMap(_._2).partition(_.version.endsWith(".0"))
-
-        val to =
-          if (index == (releaseBuckets.size - 1))
-            period.atDay(LocalDate.now(clock).getDayOfMonth)
-          else period.atEndOfMonth()
-
-        val hotfixRate: HotFixRate = Try(hotfixReleases.size * 100 / (hotfixReleases.size + baseReleases.size)).toOption
-
-
-        ReleaseStabilityMetricResult(
-          period,
-          from = from.atDay(1),
-          to = to,
-          hotfixRate,
-          hotfixReleases.flatMap(_.leadTime).median.map(x => MeasureResult(Math.round(x.toDouble).toInt)))
+        createReleaseStabilityResult(releaseBucket, dateData)
       }
 
     }
-
-
   }
 
-  private def withRollingAverageOf[T <: MetricsResult](releases: Seq[Release], requiredPeriod: Int, mesure: (Release => Option[Long]))
-                                                      (createMetricResult: (YearMonth, LocalDate, LocalDate, Option[BigDecimal]) => T)(implicit clock: Clock): Seq[T] = {
+  def createReleaseStabilityResult(releaseBucket: Iterable[(YearMonth, Seq[Release])],
+                                   dateData: DateData): ReleaseStabilityMetricResult = {
 
-    import IndicatorTraversable._
+    val (baseReleases, hotfixReleases) = releaseBucket.flatMap(_._2).partition(_.version.endsWith(".0"))
 
-    val releaseBuckets = getReleaseBuckets(releases, requiredPeriod)
+    val hotfixRate = Try(hotfixReleases.size * 100 / (hotfixReleases.size + baseReleases.size)).toOption
 
-    releaseBuckets.zipWithIndex.map { case (bucket, indx) =>
+    ReleaseStabilityMetricResult(
+      dateData.period,
+      dateData.from,
+      dateData.to,
+      hotfixRate,
+      hotfixReleases.flatMap(_.leadTime).median.map(x => MeasureResult(Math.round(x.toDouble).toInt)))
+  }
+
+
+  private case class DateData(period: YearMonth, from: LocalDate, to: LocalDate)
+  private object DateData {
+    def apply(releaseBucketSize: Int,
+                    bucket: Iterable[(YearMonth, Seq[Release])],
+                    indx: Int)(implicit clock: Clock): DateData = {
+
       val (period, _) = bucket.last
       val (from, _) = bucket.head
 
-      val windowReleases: Iterable[Release] = bucket.flatMap(_._2)
-
-      val to =
-        if (indx == (releaseBuckets.size - 1))
+      val toDate =
+        if (indx == (releaseBucketSize - 1))
           period.atDay(LocalDate.now(clock).getDayOfMonth)
         else period.atEndOfMonth()
 
+      val fromDate: LocalDate = from.atDay(1)
+
+      DateData(period, fromDate, toDate)
+    }
+  }
+
+
+  private def withRollingAverageOf[T](releases: Seq[Release], requiredPeriod: Int, measure: (Release => Option[Long]))
+                                                      (createMetricResult: (YearMonth, LocalDate, LocalDate, Option[BigDecimal]) => T)(implicit clock: Clock): Seq[T] = {
+
+    val releaseBuckets = getReleaseBuckets(releases, requiredPeriod)
+
+    val releaseBucketSize: Int = releaseBuckets.size
+
+    releaseBuckets.zipWithIndex.map { case (bucket, indx) =>
+
+      val dateData = DateData(releaseBucketSize, bucket, indx)
+
+      val windowReleases: Iterable[Release] = bucket.flatMap(_._2)
+
       createMetricResult(
-        period,
-        from.atDay(1),
-        to,
-        windowReleases.flatMap(mesure(_)).median
+        dateData.period,
+        dateData.from,
+        dateData.to,
+        windowReleases.flatMap(measure(_)).median
       )
 
     }
