@@ -27,7 +27,7 @@ import play.api.mvc.{Result, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.TestImplicits._
-import uk.gov.hmrc.indicators.service.{IndicatorsService, MeasureResult, ReleaseStabilityMetricResult, ReleaseThroughputMetricResult}
+import uk.gov.hmrc.indicators.service._
 
 import scala.concurrent.{Await, Future}
 
@@ -88,8 +88,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       when(mockIndicatorsService.getReleaseThroughputMetrics("serviceName")).thenReturn(Future.successful(
         Some(List(
-          ReleaseThroughputMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(5)), Some(MeasureResult(4))),
-          ReleaseThroughputMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(6)), None)
+          ReleaseThroughputMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4))))),
+          ReleaseThroughputMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(Throughput(Some(MeasureResult(6)), None)))
         )))
       )
 
@@ -97,8 +97,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       contentAsJson(result) mustBe
         """[
-          |{"period" : "2016-04", "from" : "2016-09-13", "to" : "2016-09-13", "leadTime" : {"median" : 5}, "interval" : {"median" : 4}},
-          |{"period" : "2016-05", "from" : "2016-09-13", "to" : "2016-09-13", "leadTime" : {"median" : 6}}
+          |{"period" : "2016-04", "from" : "2016-09-13", "to" : "2016-09-13", "throughput":{"leadTime" : {"median" : 5}, "interval" : {"median" : 4}}},
+          |{"period" : "2016-05", "from" : "2016-09-13", "to" : "2016-09-13", "throughput":{"leadTime" : {"median" : 6}}}
           |]""".stripMargin.toJson
 
       header("content-type", result).get mustBe "application/json"

@@ -28,12 +28,14 @@ import scala.concurrent.Future
 import play.api.libs.json.Json
 import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
 
-case class ReleaseThroughputMetricResult(period: YearMonth,
-                                         from: LocalDate,
-                                         to: LocalDate,
-                                         leadTime: Option[MeasureResult],
-                                         interval: Option[MeasureResult])
+//TODO: rename to DeploymentMetricResult
+case class ReleaseThroughputMetricResult(period: YearMonth, from: LocalDate, to: LocalDate, throughput: Option[Throughput])
 
+
+case class Throughput(leadTime: Option[MeasureResult], interval: Option[MeasureResult])
+object Throughput {
+  implicit val writes = Json.writes[Throughput]
+}
 
 object ReleaseThroughputMetricResult {
 
@@ -52,13 +54,10 @@ object ReleaseThroughputMetricResult {
       val from = Seq(leadTimeResult.map(_.from), intervalResult.map(_.from)).flatten.head
       val to = Seq(leadTimeResult.map(_.to), intervalResult.map(_.to)).flatten.head
 
-      ReleaseThroughputMetricResult(
-        ym,
-        from,
-        to,
-        leadTimeResult.flatMap(x => x.median.map(MeasureResult.apply)),
-        intervalResult.flatMap(x => x.median.map(MeasureResult.apply))
-      )
+      ReleaseThroughputMetricResult(ym, from, to, Some(Throughput(
+                leadTimeResult.flatMap(x => x.median.map(MeasureResult.apply)),
+                intervalResult.flatMap(x => x.median.map(MeasureResult.apply))
+              )))
     }.toSeq.sortBy(_.period)
   }
 
@@ -134,5 +133,6 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = C
   }
 
 }
+
 
 

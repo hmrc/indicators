@@ -51,10 +51,10 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       ReleaseThroughputMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        ReleaseThroughputMetricResult(Jan_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(1)), Some(MeasureResult(5))),
-        ReleaseThroughputMetricResult(Feb_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(2)), Some(MeasureResult(6))),
-        ReleaseThroughputMetricResult(March_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(3)), Some(MeasureResult(7))),
-        ReleaseThroughputMetricResult(April_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(4)), Some(MeasureResult(8)))
+        ReleaseThroughputMetricResult(Jan_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(1)), Some(MeasureResult(5))))),
+        ReleaseThroughputMetricResult(Feb_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(6))))),
+        ReleaseThroughputMetricResult(March_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(3)), Some(MeasureResult(7))))),
+        ReleaseThroughputMetricResult(April_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(4)), Some(MeasureResult(8)))))
       )
     }
 
@@ -75,8 +75,8 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       ReleaseThroughputMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        ReleaseThroughputMetricResult(Jan_2016, from = Nov_2015.atDay(1), to = Jan_2016.atEndOfMonth(), Some(MeasureResult(1)), Some(MeasureResult(5))),
-        ReleaseThroughputMetricResult(Feb_2016, from = Dec_2015.atDay(1), to = Feb_2016.atDay(25), Some(MeasureResult(2)), Some(MeasureResult(6)))
+        ReleaseThroughputMetricResult(Jan_2016, from = Nov_2015.atDay(1), to = Jan_2016.atEndOfMonth(), Some(Throughput(Some(MeasureResult(1)), Some(MeasureResult(5))))),
+        ReleaseThroughputMetricResult(Feb_2016, from = Dec_2015.atDay(1), to = Feb_2016.atDay(25), Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(6)))))
       )
     }
 
@@ -96,8 +96,8 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       ReleaseThroughputMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        ReleaseThroughputMetricResult(Jan_2016, from = Nov_2015.atDay(1), to = Jan_2016.atEndOfMonth(), Some(MeasureResult(1)), None),
-        ReleaseThroughputMetricResult(Feb_2016, from = Dec_2015.atDay(1), to = Feb_2016.atDay(25), Some(MeasureResult(2)), Some(MeasureResult(6)))
+        ReleaseThroughputMetricResult(Jan_2016, from = Nov_2015.atDay(1), to = Jan_2016.atEndOfMonth(), Some(Throughput(Some(MeasureResult(1)), None))),
+        ReleaseThroughputMetricResult(Feb_2016, from = Dec_2015.atDay(1), to = Feb_2016.atDay(25), Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(6)))))
       )
     }
 
@@ -116,8 +116,8 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       ReleaseThroughputMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        ReleaseThroughputMetricResult(Jan_2016, from = Nov_2015.atDay(1), to = Jan_2016.atEndOfMonth(), None, Some(MeasureResult(5))),
-        ReleaseThroughputMetricResult(Feb_2016, from = Dec_2015.atDay(1), to = Feb_2016.atDay(25), Some(MeasureResult(2)), Some(MeasureResult(6)))
+        ReleaseThroughputMetricResult(Jan_2016, from = Nov_2015.atDay(1), to = Jan_2016.atEndOfMonth(), Some(Throughput(None, Some(MeasureResult(5))))),
+        ReleaseThroughputMetricResult(Feb_2016, from = Dec_2015.atDay(1), to = Feb_2016.atDay(25), Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(6)))))
       )
     }
 
@@ -142,11 +142,11 @@ class FrequentReleaseMetricResultSpec extends WordSpec with Matchers {
 
 
       ReleaseThroughputMetricResult.from(releaseLeadTimeResults, releaseIntervalResults) shouldBe Seq(
-        ReleaseThroughputMetricResult(Jan_2016, from = LocalDate.now(), to = LocalDate.now(), None, Some(MeasureResult(5))),
-        ReleaseThroughputMetricResult(Feb_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(2)), Some(MeasureResult(6))),
-        ReleaseThroughputMetricResult(March_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(3)), None),
-        ReleaseThroughputMetricResult(April_2016, from = LocalDate.now(), to = LocalDate.now(), Some(MeasureResult(4)), Some(MeasureResult(8))),
-        ReleaseThroughputMetricResult(May_2016, from = LocalDate.now(), to = LocalDate.now(), None, Some(MeasureResult(9)))
+        ReleaseThroughputMetricResult(Jan_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(None, Some(MeasureResult(5))))),
+        ReleaseThroughputMetricResult(Feb_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(6))))),
+        ReleaseThroughputMetricResult(March_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(3)), None))),
+        ReleaseThroughputMetricResult(April_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(Some(MeasureResult(4)), Some(MeasureResult(8))))),
+        ReleaseThroughputMetricResult(May_2016, from = LocalDate.now(), to = LocalDate.now(), Some(Throughput(None, Some(MeasureResult(9)))))
       )
     }
 
