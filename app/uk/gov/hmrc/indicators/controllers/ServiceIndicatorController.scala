@@ -40,14 +40,7 @@ trait ServiceIndicatorController extends BaseController {
 
   def releaseThroughput(serviceName: String) = Action.async { implicit request =>
 
-    indicatorsService.getReleaseThroughputMetrics(serviceName) map {
-      case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
-      case _ => NotFound
-    }
-  }
-
-  def releaseStability(serviceName: String) =  Action.async { implicit request =>
-    indicatorsService.getReleaseStabilityMetrics(serviceName) map {
+    indicatorsService.getDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
       case _ => NotFound
     }
