@@ -40,49 +40,17 @@ object Stability {
   implicit val writes = Json.writes[Stability]
 }
 
-//TODO: rename to DeploymentMetricResult
 case class DeploymentsMetricResult(period: YearMonth,
                                    from: LocalDate,
                                    to: LocalDate,
                                    throughput: Option[Throughput],
-                                   stability: Option[Stability] = None)
+                                   stability: Option[Stability])
 
 object DeploymentsMetricResult {
 
   implicit val writes = Json.writes[DeploymentsMetricResult]
-
-  def from(leadTimes: Seq[ReleaseLeadTimeResult], intervals: Seq[ReleaseIntervalResult]): Seq[DeploymentsMetricResult] = {
-    val ymToRLT = leadTimes.map(x => x.period -> x).toMap
-    val ymToRI = intervals.map(x => x.period -> x).toMap
-
-    val ymToReleaseLeadTime = leadTimes.map(x => x.period -> x.median).toMap
-    val ymToReleaseInterval = intervals.map(x => x.period -> x.median).toMap
-
-    (ymToReleaseLeadTime.keySet ++ ymToReleaseInterval.keySet).map { ym =>
-      val leadTimeResult = ymToRLT.get(ym)
-      val intervalResult = ymToRI.get(ym)
-      val from = Seq(leadTimeResult.map(_.from), intervalResult.map(_.from)).flatten.head
-      val to = Seq(leadTimeResult.map(_.to), intervalResult.map(_.to)).flatten.head
-
-      DeploymentsMetricResult(ym, from, to, Some(Throughput(
-        leadTimeResult.flatMap(x => x.median.map(MeasureResult.apply)),
-        intervalResult.flatMap(x => x.median.map(MeasureResult.apply))
-      )), None)
-    }.toSeq.sortBy(_.period)
-  }
-
 }
 
-
-//case class ReleaseStabilityMetricResult(period: YearMonth,
-//                                        from: LocalDate,
-//                                        to: LocalDate,
-//                                        hotfixRate: Option[Int],
-//                                        hotfixLeadTime: Option[MeasureResult])
-//
-//object ReleaseStabilityMetricResult {
-//  implicit val writes = Json.writes[ReleaseStabilityMetricResult]
-//}
 
 case class MeasureResult(median: Int)
 
@@ -124,21 +92,15 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = C
   implicit val c = clock
 
   def getDeploymentMetrics(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[DeploymentsMetricResult]]] =
-    withReleases(serviceName) { releases =>
+
+    releasesDataSource.getForService(serviceName).map { releases =>
+
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
       Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
 
       Some(calculateDeploymentMetrics(releases, periodInMonths))
-    }
-
-  private def withReleases[T](serviceName: String)(f: (Seq[Release] => Option[T])): Future[Option[T]] = {
-    releasesDataSource.getForService(serviceName).map { releases =>
-
-      f(releases)
 
     }.recoverWith { case ex => Future.successful(None) }
-  }
-
 }
 
 

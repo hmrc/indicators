@@ -45,32 +45,6 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
   val serviceName = "test-service"
 
-
-
-//  "IndicatorService getReleaseStabilityMetrics" should {
-//    "calculates ReleaseStabilityMetrics when there has been no hotfix releases" in {
-//
-//      val releases = List(
-//        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
-//        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2), version = "2.0.0"))
-//
-//      Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
-//
-//      val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
-//
-//      indicatorsService.getReleaseStabilityMetrics("test-service", 1).futureValue.get shouldBe
-//        List(ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, Some(0) , None))
-//    }
-//
-//
-//    "returns None if the service is not found" in {
-//      Mockito.when(releasesClient.getForService("test-service")).thenReturn(Future.failed(new RuntimeException("404")))
-//
-//      indicatorsService.getReleaseStabilityMetrics("test-service", 1).futureValue shouldBe None
-//    }
-//
-//  }
-
   def release(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Release = {
     Release(name, version, creationDate, leadTime, interval)
   }
@@ -88,12 +62,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       indicatorsService.getDeploymentMetrics("test-service", 1).futureValue.get shouldBe
         List(
-          DeploymentsMetricResult(
-            YearMonth.from(Feb_1st),
-            from = expectedFrom,
-            to = Feb_18th.toLocalDate,
-            throughput = Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(2)))),
-            stability = Some(Stability(Some(100), Some(MeasureResult(2))))))
+          DeploymentsMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(2)))), stability = Some(Stability(Some(100), Some(MeasureResult(2))))))
     }
 
     "return only the release interval if no tag creation dates are available" in {
@@ -106,12 +75,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
 
       indicatorsService.getDeploymentMetrics("test-service", 1).futureValue.get shouldBe
-        List(DeploymentsMetricResult(
-          period = YearMonth.from(Feb_1st),
-          from = expectedFrom,
-          to = Feb_18th.toLocalDate,
-          throughput = Some(Throughput(None, Some(MeasureResult(2)))),
-          stability = Some(Stability(Some(100), None))))
+        List(DeploymentsMetricResult(period = YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(None, Some(MeasureResult(2)))), stability = Some(Stability(Some(100), None))))
     }
 
     "returns None if the service is not found" in {

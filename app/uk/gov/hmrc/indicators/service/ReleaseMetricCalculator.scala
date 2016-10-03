@@ -36,12 +36,7 @@ object ReleaseMetricCalculator {
         val dateData = DateData(releaseBuckets.size, bucket, index)
 
         val allReleasesInBucket: Seq[Release] = bucket.flatMap(_._2).toSeq
-        DeploymentsMetricResult(
-          dateData.period,
-          dateData.from,
-          dateData.to,
-          calculateThroughputMetric(allReleasesInBucket),
-          calculateReleaseStabilityMetric(allReleasesInBucket))
+        DeploymentsMetricResult(dateData.period, dateData.from, dateData.to, calculateThroughputMetric(allReleasesInBucket), calculateReleaseStabilityMetric(allReleasesInBucket))
       }
 
     }
