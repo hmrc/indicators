@@ -19,12 +19,44 @@ package uk.gov.hmrc.indicators.service
 import java.time._
 
 import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{LoneElement, Matchers, OptionValues, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
 import uk.gov.hmrc.indicators.datasource.Release
 
 
-class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
+class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTripleEquals with LoneElement with OptionValues {
+
+  object ResultExtractor {
+
+    implicit class MeasureExtractor(deploymentsMetricResult: Seq[DeploymentsMetricResult]) {
+      def leadTimes: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] = {
+        deploymentsMetricResult.map { x =>
+
+          (x.period, x.from, x.to, x.throughput.flatMap(_.leadTime).map(_.median))
+
+        }
+      }
+
+      def intervals: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] = {
+        deploymentsMetricResult.map { x =>
+
+          (x.period, x.from, x.to, x.throughput.flatMap(_.interval).map(_.median))
+
+        }
+      }
+
+      def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Int], Option[Int])] = {
+        deploymentsMetricResult.map { x =>
+
+          (x.period, x.from, x.to, x.stability.flatMap(_.hotfixRate), x.stability.flatMap(_.hotfixLeadTime.map(_.median)))
+
+        }
+      }
+
+    }
+
+  }
+
 
   trait SetUp {
     private val midNight: LocalTime = LocalTime.of(0, 0)
@@ -58,16 +90,16 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
     val May_10th = LocalDateTime.of(LocalDate.of(2016, 5, 10), midNight)
     val May_11th = LocalDateTime.of(LocalDate.of(2016, 5, 11), midNight)
     val June_1st = LocalDateTime.of(LocalDate.of(2016, 6, 1), midNight)
-    val June_5th = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
+    val Jun_5th = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
 
     val Nov_2015 = YearMonth.of(2015, 11)
     val Dec_2015 = YearMonth.of(2015, 12)
     val Jan_2016 = YearMonth.of(2016, 1)
     val Feb_2016 = YearMonth.of(2016, 2)
-    val March_2016 = YearMonth.of(2016, 3)
-    val April_2016 = YearMonth.of(2016, 4)
+    val Mar_2016 = YearMonth.of(2016, 3)
+    val Apr_2016 = YearMonth.of(2016, 4)
     val May_2016 = YearMonth.of(2016, 5)
-    val June_2016 = YearMonth.of(2016, 6)
+    val Jun_2016 = YearMonth.of(2016, 6)
     val July_2016 = YearMonth.of(2016, 7)
     val August_2016 = YearMonth.of(2016, 8)
     implicit val clock = clockFrom(May_10th)
@@ -78,208 +110,194 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
     Release(name, version, creationDate, leadTime, interval)
   }
 
+  import ResultExtractor._
+
+
   private val serviceName: String = "test-service"
 
-  //  "ReleaseMetricCalculator.getReleaseStabilityMetrics" should {
-  //
-  //    "calculates ReleaseStabilityMetrics's when there has been no release" in new SetUp {
-  //      override implicit val clock: Clock = clockFrom(Feb_18th)
-  //      val releases = List()
-  //
-  //      ReleaseMetricCalculator.calculateReleaseStabilityMetric(releases, 1) shouldBe
-  //        List(ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, None, None))
-  //    }
-  //
-  //    "calculates ReleaseStabilityMetrics's hotfix rate when there has been some hotfix releases" in new SetUp {
-  //      override implicit val clock: Clock = clockFrom(Feb_18th)
-  //      val releases = List(
-  //        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
-  //        release(serviceName, Feb_4th.plusDays(1), leadTime = Some(1), version = "1.0.1"),
-  //        release(serviceName, Feb_4th.plusDays(2), leadTime = Some(1), version = "1.0.2"),
-  //        release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "2.0.0"))
-  //
-  //      ReleaseMetricCalculator.calculateReleaseStabilityMetric(releases, 1) shouldBe
-  //        List(ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(50), Some(MeasureResult(1))))
-  //    }
-  //
-  //    "calculates ReleaseStabilityMetrics's hotfix rate when there has been no hotfix releases" in new SetUp {
-  //      override implicit val clock: Clock = clockFrom(Feb_18th)
-  //      val releases = List(
-  //        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
-  //        release(serviceName, Feb_4th.plusDays(1), leadTime = Some(1), version = "2.0.0"),
-  //        release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "3.0.0"))
-  //
-  //      ReleaseMetricCalculator.calculateReleaseStabilityMetric(releases, 1) shouldBe
-  //        List(ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(0), None))
-  //    }
-  //
-  //    "calculates ReleaseStabilityMetrics's hotfix rate when there has been hotfixes and releases in mulitple months" in new SetUp {
-  //      override implicit val clock: Clock = clockFrom(June_5th)
-  //
-  //      val releases = List(
-  //        release("test-service", Feb_4th, Some(3), version = "3.1.1"),
-  //        release("test-service", Feb_10th, Some(6), version = "4.1.1"),
-  //        release("test-service", Feb_16th, Some(4), version = "5.1.1"),
-  //        release("test-service", Feb_18th, Some(2), version = "6.1.1"),
-  //        release("test-service", Mar_1st, Some(12), version = "7.1.1"),
-  //        release("test-service", Mar_27th, Some(23), version = "8.1.0"),// leadt times of hotfixes = 2,3,4,6,12 = 4 median
-  //
-  //        release("test-service", Apr_1st, Some(5), version = "1.1.1"),
-  //        release("test-service", Apr_11th, Some(7), version = "2.1.0"), // leadt times of hotfixes = 2,3,4,5,6,12 = 5 median
-  //        release("test-service", May_11th, Some(10), version = "9.1.1"), // lead times =   5, 7, 10, 12, 23
-  //        release("test-service", June_5th, Some(4), version = "10.1.0") // leadt times of hotfixes = 5 , 10 = 8 median
-  //      )
-  //
-  //      ReleaseMetricCalculator.calculateReleaseStabilityMetric(releases, 7) shouldBe List(
-  //        ReleaseStabilityMetricResult(YearMonth.from(Dec_1st_2015), from = Oct_1st_2015.toLocalDate, to = toEndOfMonth(Dec_1st_2015), None, None),
-  //        ReleaseStabilityMetricResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = toEndOfMonth(Jan_1st), None, None),
-  //        ReleaseStabilityMetricResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(100), Some(MeasureResult(4))),
-  //        ReleaseStabilityMetricResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(83), Some(MeasureResult(4))),
-  //        ReleaseStabilityMetricResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(75), Some(MeasureResult(5))),
-  //        ReleaseStabilityMetricResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(60), Some(MeasureResult(10))),
-  //        ReleaseStabilityMetricResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(50), Some(MeasureResult(8)))
-  //      )
-  //    }
-  //
-  //  }
+  "ReleaseMetricCalculator for stability" should {
 
-  "ReleaseMetricCalculator.calculateLeadTime" should {
+    "calculates when there has been no release" in new SetUp {
+      override implicit val clock: Clock = clockFrom(Feb_18th)
+      val releases = List()
+
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).stability shouldBe
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, None, None))
+    }
+
+    "calculates hotfix rate when there has been some hotfix releases" in new SetUp {
+      override implicit val clock: Clock = clockFrom(Feb_18th)
+      val releases = List(
+        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
+        release(serviceName, Feb_4th.plusDays(1), leadTime = Some(1), version = "1.0.1"),
+        release(serviceName, Feb_4th.plusDays(2), leadTime = Some(1), version = "1.0.2"),
+        release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "2.0.0"))
+
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).stability shouldBe
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(50), Some(1)))
+    }
+
+    "calculates hotfix rate when there has been no hotfix releases" in new SetUp {
+      override implicit val clock: Clock = clockFrom(Feb_18th)
+      val releases = List(
+        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
+        release(serviceName, Feb_4th.plusDays(1), leadTime = Some(1), version = "2.0.0"),
+        release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "3.0.0"))
+
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).stability shouldBe
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(0), None))
+    }
+
+    "calculates hotfix rate when there has been hotfixes and releases in mulitple months" in new SetUp {
+      override implicit val clock: Clock = clockFrom(Jun_5th)
+
+      val releases = List(
+        release("test-service", Feb_4th, Some(3), version = "3.1.1"),
+        release("test-service", Feb_10th, Some(6), version = "4.1.1"),
+        release("test-service", Feb_16th, Some(4), version = "5.1.1"),
+        release("test-service", Feb_18th, Some(2), version = "6.1.1"),
+        release("test-service", Mar_1st, Some(12), version = "7.1.1"),
+        release("test-service", Mar_27th, Some(23), version = "8.1.0"), // leadt times of hotfixes = 2,3,4,6,12 = 4 median
+
+        release("test-service", Apr_1st, Some(5), version = "1.1.1"),
+        release("test-service", Apr_11th, Some(7), version = "2.1.0"), // leadt times of hotfixes = 2,3,4,5,6,12 = 5 median
+        release("test-service", May_11th, Some(10), version = "9.1.1"), // lead times =   5, 7, 10, 12, 23
+        release("test-service", Jun_5th, Some(4), version = "10.1.0") // leadt times of hotfixes = 5 , 10 = 8 median
+      )
+
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 7).stability shouldBe Seq(
+        (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None, None),
+        (Jan_2016, Nov_1st_2015.toLocalDate, toEndOfMonth(Jan_1st), None, None),
+        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(100), Some(4)),
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(83), Some(4)),
+        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(75), Some(5)),
+        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(60), Some(10)),
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(50), Some(8))
+      )
+    }
+
+  }
+
+  "ReleaseMetricCalculator throughput leadtime" should {
 
     "calculate the correct median lead time for one tag and release in the same month 3 days apart" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_4th)
 
 
-      val releaseBucket = Iterable(Feb_2016 -> Seq(release(serviceName, Feb_4th, Some(3))))
+      val releaseBucket = Seq(release(serviceName, Feb_4th, Some(3)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releaseBucket) should ===(
-        Some(MeasureResult(median = 3)))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releaseBucket, 1).leadTimes shouldBe
+        Seq(
+          (Feb_2016, Dec_1st_2015.toLocalDate, Feb_4th.toLocalDate, Some(3))
+        )
+
     }
 
     "calculate the correct median lead time for two tags" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_16th)
 
+      val releases = Seq(release("test-service", Feb_4th, Some(3)), release("test-service", Feb_16th, Some(6)))
 
-      val releases = List(
-        Feb_2016 -> Seq(release("test-service", Feb_4th, Some(3)), release("test-service", Feb_16th, Some(6)))
-      )
-
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(period = YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_16th.toLocalDate, median = Some(5))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).leadTimes shouldBe Seq(
+        (YearMonth.from(Feb_1st), Dec_1st_2015.toLocalDate, Feb_16th.toLocalDate, Some(5))
       )
     }
 
     "calculate the correct median lead time for releases that spans two months" in new SetUp {
       override implicit val clock: Clock = clockFrom(Apr_10th)
 
-      val releases = List(
-        March_2016 -> Seq(release("test-service", Mar_4th, Some(3))),
-        April_2016 -> Seq(release("test-service", Apr_10th, Some(6)))
-      )
+      val releases = Seq(release("test-service", Mar_4th, Some(3)), release("test-service", Apr_10th, Some(6)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(3)),
-        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = Apr_10th.toLocalDate, Some(5)))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 2).leadTimes shouldBe Seq(
+        (YearMonth.from(Mar_1st), Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(3)),
+        (YearMonth.from(Apr_1st), Feb_1st.toLocalDate, Apr_10th.toLocalDate, Some(5)))
     }
 
     "calculate the correct median lead time for 3 releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
-      val releases = List(
-        Feb_2016 -> Seq(release("test-service", Feb_6th, Some(5)),
-          release("test-service", Feb_12th, Some(6)),
-          release("test-service", Feb_18th, Some(8))))
+      val releases = Seq(release("test-service", Feb_6th, Some(5)),
+        release("test-service", Feb_12th, Some(6)),
+        release("test-service", Feb_18th, Some(8)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(6))
-      )
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).leadTimes shouldBe
+        Seq(
+          (YearMonth.from(Feb_1st), Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(6))
+        )
     }
 
     "calculate the correct median lead time for 3 releases with one missing tag date" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
-      val releases = List(
-        Feb_2016 -> Seq(release("test-service", Feb_6th, Some(5)),
-          release("test-service", Feb_12th, None), // N/A
-          release("test-service", Feb_20st, Some(8))))
+      val releases = Seq(release("test-service", Feb_6th, Some(5)),
+        release("test-service", Feb_12th, None), // N/A
+        release("test-service", Feb_20st, Some(8)))
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(7))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).leadTimes shouldBe Seq(
+        (YearMonth.from(Feb_1st), Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(7))
       )
     }
 
     "calculate the correct median lead time for 4 releases (3, 6, 6, 2)" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
-      val releases = List(
-        Feb_2016 -> Seq(release("test-service", Feb_4th, Some(3)),
-          release("test-service", Feb_10th, Some(6)),
-          release("test-service", Feb_16th, Some(6)),
-          release("test-service", Feb_18th, Some(2)))
+      val releases = Seq(release("test-service", Feb_4th, Some(3)),
+        release("test-service", Feb_10th, Some(6)),
+        release("test-service", Feb_16th, Some(6)),
+        release("test-service", Feb_18th, Some(2))
       )
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(5))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).leadTimes shouldBe Seq(
+        (YearMonth.from(Feb_1st), Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(5))
       )
     }
 
     "calculate the rolling lead time for 7 months (3 months sliding window) when provided tags and releases are not ordered" in new SetUp {
-      override implicit val clock: Clock = clockFrom(June_5th)
+      override implicit val clock: Clock = clockFrom(Jun_5th)
 
       val releases = List(
-        April_2016 ->
-          Seq(release("test-service", Apr_1st, Some(5)), release("test-service", Apr_11th, Some(7))),
-        Feb_2016 ->
-          Seq(release("test-service", Feb_4th, Some(3)),
-            release("test-service", Feb_10th, Some(6)),
-            release("test-service", Feb_16th, Some(6)),
-            release("test-service", Feb_18th, Some(2))
-          ),
-        March_2016 ->
-          Seq(release("test-service", Mar_1st, Some(12)), release("test-service", Mar_27th, Some(23))),
-        May_2016 ->
-          Seq(release("test-service", May_11th, Some(10))),
-        June_2016 ->
-          Seq(release("test-service", June_5th, Some(4)))
+        release("test-service", Apr_1st, Some(5)),
+        release("test-service", Apr_11th, Some(7)),
+        release("test-service", Feb_4th, Some(3)),
+        release("test-service", Feb_10th, Some(6)),
+        release("test-service", Feb_16th, Some(6)),
+        release("test-service", Feb_18th, Some(2)),
+        release("test-service", Mar_1st, Some(12)),
+        release("test-service", Mar_27th, Some(23)),
+        release("test-service", May_11th, Some(10)),
+        release("test-service", Jun_5th, Some(4))
       )
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Dec_1st_2015), from = Oct_1st_2015.toLocalDate, to = toEndOfMonth(Dec_1st_2015), None),
-        ReleaseLeadTimeResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = toEndOfMonth(Jan_1st), None),
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(5)),
-        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(6)),
-        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(6)),
-        ReleaseLeadTimeResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(10)),
-        ReleaseLeadTimeResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(6))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 7).leadTimes shouldBe Seq(
+        (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None),
+        (Jan_2016, Nov_1st_2015.toLocalDate, toEndOfMonth(Jan_1st), None),
+        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(5)),
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(6)),
+        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(6)),
+        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(10)),
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(6))
       )
     }
 
     "calculate the median release lead time for 5 months (3 months sliding window) looking back 8 months" in new SetUp {
-      override implicit val clock: Clock = clockFrom(June_5th)
+      override implicit val clock: Clock = clockFrom(Jun_5th)
 
       val releases = List(
 
-        Nov_2015 ->
-          Seq(release("test-service", Nov_26th_2015, leadTime = Some(10))),
-        Dec_2015 ->
-          Seq(release("test-service", Dec_2nd_2015, leadTime = Some(7))),
-        Jan_2016 ->
-          Seq(release("test-service", Jan_10th, leadTime = Some(41))),
+        release("test-service", Nov_26th_2015, leadTime = Some(10)),
+        release("test-service", Dec_2nd_2015, leadTime = Some(7)),
+        release("test-service", Jan_10th, leadTime = Some(41)),
 
-        Feb_2016 ->
-          Seq(release("test-service", Feb_4th, leadTime = Some(24)), // leadTime 24
-            release("test-service", Feb_10th, leadTime = Some(6)), // leadTime 6
-            release("test-service", Feb_16th, leadTime = Some(6)), // leadTime 6
-            release("test-service", Feb_18th, leadTime = Some(2))), // leadTime 2
-        March_2016 ->
-          Seq(release("test-service", Mar_1st, leadTime = Some(12)), //leadTime 12
-            release("test-service", Mar_27th, leadTime = Some(26))), //leadTime 26
-        April_2016 ->
-          Seq(release("test-service", Apr_1st, leadTime = Some(5)), //leadTime 5
-            release("test-service", Apr_11th, leadTime = Some(10))), //leadTime 10
-        May_2016 ->
-          Seq(release("test-service", May_11th, leadTime = Some(30))), //leadTime 30
-        June_2016 ->
-          Seq(release("test-service", June_5th, leadTime = Some(25))) //leadTime 25
+        release("test-service", Feb_4th, leadTime = Some(24)), // leadTime 24
+        release("test-service", Feb_10th, leadTime = Some(6)), // leadTime 6
+        release("test-service", Feb_16th, leadTime = Some(6)), // leadTime 6
+        release("test-service", Feb_18th, leadTime = Some(2)), // leadTime 2
+        release("test-service", Mar_1st, leadTime = Some(12)), //leadTime 12
+        release("test-service", Mar_27th, leadTime = Some(26)), //leadTime 26
+        release("test-service", Apr_1st, leadTime = Some(5)), //leadTime 5
+        release("test-service", Apr_11th, leadTime = Some(10)), //leadTime 10
+        release("test-service", May_11th, leadTime = Some(30)), //leadTime 30
+        release("test-service", Jun_5th, leadTime = Some(25)) //leadTime 25
       )
 
       //dec None
@@ -291,25 +309,25 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       //june 5,10,30,25 => 5,10,25,30
 
 
-      ReleaseMetricCalculator.calculateLeadTimeMetric(releases) shouldBe List(
-        ReleaseLeadTimeResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(7)),
-        ReleaseLeadTimeResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(12)),
-        ReleaseLeadTimeResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(8)),
-        ReleaseLeadTimeResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(12)),
-        ReleaseLeadTimeResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(18)))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 5).leadTimes shouldBe Seq(
+        (YearMonth.from(Feb_1st), Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(7)),
+        (YearMonth.from(Mar_1st), Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(12)),
+        (YearMonth.from(Apr_1st), Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(8)),
+        (YearMonth.from(May_1st), Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(12)),
+        (YearMonth.from(June_1st), Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18)))
     }
 
   }
 
-  "ReleaseMetricCalculator.calculateReleaseInterval" should {
+  "ReleaseMetricCalculator throughput interval" should {
 
     "calculate the correct median release interval for release in the same month 3 days apart" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_4th)
 
-      val releases = List(Feb_2016 -> Seq(release("test-service", Feb_4th)))
+      val releases = Seq(release("test-service", Feb_4th))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_4th.toLocalDate, None)
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).intervals shouldBe List(
+        (Feb_2016, Dec_1st_2015.toLocalDate, Feb_4th.toLocalDate, None)
       )
     }
 
@@ -323,39 +341,34 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       val Jan_28th = LocalDateTime.of(LocalDate.of(2016, 1, 28), LocalTime.of(11, 16, 3))
 
 
-      val releases = List(
-        Jan_2016 -> Seq(release("test-service", Jan_7th),
-          release("test-service", Jan_28th, interval = Some(21)))
-      )
+      val releases = Seq(release("test-service", Jan_7th), release("test-service", Jan_28th, interval = Some(21)))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = Jan_29th.toLocalDate, Some(21))
+
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).intervals shouldBe Seq(
+        (Jan_2016, Nov_1st_2015.toLocalDate, Jan_29th.toLocalDate, Some(21))
       )
     }
 
     "calculate the correct median release interval for releases that spans two months" in new SetUp {
       override implicit val clock: Clock = clockFrom(Apr_10th)
 
-      val releases = List(
-        March_2016 -> Seq(release("test-service", Mar_4th)),
-        April_2016 -> Seq(release("test-service", Apr_10th, interval = Some(37))))
+      val releases = Seq(release("test-service", Mar_4th), release("test-service", Apr_10th, interval = Some(37)))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), None),
-        ReleaseIntervalResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = Apr_10th.toLocalDate, Some(37))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 2).intervals shouldBe Seq(
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), None),
+        (Apr_2016, Feb_1st.toLocalDate, Apr_10th.toLocalDate, Some(37))
       )
     }
 
     "calculate the correct median release interval for 3 releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
-      val releases = List(
-        Feb_2016 -> Seq(release("test-service", Feb_4th),
-          release("test-service", Feb_10th, interval = Some(6)),
-          release("test-service", Feb_18th, interval = Some(8))))
+      val releases = Seq(release("test-service", Feb_4th),
+        release("test-service", Feb_10th, interval = Some(6)),
+        release("test-service", Feb_18th, interval = Some(8)))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(7))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).intervals shouldBe List(
+        (Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(7))
       )
     }
 
@@ -363,33 +376,30 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       override implicit val clock: Clock = clockFrom(Feb_18th)
 
       //6,6,2
-      val releases = List(
-        Feb_2016 -> Seq(release("test-service", Feb_4th),
-          release("test-service", Feb_10th, interval = Some(6)),
-          release("test-service", Feb_16th, interval = Some(6)),
-          release("test-service", Feb_18th, interval = Some(2))))
+      val releases = Seq(release("test-service", Feb_4th),
+        release("test-service", Feb_10th, interval = Some(6)),
+        release("test-service", Feb_16th, interval = Some(6)),
+        release("test-service", Feb_18th, interval = Some(2)))
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = Feb_18th.toLocalDate, Some(6))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).intervals shouldBe Seq(
+        (Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(6))
       )
     }
 
     "calculate the median release interval for 7 months (3 months sliding window) when provided releases are not ordered" in new SetUp {
-      override implicit val clock: Clock = clockFrom(June_5th)
+      override implicit val clock: Clock = clockFrom(Jun_5th)
 
       val releases = List(
-        May_2016 -> Seq(release("test-service", May_11th, interval = Some(30))), //interval 30
-        March_2016 -> Seq(release("test-service", Mar_1st, interval = Some(12)), release("test-service", Mar_27th, interval = Some(26))), //interval 12
-        Feb_2016 ->
-          Seq(release("test-service", Feb_10th, interval = Some(6)), // interval 6
-            release("test-service", Feb_18th, interval = Some(2)),
-            release("test-service", Feb_16th, interval = Some(6)), // interval 6
-            release("test-service", Feb_4th, interval = None)), // interval None), // interval 2
-
-        April_2016 -> Seq(release("test-service", Apr_11th, interval = Some(10)), //interval 10
-          release("test-service", Apr_1st, interval = Some(5))), //interval 5
-
-        June_2016 -> Seq(release("test-service", June_5th, interval = Some(25))) //interval 25
+        release("test-service", May_11th, interval = Some(30)), //interval 30
+        release("test-service", Mar_1st, interval = Some(12)), //interval 12
+        release("test-service", Feb_10th, interval = Some(6)), // interval 6
+        release("test-service", Feb_18th, interval = Some(2)), // interval 2
+        release("test-service", Mar_27th, interval = Some(26)), //interval 26
+        release("test-service", Apr_11th, interval = Some(10)), //interval 10
+        release("test-service", Apr_1st, interval = Some(5)), //interval 5
+        release("test-service", Feb_16th, interval = Some(6)), // interval 6
+        release("test-service", Feb_4th, interval = None), // interval None
+        release("test-service", Jun_5th, interval = Some(25)) //interval 25
       )
 
       //dec None
@@ -401,38 +411,36 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       //june 5,10,30,25 => 5,10,25,30
 
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Dec_1st_2015), from = Oct_1st_2015.toLocalDate, to = toEndOfMonth(Dec_1st_2015), None),
-        ReleaseIntervalResult(YearMonth.from(Jan_1st), from = Nov_1st_2015.toLocalDate, to = toEndOfMonth(Jan_1st), None),
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(6)),
-        ReleaseIntervalResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(12)),
-        ReleaseIntervalResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(18))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 7).intervals shouldBe List(
+        (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None),
+        (Jan_2016, Nov_1st_2015.toLocalDate, toEndOfMonth(Jan_1st), None),
+        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(6)),
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(6)),
+        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(6)),
+        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(12)),
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18))
       )
     }
 
     "calculate the median release interval for 5 months (3 months sliding window) looking back 8 months" in new SetUp {
-      override implicit val clock: Clock = clockFrom(June_5th)
+      override implicit val clock: Clock = clockFrom(Jun_5th)
 
       val releases = List(
 
-        Nov_2015 -> Seq(release("test-service", Nov_26th_2015, interval = Some(10))),
-        Dec_2015 -> Seq(release("test-service", Dec_2nd_2015, interval = Some(7))),
-        Jan_2016 -> Seq(release("test-service", Jan_10th, interval = Some(41))),
+        release("test-service", Nov_26th_2015, interval = Some(10)),
+        release("test-service", Dec_2nd_2015, interval = Some(7)),
+        release("test-service", Jan_10th, interval = Some(41)),
 
-        Feb_2016 ->
-          Seq(release("test-service", Feb_4th, interval = Some(24)), // interval 24
-            release("test-service", Feb_10th, interval = Some(6)), // interval 6
-            release("test-service", Feb_16th, interval = Some(6)), // interval 6
-            release("test-service", Feb_18th, interval = Some(2))), // interval 2
-
-        March_2016 -> Seq(release("test-service", Mar_1st, interval = Some(12)), //interval 12
-          release("test-service", Mar_27th, interval = Some(26))), //interval 26
-        April_2016 -> Seq(release("test-service", Apr_1st, interval = Some(5)), //interval 5
-          release("test-service", Apr_11th, interval = Some(10))), //interval 10
-        May_2016 -> Seq(release("test-service", May_11th, interval = Some(30))), //interval 30
-        June_2016 -> Seq(release("test-service", June_5th, interval = Some(25))) //interval 25
+        release("test-service", Feb_4th, interval = Some(24)), // interval 24
+        release("test-service", Feb_10th, interval = Some(6)), // interval 6
+        release("test-service", Feb_16th, interval = Some(6)), // interval 6
+        release("test-service", Feb_18th, interval = Some(2)), // interval 2
+        release("test-service", Mar_1st, interval = Some(12)), //interval 12
+        release("test-service", Mar_27th, interval = Some(26)), //interval 26
+        release("test-service", Apr_1st, interval = Some(5)), //interval 5
+        release("test-service", Apr_11th, interval = Some(10)), //interval 10
+        release("test-service", May_11th, interval = Some(30)), //interval 30
+        release("test-service", Jun_5th, interval = Some(25)) //interval 25
       )
 
       //dec None
@@ -444,12 +452,12 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       //june 5,10,30,25 => 5,10,25,30
 
 
-      ReleaseMetricCalculator.calculateReleaseIntervalMetric(releases) shouldBe List(
-        ReleaseIntervalResult(YearMonth.from(Feb_1st), from = Dec_1st_2015.toLocalDate, to = toEndOfMonth(Feb_1st), Some(7)),
-        ReleaseIntervalResult(YearMonth.from(Mar_1st), from = Jan_1st.toLocalDate, to = toEndOfMonth(Mar_1st), Some(12)),
-        ReleaseIntervalResult(YearMonth.from(Apr_1st), from = Feb_1st.toLocalDate, to = toEndOfMonth(Apr_1st), Some(8)),
-        ReleaseIntervalResult(YearMonth.from(May_1st), from = Mar_1st.toLocalDate, to = toEndOfMonth(May_1st), Some(12)),
-        ReleaseIntervalResult(YearMonth.from(June_1st), from = Apr_1st.toLocalDate, to = June_5th.toLocalDate, Some(18)))
+      ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 5).intervals shouldBe List(
+        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(7)),
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(12)),
+        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(8)),
+        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(12)),
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18)))
     }
   }
 
