@@ -1,5 +1,5 @@
 # microservice specific routes
 
-GET        /service/:serviceName/deployments    uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.releaseThroughput(serviceName)
+GET        /service/:serviceName/deployments    uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.deploymentMetrics(serviceName)
 
 

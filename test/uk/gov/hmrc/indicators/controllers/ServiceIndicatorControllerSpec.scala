@@ -93,7 +93,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
         )))
       )
 
-      val result = controller.releaseThroughput("serviceName")(FakeRequest())
+      val result = controller.deploymentMetrics("serviceName")(FakeRequest())
 
       contentAsJson(result) mustBe
         """[
@@ -108,7 +108,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     "return NotFound if None lead times returned" in {
       when(mockIndicatorsService.getDeploymentMetrics("serviceName")).thenReturn(Future.successful(None))
 
-      val result = controller.releaseThroughput("serviceName")(FakeRequest())
+      val result = controller.deploymentMetrics("serviceName")(FakeRequest())
 
       status(result) mustBe NOT_FOUND
 
