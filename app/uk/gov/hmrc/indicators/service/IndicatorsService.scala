@@ -34,7 +34,7 @@ object Throughput {
   implicit val writes = Json.writes[Throughput]
 }
 
-case class Stability(hotfixRate: Option[Int], hotfixLeadTime: Option[MeasureResult])
+case class Stability(hotfixRate: Option[Double], hotfixLeadTime: Option[MeasureResult])
 
 object Stability {
   implicit val writes = Json.writes[Stability]

@@ -21,6 +21,7 @@ import java.time.{Clock, LocalDate, YearMonth}
 import uk.gov.hmrc.indicators.datasource.Release
 import IndicatorTraversable._
 
+import scala.math.BigDecimal.RoundingMode
 import scala.util.Try
 
 object ReleaseMetricCalculator {
@@ -67,7 +68,7 @@ object ReleaseMetricCalculator {
 
     val (baseReleases, hotfixReleases) = releases.partition(_.version.endsWith(".0"))
 
-    val hotfixRate = Try(hotfixReleases.size * 100 / (hotfixReleases.size + baseReleases.size)).toOption
+    val hotfixRate = ratio(hotfixReleases.size, releases.size)
 
     val leadTimeMeasure: Option[MeasureResult] = calculateMeasureResult(hotfixReleases, _.leadTime)
 
@@ -78,6 +79,13 @@ object ReleaseMetricCalculator {
 
   }
 
+
+  def ratio(num: Int, denum: Int): Option[Double] = {
+    if (denum == 0) None
+    else {
+      Some(BigDecimal(num.toDouble / denum).setScale(2, RoundingMode.HALF_UP).toDouble)
+    }
+  }
 
   private def getReleaseBuckets[T <: MetricsResult](releases: Seq[Release], requiredPeriod: Int)(implicit clock: Clock): Seq[Iterable[(YearMonth, Seq[Release])]] = {
     val monthlyReleaseIntervalBuckets: YearMonthTimeSeries[Release] = MonthlyBucketBuilder(releases, requiredPeriod)(_.productionDate)

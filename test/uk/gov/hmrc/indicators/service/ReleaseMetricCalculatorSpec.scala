@@ -45,7 +45,7 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
         }
       }
 
-      def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Int], Option[Int])] = {
+      def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Double], Option[Int])] = {
         deploymentsMetricResult.map { x =>
 
           (x.period, x.from, x.to, x.stability.flatMap(_.hotfixRate), x.stability.flatMap(_.hotfixLeadTime.map(_.median)))
@@ -134,7 +134,7 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
         release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "2.0.0"))
 
       ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).stability shouldBe
-        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(50), Some(1)))
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(0.5), Some(1)))
     }
 
     "calculates hotfix rate when there has been no hotfix releases" in new SetUp {
@@ -168,11 +168,11 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 7).stability shouldBe Seq(
         (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None, None),
         (Jan_2016, Nov_1st_2015.toLocalDate, toEndOfMonth(Jan_1st), None, None),
-        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(100), Some(4)),
-        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(83), Some(4)),
-        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(75), Some(5)),
-        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(60), Some(10)),
-        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(50), Some(8))
+        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(1.0), Some(4)),
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(0.83), Some(4)),
+        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(0.75), Some(5)),
+        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(0.60), Some(10)),
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(0.50), Some(8))
       )
     }
 

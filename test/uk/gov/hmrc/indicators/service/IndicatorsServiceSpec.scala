@@ -49,9 +49,9 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     Release(name, version, creationDate, leadTime, interval)
   }
 
-  "IndicatorService getFrequentReleaseMetric" should {
+  "IndicatorService getDeploymentMetrics" should {
 
-    "calculates FrequentReleaseMetricResult" in {
+    "calculates DeploymentsMetricResult" in {
       val releases = List(
         release(serviceName, Feb_4th, leadTime = Some(3)),
         release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
@@ -62,7 +62,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       indicatorsService.getDeploymentMetrics("test-service", 1).futureValue.get shouldBe
         List(
-          DeploymentsMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(2)))), stability = Some(Stability(Some(100), Some(MeasureResult(2))))))
+          DeploymentsMetricResult(YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(Some(MeasureResult(2)), Some(MeasureResult(2)))), stability = Some(Stability(Some(1.0), Some(MeasureResult(2))))))
     }
 
     "return only the release interval if no tag creation dates are available" in {
@@ -75,7 +75,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
 
       indicatorsService.getDeploymentMetrics("test-service", 1).futureValue.get shouldBe
-        List(DeploymentsMetricResult(period = YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(None, Some(MeasureResult(2)))), stability = Some(Stability(Some(100), None))))
+        List(DeploymentsMetricResult(period = YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(None, Some(MeasureResult(2)))), stability = Some(Stability(Some(1.0), None))))
     }
 
     "returns None if the service is not found" in {
