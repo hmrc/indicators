@@ -70,11 +70,11 @@ object ReleaseMetricCalculator {
 
     val hotfixRate = ratio(hotfixReleases.size, releases.size)
 
-    val leadTimeMeasure: Option[MeasureResult] = calculateMeasureResult(hotfixReleases, _.leadTime)
+    val intervalMeasure: Option[MeasureResult] = calculateMeasureResult(hotfixReleases, _.interval)
 
-    (hotfixRate, leadTimeMeasure) match {
+    (hotfixRate, intervalMeasure) match {
       case (None, None) => None
-      case _ => Some(Stability(hotfixRate, leadTimeMeasure))
+      case _ => Some(Stability(hotfixRate, intervalMeasure))
     }
 
   }

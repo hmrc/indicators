@@ -48,7 +48,7 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Double], Option[Int])] = {
         deploymentsMetricResult.map { x =>
 
-          (x.period, x.from, x.to, x.stability.flatMap(_.hotfixRate), x.stability.flatMap(_.hotfixLeadTime.map(_.median)))
+          (x.period, x.from, x.to, x.stability.flatMap(_.hotfixRate), x.stability.flatMap(_.hotfixInterval.map(_.median)))
 
         }
       }
@@ -125,13 +125,13 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, None, None))
     }
 
-    "calculates hotfix rate when there has been some hotfix releases" in new SetUp {
+    "calculates hotfix rate based on (hotfix intervals only) when there has been some hotfix releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
       val releases = List(
-        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
-        release(serviceName, Feb_4th.plusDays(1), leadTime = Some(1), version = "1.0.1"),
-        release(serviceName, Feb_4th.plusDays(2), leadTime = Some(1), version = "1.0.2"),
-        release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "2.0.0"))
+        release(serviceName, Feb_4th, version = "1.0.0"),
+        release(serviceName, Feb_4th.plusDays(1), interval = Some(1), version = "1.0.1"),
+        release(serviceName, Feb_4th.plusDays(2), interval = Some(1), version = "1.0.2"),
+        release(serviceName, Feb_18th, version = "2.0.0"))
 
       ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(0.5), Some(1)))
@@ -140,9 +140,9 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
     "calculates hotfix rate when there has been no hotfix releases" in new SetUp {
       override implicit val clock: Clock = clockFrom(Feb_18th)
       val releases = List(
-        release(serviceName, Feb_4th, leadTime = Some(3), version = "1.0.0"),
-        release(serviceName, Feb_4th.plusDays(1), leadTime = Some(1), version = "2.0.0"),
-        release(serviceName, Feb_18th, leadTime = Some(1), interval = Some(12), version = "3.0.0"))
+        release(serviceName, Feb_4th,  version = "1.0.0"),
+        release(serviceName, Feb_4th.plusDays(1), version = "2.0.0"),
+        release(serviceName, Feb_18th, interval = Some(12), version = "3.0.0"))
 
       ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(0), None))
@@ -152,17 +152,17 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
       override implicit val clock: Clock = clockFrom(Jun_5th)
 
       val releases = List(
-        release("test-service", Feb_4th, Some(3), version = "3.1.1"),
-        release("test-service", Feb_10th, Some(6), version = "4.1.1"),
-        release("test-service", Feb_16th, Some(4), version = "5.1.1"),
-        release("test-service", Feb_18th, Some(2), version = "6.1.1"),
-        release("test-service", Mar_1st, Some(12), version = "7.1.1"),
-        release("test-service", Mar_27th, Some(23), version = "8.1.0"), // leadt times of hotfixes = 2,3,4,6,12 = 4 median
+        release("test-service", Feb_4th,  interval = Some(3), version = "3.1.1"),
+        release("test-service", Feb_10th, interval = Some(6), version = "4.1.1"),
+        release("test-service", Feb_16th, interval = Some(4), version = "5.1.1"),
+        release("test-service", Feb_18th, interval = Some(2), version = "6.1.1"),
+        release("test-service", Mar_1st, interval = Some(12), version = "7.1.1"),
+        release("test-service", Mar_27th, interval = Some(23), version = "8.1.0"), // leadt times of hotfixes = 2,3,4,6,12 = 4 median
 
-        release("test-service", Apr_1st, Some(5), version = "1.1.1"),
-        release("test-service", Apr_11th, Some(7), version = "2.1.0"), // leadt times of hotfixes = 2,3,4,5,6,12 = 5 median
-        release("test-service", May_11th, Some(10), version = "9.1.1"), // lead times =   5, 7, 10, 12, 23
-        release("test-service", Jun_5th, Some(4), version = "10.1.0") // leadt times of hotfixes = 5 , 10 = 8 median
+        release("test-service", Apr_1st, interval = Some(5), version = "1.1.1"),
+        release("test-service", Apr_11th, interval = Some(7), version = "2.1.0"), // leadt times of hotfixes = 2,3,4,5,6,12 = 5 median
+        release("test-service", May_11th, interval = Some(10), version = "9.1.1"), // lead times =   5, 7, 10, 12, 23
+        release("test-service", Jun_5th, interval = Some(4), version = "10.1.0") // leadt times of hotfixes = 5 , 10 = 8 median
       )
 
       ReleaseMetricCalculator.calculateDeploymentMetrics(releases, 7).stability shouldBe Seq(

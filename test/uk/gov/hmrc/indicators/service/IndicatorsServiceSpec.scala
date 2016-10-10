@@ -75,7 +75,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       val expectedFrom = LocalDate.of(1999, 12, 1) // 3 months before the required period
 
       indicatorsService.getDeploymentMetrics("test-service", 1).futureValue.get shouldBe
-        List(DeploymentsMetricResult(period = YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(None, Some(MeasureResult(2)))), stability = Some(Stability(Some(1.0), None))))
+        List(DeploymentsMetricResult(period = YearMonth.from(Feb_1st), from = expectedFrom, to = Feb_18th.toLocalDate, throughput = Some(Throughput(None, Some(MeasureResult(2)))), stability = Some(Stability(Some(1.0), Some(MeasureResult(2))))))
     }
 
     "returns None if the service is not found" in {
