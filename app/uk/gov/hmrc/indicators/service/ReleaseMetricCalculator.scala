@@ -30,7 +30,7 @@ object ReleaseMetricCalculator {
   val monthlyWindowSize: Int = 3
   val monthsToLookBack = 3
 
-  def calculateDeploymentMetrics(releases: Seq[Release], requiredPeriodInMonths: Int = 9)(implicit clock: Clock): Seq[DeploymentsMetricResult] = {
+  def calculateDeploymentMetrics(releases: Seq[Release], requiredPeriodInMonths: Int)(implicit clock: Clock): Seq[DeploymentsMetricResult] = {
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
       val releaseBuckets = getReleaseBuckets(releases, requiredMonths)
       releaseBuckets.zipWithIndex.map { case (bucket, index) =>

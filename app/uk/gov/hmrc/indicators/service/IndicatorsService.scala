@@ -91,7 +91,7 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = C
 
   implicit val c = clock
 
-  def getDeploymentMetrics(serviceName: String, periodInMonths: Int = 9): Future[Option[Seq[DeploymentsMetricResult]]] =
+  def getDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
 
     releasesDataSource.getForService(serviceName).map { releases =>
 

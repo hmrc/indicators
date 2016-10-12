@@ -33,7 +33,6 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
         deploymentsMetricResult.map { x =>
 
           (x.period, x.from, x.to, x.throughput.flatMap(_.leadTime).map(_.median))
-
         }
       }
 
@@ -41,7 +40,6 @@ class ReleaseMetricCalculatorSpec extends WordSpec with Matchers with TypeChecke
         deploymentsMetricResult.map { x =>
 
           (x.period, x.from, x.to, x.throughput.flatMap(_.interval).map(_.median))
-
         }
       }
 
