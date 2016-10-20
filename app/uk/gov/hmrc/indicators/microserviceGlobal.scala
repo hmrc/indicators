@@ -25,6 +25,8 @@ import uk.gov.hmrc.play.auth.controllers.AuthParamsControllerConfig
 import uk.gov.hmrc.play.config.{ControllerConfig, RunMode}
 import uk.gov.hmrc.play.filters.{NoCacheFilter, RecoveryFilter}
 import uk.gov.hmrc.play.graphite.GraphiteConfig
+import uk.gov.hmrc.play.microservice.bootstrap.{DefaultMicroserviceGlobal, MicroserviceFilterSupport}
+
 import uk.gov.hmrc.play.http.logging.filters.LoggingFilter
 import uk.gov.hmrc.play.microservice.bootstrap.JsonErrorHandling
 import uk.gov.hmrc.play.microservice.bootstrap.Routing.RemovingOfTrailingSlashes
@@ -34,11 +36,11 @@ object ControllerConfiguration extends ControllerConfig {
   lazy val controllerConfigs = Play.current.configuration.underlying.as[Config]("controllers")
 }
 
-object AuthParamsControllerConfiguration extends AuthParamsControllerConfig {
+object AuthParamsControllerConfiguration extends AuthParamsControllerConfig  {
   lazy val controllerConfigs = ControllerConfiguration.controllerConfigs
 }
 
-object MicroserviceLoggingFilter extends LoggingFilter {
+object MicroserviceLoggingFilter extends LoggingFilter with MicroserviceFilterSupport {
   override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
 }
 

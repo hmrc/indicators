@@ -40,4 +40,5 @@ trait Configs {
 
 object PlayConfigs extends Configs {
   def config(path: String) = Play.current.configuration.getString(path)
+  def config0(path: String) = Play.current.configuration.getString(path)
 }
