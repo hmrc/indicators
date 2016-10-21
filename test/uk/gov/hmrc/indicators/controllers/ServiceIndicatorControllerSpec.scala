@@ -80,19 +80,19 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
   }
 
-  /**
-    * http://stackoverflow.com/questions/28461877/is-there-a-bug-in-play2-testing-with-fakerequests-and-chunked-responses-enumera
-    */
-  def contentAsBytes(of: Future[Result])(implicit timeout: Timeout): Array[Byte] = {
-    val r = Await.result(of, timeout.duration)
-    val e = r.header.headers.get(TRANSFER_ENCODING) match {
-      case Some("chunked") => {
-        r.body &> Results.dechunk
-      }
-      case _ => r.body
-    }
-    Await.result(e |>>> Iteratee.consume[Array[Byte]](), timeout.duration)
-  }
+//  /**
+//    * http://stackoverflow.com/questions/28461877/is-there-a-bug-in-play2-testing-with-fakerequests-and-chunked-responses-enumera
+//    */
+//  def contentAsBytes(of: Future[Result])(implicit timeout: Timeout): Array[Byte] = {
+//    val r = Await.result(of, timeout.duration)
+//    val e = r.header.headers.get(TRANSFER_ENCODING) match {
+//      case Some("chunked") => {
+//        r.body &> Results.dechunk
+//      }
+//      case _ => r.body
+//    }
+//    Await.result(e |>>> Iteratee.consume[Array[Byte]](), timeout.duration)
+//  }
 
 
 }
