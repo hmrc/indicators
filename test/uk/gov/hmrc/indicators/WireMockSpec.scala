@@ -25,7 +25,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, WordSpec}
 import play.api.libs.json.Json
-import uk.gov.hmrc.play.test.WithFakeApplication
+//import uk.gov.hmrc.play.test.WithFakeApplication
 
 import scala.collection.JavaConversions._
 import scala.util.Try

@@ -16,23 +16,26 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import java.time.{LocalDate, LocalDateTime, ZoneOffset, ZonedDateTime}
+import java.time.{LocalDateTime, ZoneOffset}
 
 import com.github.tomakehurst.wiremock.http.RequestMethod.GET
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec}
-import play.api.test.FakeApplication
+import org.scalatestplus.play.{OneAppPerSuite, OneAppPerTest, OneServerPerSuite}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.indicators.{Configs, DefaultPatienceConfig, IndicatorsConfigProvider, WireMockSpec}
+import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 
-class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig{
+class ReleasesClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig with OneAppPerSuite {
 
   val releasesClient = new ReleasesClient(endpointMockUrl)
+
+//  implicit override lazy val app = new GuiceApplicationBuilder().build()
 
   "ReleasesClient.getForService" should {
 
     "get all releases from the releases api and return ones for the given serviceName" in {
-      running(FakeApplication()) {
+      running(app) {
         val serviceName = "test-service"
 
         val `release 8.3.0 production date` = LocalDateTime.now().minusMonths(2).toEpochSecond(ZoneOffset.UTC)
