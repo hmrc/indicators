@@ -24,7 +24,7 @@ import play.sbt.PlayImport._
   private val playHealthVersion = "2.0.0"
   private val playJsonLoggerVersion = "5460c48e17aaea6fc83395a993fab1ab2cc90cbb"
   private val playLogbackJsonLoggerVersion = "3.0.0"
-  private val playUrlBindersVersion = "0.2.0"
+  private val playUrlBindersVersion = "2.0.0"
   private val playConfigVersion = "3.0.0"
   private val domainVersion = "3.7.0"
   private val hmrcTestVersion = "2.0.0"
