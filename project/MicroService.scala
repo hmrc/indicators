@@ -38,7 +38,7 @@ trait MicroService {
       routesGenerator := StaticRoutesGenerator
     )
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-    .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
+    .settings(resolvers ++= Seq(Resolver.bintrayRepo("hmrc", "releases"), Resolver.jcenterRepo))
     .enablePlugins(
 //      SbtDistributablesPlugin,
       SbtAutoBuildPlugin,
