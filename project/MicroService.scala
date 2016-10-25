@@ -1,9 +1,10 @@
+import play.sbt.PlayScala
 import play.sbt.routes.RoutesKeys._
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
-//import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-//import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import uk.gov.hmrc.versioning.SbtGitVersioning
 
 
@@ -15,18 +16,18 @@ trait MicroService {
 
   import TestPhases._
   import play.sbt.routes.RoutesKeys.routesGenerator
-
+  import play.sbt.PlayScala
   val appName: String
 
   lazy val appDependencies : Seq[ModuleID] = ???
-  lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala)
+  lazy val plugins: Seq[Plugins] = Seq()
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(plugins : _*)
+    .enablePlugins(Seq(PlayScala) ++ plugins: _*)
     .settings(playSettings : _*)
     .settings(scalaSettings: _*)
-//    .settings(publishingSettings: _*)
+    .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
       libraryDependencies ++= appDependencies,
@@ -39,10 +40,6 @@ trait MicroService {
     )
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
     .settings(resolvers ++= Seq(Resolver.bintrayRepo("hmrc", "releases"), Resolver.jcenterRepo))
-    .enablePlugins(
-//      SbtDistributablesPlugin,
-      SbtAutoBuildPlugin,
-      SbtGitVersioning)
 }
 
 private object TestPhases {
