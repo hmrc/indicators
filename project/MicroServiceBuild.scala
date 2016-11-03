@@ -20,13 +20,13 @@ object MicroServiceBuild extends Build with MicroService {
 private object AppDependencies {
 
   import play.core.PlayVersion
-import play.sbt.PlayImport._
+  import play.sbt.PlayImport._
 
 
   private val microserviceBootstrapVersion = "5.1.0"
   private val playAuthVersion = "4.0.0"
   private val playHealthVersion = "2.0.0"
-  private val playJsonLoggerVersion = "5460c48e17aaea6fc83395a993fab1ab2cc90cbb"
+  private val playJsonLoggerVersion = "3.0.0"
   private val playLogbackJsonLoggerVersion = "3.0.0"
   private val playUrlBindersVersion = "2.0.0"
   private val playConfigVersion = "3.0.0"
@@ -42,13 +42,12 @@ import play.sbt.PlayImport._
 
 
   val compile = Seq(
-    ws,
     "uk.gov.hmrc" %% "microservice-bootstrap" % microserviceBootstrapVersion,
     "uk.gov.hmrc" %% "play-authorisation" % playAuthVersion,
     "uk.gov.hmrc" %% "play-health" % playHealthVersion,
     "uk.gov.hmrc" %% "play-url-binders" % playUrlBindersVersion,
     "uk.gov.hmrc" %% "play-config" % playConfigVersion,
-    "uk.gov.hmrc" %% "logback-json-logger" % playLogbackJsonLoggerVersion,
+    "uk.gov.hmrc" %% "play-json-logger" % playJsonLoggerVersion,
     "uk.gov.hmrc" %% "domain" % domainVersion,
     "uk.gov.hmrc" %% "git-client" % "0.6.0",
     "uk.gov.hmrc" %% "github-client" % "1.4.0",
