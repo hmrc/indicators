@@ -16,16 +16,12 @@
 
 package uk.gov.hmrc.indicators
 
-import java.nio.file.{Path, Files, Paths}
-
-
-import play.api.Logger
-import uk.gov.hmrc.gitclient.Git
-import uk.gov.hmrc.githubclient.GithubApiClient
 import uk.gov.hmrc.indicators.datasource._
-import uk.gov.hmrc.indicators.service.IndicatorsService
+import uk.gov.hmrc.indicators.service.{IndicatorsService, ReleaseMetricCalculator}
 
 object ComponentRegistry extends IndicatorsConfigProvider {
   val releasesDataSource = new ReleasesClient(releasesApiBase)
-  val indicatorsService = new IndicatorsService(releasesDataSource)
+  val teamsAndRepositoriesDataSource = new TeamsAndRepositoriesClient(teamsAndRepositoryApiBase)
+  val releaseMetricCalculator = new ReleaseMetricCalculator()
+  val indicatorsService = new IndicatorsService(releasesDataSource, teamsAndRepositoriesDataSource, releaseMetricCalculator)
 }

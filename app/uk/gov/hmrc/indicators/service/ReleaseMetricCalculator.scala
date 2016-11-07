@@ -24,13 +24,15 @@ import IndicatorTraversable._
 import scala.math.BigDecimal.RoundingMode
 import scala.util.Try
 
-object ReleaseMetricCalculator {
+class ReleaseMetricCalculator(clock : Clock = Clock.systemUTC()) {
+
+  implicit val c = clock
 
   type ReleaseBucket = Iterable[(YearMonth, Seq[Release])]
   val monthlyWindowSize: Int = 3
   val monthsToLookBack = 3
 
-  def calculateDeploymentMetrics(releases: Seq[Release], requiredPeriodInMonths: Int)(implicit clock: Clock): Seq[DeploymentsMetricResult] = {
+  def calculateDeploymentMetrics(releases: Seq[Release], requiredPeriodInMonths: Int): Seq[DeploymentsMetricResult] = {
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
       val releaseBuckets = getReleaseBuckets(releases, requiredMonths)
       releaseBuckets.zipWithIndex.map { case (bucket, index) =>
@@ -87,7 +89,7 @@ object ReleaseMetricCalculator {
     }
   }
 
-  private def getReleaseBuckets[T <: MetricsResult](releases: Seq[Release], requiredPeriod: Int)(implicit clock: Clock): Seq[Iterable[(YearMonth, Seq[Release])]] = {
+  private def getReleaseBuckets[T <: MetricsResult](releases: Seq[Release], requiredPeriod: Int): Seq[Iterable[(YearMonth, Seq[Release])]] = {
     val monthlyReleaseIntervalBuckets: YearMonthTimeSeries[Release] = MonthlyBucketBuilder(releases, requiredPeriod)(_.productionDate)
 
     val releaseBuckets = monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize)

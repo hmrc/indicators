@@ -36,21 +36,21 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     override val indicatorsService: IndicatorsService = mockIndicatorsService
   }
 
-  "ServiceIndicatorController.releaseThroughput" should {
+  "ServiceIndicatorController.serviceDeploymentMetrics" should {
 
 
     "return Frequent release metric for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getDeploymentMetrics("serviceName")).thenReturn(Future.successful(
+      when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(
         Some(List(
           DeploymentsMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))), None),
           DeploymentsMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(Throughput(Some(MeasureResult(6)), None)), None)
         )))
       )
 
-      val result = controller.deploymentMetrics("serviceName")(FakeRequest())
+      val result = controller.serviceDeploymentMetrics("serviceName")(FakeRequest())
 
       contentAsJson(result) mustBe
         """[
@@ -63,9 +63,9 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
 
     "return NotFound if None lead times returned" in {
-      when(mockIndicatorsService.getDeploymentMetrics("serviceName")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(None))
 
-      val result = controller.deploymentMetrics("serviceName")(FakeRequest())
+      val result = controller.serviceDeploymentMetrics("serviceName")(FakeRequest())
 
       status(result) mustBe NOT_FOUND
 
@@ -74,19 +74,43 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
   }
 
-//  /**
-//    * http://stackoverflow.com/questions/28461877/is-there-a-bug-in-play2-testing-with-fakerequests-and-chunked-responses-enumera
-//    */
-//  def contentAsBytes(of: Future[Result])(implicit timeout: Timeout): Array[Byte] = {
-//    val r = Await.result(of, timeout.duration)
-//    val e = r.header.headers.get(TRANSFER_ENCODING) match {
-//      case Some("chunked") => {
-//        r.body &> Results.dechunk
-//      }
-//      case _ => r.body
-//    }
-//    Await.result(e |>>> Iteratee.consume[Array[Byte]](), timeout.duration)
-//  }
+  "ServiceIndicatorController.teamDeploymentMetrics" should {
+
+
+    "return Frequent release metric for a given service in json format" in {
+
+      val date = LocalDate.of(2016, 9, 13)
+
+      when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(
+        Some(List(
+          DeploymentsMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))), None),
+          DeploymentsMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(Throughput(Some(MeasureResult(6)), None)), None)
+        )))
+      )
+
+      val result = controller.teamDeploymentMetrics("teamName")(FakeRequest())
+
+      contentAsJson(result) mustBe
+        """[
+          |{"period" : "2016-04", "from" : "2016-09-13", "to" : "2016-09-13", "throughput":{"leadTime" : {"median" : 5}, "interval" : {"median" : 4}}},
+          |{"period" : "2016-05", "from" : "2016-09-13", "to" : "2016-09-13", "throughput":{"leadTime" : {"median" : 6}}}
+          |]""".stripMargin.toJson
+
+      contentType(result).value mustBe "application/json"
+    }
+
+
+    "return NotFound if None lead times returned" in {
+      when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(None))
+
+      val result = controller.teamDeploymentMetrics("teamName")(FakeRequest())
+
+      status(result) mustBe NOT_FOUND
+
+
+    }
+
+  }
 
 
 }

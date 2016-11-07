@@ -16,17 +16,14 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{Clock, LocalDate, YearMonth}
+import java.time.{LocalDate, YearMonth}
 
 import play.api.Logger
-import play.api.libs.json.Writes
+import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.indicators.datasource._
-import uk.gov.hmrc.indicators.service.ReleaseMetricCalculator._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import play.api.libs.json.Json
-import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
 
 case class Throughput(leadTime: Option[MeasureResult], interval: Option[MeasureResult])
 
@@ -47,7 +44,7 @@ case class DeploymentsMetricResult(period: YearMonth,
                                    stability: Option[Stability])
 
 object DeploymentsMetricResult {
-
+  import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
   implicit val writes = Json.writes[DeploymentsMetricResult]
 }
 
@@ -87,20 +84,42 @@ object ReleaseLeadTimeResult {
 }
 
 
-class IndicatorsService(releasesDataSource: ReleasesDataSource, clock: Clock = Clock.systemUTC()) {
+class IndicatorsService(releasesDataSource: ReleasesDataSource,
+                        teamsAndRepositoriesDataSource: TeamsAndRepositoriesDataSource,
+                        releaseMetricCalculator: ReleaseMetricCalculator) {
 
-  implicit val c = clock
 
-  def getDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
+  def getServiceDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
 
     releasesDataSource.getForService(serviceName).map { releases =>
 
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
       Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
 
-      Some(calculateDeploymentMetrics(releases, periodInMonths))
+      Some(releaseMetricCalculator.calculateDeploymentMetrics(releases, periodInMonths))
 
     }.recoverWith { case ex => Future.successful(None) }
+
+  def getTeamDeploymentMetrics(teamName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] = {
+
+    teamsAndRepositoriesDataSource.getServicesForTeam(teamName).flatMap { services =>
+      Future.sequence(
+        services.map(getReleases)
+      ).map { releases =>
+        Some(releaseMetricCalculator.calculateDeploymentMetrics(releases.flatten, periodInMonths))
+      }
+    }.recoverWith { case ex => Future.successful(None) }
+
+
+  }
+
+
+  private def getReleases(service: String): Future[List[Release]] = {
+    releasesDataSource.getForService(service).recoverWith {case _ =>
+      Logger.info(s"No releases found for service : $service")
+      Future.successful(List())
+    }
+  }
 }
 
 
