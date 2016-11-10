@@ -101,21 +101,21 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource,
     }.recoverWith { case ex => Future.successful(None) }
 
   def getTeamDeploymentMetrics(teamName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] = {
-
     teamsAndRepositoriesDataSource.getServicesForTeam(teamName).flatMap { services =>
-      Future.sequence(
-        services.map(getReleases)
-      ).map { releases =>
-        Some(releaseMetricCalculator.calculateDeploymentMetrics(releases.flatten, periodInMonths))
-      }
+      Future.traverse(services)(getReleases)
+        .map(_.flatten)
+        .map(getMetrics(periodInMonths))
     }.recoverWith { case ex => Future.successful(None) }
-
-
   }
 
+  private def getMetrics(periodInMonths: Int)(releases: Seq[Release]) =
+    releases match {
+      case Nil => None
+      case l => Some(releaseMetricCalculator.calculateDeploymentMetrics(l, periodInMonths))
+    }
 
   private def getReleases(service: String): Future[List[Release]] = {
-    releasesDataSource.getForService(service).recoverWith {case _ =>
+    releasesDataSource.getForService(service).recoverWith { case _ =>
       Logger.info(s"No releases found for service : $service")
       Future.successful(List())
     }

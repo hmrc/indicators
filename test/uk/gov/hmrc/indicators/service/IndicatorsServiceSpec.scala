@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.LocalDateTime
+import java.time.{LocalDate, LocalDateTime, YearMonth}
 
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{Matchers, OptionValues, WordSpec}
 import uk.gov.hmrc.indicators.datasource.{TeamsAndRepositoriesDataSource, _}
 import uk.gov.hmrc.indicators.{DateHelper, DefaultPatienceConfig}
 
 import scala.concurrent.Future
 
 
-class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig {
+class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig with OptionValues {
 
   trait SetUp {
 
@@ -67,7 +67,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
       when(releaseMetricCalculator.calculateDeploymentMetrics(releases, 1)).thenReturn(Seq(deploymentsMetricResult))
 
-      indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue.get shouldBe
+      indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
 
@@ -92,7 +92,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       when(releasesClient.getForService("Service2")).thenReturn(Future.successful(releases2))
       when(releaseMetricCalculator.calculateDeploymentMetrics(releases1 ++ releases2, 1)).thenReturn(Seq(deploymentsMetricResult))
 
-      indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.get shouldBe
+      indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
 
@@ -112,12 +112,40 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
       when(releasesClient.getForService("Service3")).thenReturn(Future.failed(new RuntimeException))
       when(releaseMetricCalculator.calculateDeploymentMetrics(releases1 ++ releases2, 1)).thenReturn(Seq(deploymentsMetricResult))
 
-      indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.get shouldBe
+      indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
 
+    "returns None if the team has no throughput or stability indicators" in new SetUp{
+
+      val noMetricResult = Seq(
+        DeploymentsMetricResult(
+          YearMonth.of(2015, 12),
+          LocalDate.of(2015, 10, 1),
+          LocalDate.of(2015, 12, 31),
+          None,
+          None
+        ),
+        DeploymentsMetricResult(
+          YearMonth.of(2016, 1),
+          LocalDate.of(2015, 11, 1),
+          LocalDate.of(2016, 1, 31),
+          None,
+          None
+        )
+      )
+
+      val teamServices = List("service1", "service2")
+
+      val emptyReleases = List()
 
 
+      when(releasesClient.getForService("service1")).thenReturn(Future.successful(emptyReleases))
+      when(releasesClient.getForService("service2")).thenReturn(Future.successful(emptyReleases))
+      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(teamServices))
+      when(releaseMetricCalculator.calculateDeploymentMetrics(emptyReleases, 1)).thenReturn(noMetricResult)
 
+      indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue shouldBe None
+    }
   }
 }
