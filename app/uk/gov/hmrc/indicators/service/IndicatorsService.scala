@@ -16,72 +16,11 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{LocalDate, YearMonth}
-
 import play.api.Logger
-import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.indicators.datasource._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-case class Throughput(leadTime: Option[MeasureResult], interval: Option[MeasureResult])
-
-object Throughput {
-  implicit val writes = Json.writes[Throughput]
-}
-
-case class Stability(hotfixRate: Option[Double], hotfixInterval: Option[MeasureResult])
-
-object Stability {
-  implicit val writes = Json.writes[Stability]
-}
-
-case class DeploymentsMetricResult(period: YearMonth,
-                                   from: LocalDate,
-                                   to: LocalDate,
-                                   throughput: Option[Throughput],
-                                   stability: Option[Stability])
-
-object DeploymentsMetricResult {
-  import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
-  implicit val writes = Json.writes[DeploymentsMetricResult]
-}
-
-
-case class MeasureResult(median: Int)
-
-object MeasureResult {
-
-  def toMeasureResult(median: BigDecimal): MeasureResult = new MeasureResult(Math.round(median.toDouble).toInt)
-
-  implicit val measureResultWrites: Writes[MeasureResult] = Json.writes[MeasureResult]
-}
-
-abstract class MetricsResult {
-  val period: YearMonth
-  val from: LocalDate
-  val to: LocalDate
-
-  val median: Option[Int]
-}
-
-
-case class ReleaseLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
-
-case class ReleaseIntervalResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
-
-object ReleaseIntervalResult {
-
-  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseIntervalResult =
-    ReleaseIntervalResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
-}
-
-object ReleaseLeadTimeResult {
-
-  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseLeadTimeResult =
-    ReleaseLeadTimeResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
-}
 
 
 class IndicatorsService(releasesDataSource: ReleasesDataSource,
@@ -91,7 +30,7 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource,
 
   def getServiceDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
 
-    releasesDataSource.getForService(serviceName).map { releases =>
+    getServiceReleases(serviceName).map { releases =>
 
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
       Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
@@ -102,7 +41,9 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource,
 
   def getTeamDeploymentMetrics(teamName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] = {
     teamsAndRepositoriesDataSource.getServicesForTeam(teamName).flatMap { services =>
-      Future.traverse(services)(getReleases)
+      Future.traverse(services) { s =>
+        getServiceReleases(s).recoverWith { case _ => Future.successful(List()) }
+      }
         .map(_.flatten)
         .map(getMetrics(periodInMonths))
     }.recoverWith { case ex => Future.successful(None) }
@@ -114,12 +55,21 @@ class IndicatorsService(releasesDataSource: ReleasesDataSource,
       case l => Some(releaseMetricCalculator.calculateDeploymentMetrics(l, periodInMonths))
     }
 
-  private def getReleases(service: String): Future[List[Release]] = {
-    releasesDataSource.getForService(service).recoverWith { case _ =>
-      Logger.info(s"No releases found for service : $service")
-      Future.successful(List())
+  def getServiceReleases(service: String): Future[List[Release]] = {
+    releasesDataSource.getForService(service).map { rs =>
+      val (invalidReleases, validReleases) = rs.partition(r => r.leadTime.isDefined && r.leadTime.exists(_ < 0))
+      logInvalidReleases(invalidReleases)
+      validReleases
     }
   }
+
+  private def logInvalidReleases(releases: List[Release]) {
+    Future {
+      releases.foreach(r => Logger.warn(s"Invalid Release service:${r.name} version: ${r.version} leadTime : ${r.leadTime}"))
+    }
+  }
+
+
 }
 
 
