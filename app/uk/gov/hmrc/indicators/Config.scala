@@ -23,7 +23,7 @@ import play.api.{Logger, Play}
 trait ConfigProvider {
   def configs: Configs
 
-  lazy val releasesApiBase: String = requiredConf("releases.api.base")
+  lazy val deploymentsApiBase: String = requiredConf("deployments.api.base")
   lazy val teamsAndRepositoryApiBase : String = requiredConf("teamsandrepositories.api.base")
 
   private def optionalConf(path: String): Option[String] = configs.config(path)

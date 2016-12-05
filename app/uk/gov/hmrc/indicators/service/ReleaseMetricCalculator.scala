@@ -18,61 +18,61 @@ package uk.gov.hmrc.indicators.service
 
 import java.time.{Clock, LocalDate, YearMonth}
 
-import uk.gov.hmrc.indicators.datasource.Release
+import uk.gov.hmrc.indicators.datasource.Deployment
 import IndicatorTraversable._
 
 import scala.math.BigDecimal.RoundingMode
 import scala.util.Try
 
-class ReleaseMetricCalculator(clock : Clock = Clock.systemUTC()) {
+class DeploymentMetricCalculator(clock : Clock = Clock.systemUTC()) {
 
   implicit val c = clock
 
-  type ReleaseBucket = Iterable[(YearMonth, Seq[Release])]
+  type DeploymentBucket = Iterable[(YearMonth, Seq[Deployment])]
   val monthlyWindowSize: Int = 3
   val monthsToLookBack = 3
 
-  def calculateDeploymentMetrics(releases: Seq[Release], requiredPeriodInMonths: Int): Seq[DeploymentsMetricResult] = {
+  def calculateDeploymentMetrics(deployments: Seq[Deployment], requiredPeriodInMonths: Int): Seq[DeploymentsMetricResult] = {
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
-      val releaseBuckets = getReleaseBuckets(releases, requiredMonths)
-      releaseBuckets.zipWithIndex.map { case (bucket, index) =>
-        val dateData = DateData(releaseBuckets.size, bucket, index)
+      val deploymentBuckets = getDeploymentBuckets(deployments, requiredMonths)
+      deploymentBuckets.zipWithIndex.map { case (bucket, index) =>
+        val dateData = DateData(deploymentBuckets.size, bucket, index)
 
-        val allReleasesInBucket: Seq[Release] = bucket.flatMap(_._2).toSeq
-        DeploymentsMetricResult(dateData.period, dateData.from, dateData.to, calculateThroughputMetric(allReleasesInBucket), calculateReleaseStabilityMetric(allReleasesInBucket))
+        val allDeploymentsInBucket: Seq[Deployment] = bucket.flatMap(_._2).toSeq
+        DeploymentsMetricResult(dateData.period, dateData.from, dateData.to, calculateThroughputMetric(allDeploymentsInBucket), calculateDeploymentStabilityMetric(allDeploymentsInBucket))
       }
 
     }
   }
 
-  private def calculateThroughputMetric(releases: Seq[Release]): Option[Throughput] = {
-    val leadTimeMetric = calculateMeasureResult(releases, _.leadTime)
-    val releaseIntervalMetric = calculateMeasureResult(releases, _.interval)
-    (leadTimeMetric, releaseIntervalMetric) match {
+  private def calculateThroughputMetric(deployments: Seq[Deployment]): Option[Throughput] = {
+    val leadTimeMetric = calculateMeasureResult(deployments, _.leadTime)
+    val deploymentIntervalMetric = calculateMeasureResult(deployments, _.interval)
+    (leadTimeMetric, deploymentIntervalMetric) match {
       case (None, None) => None
-      case _ => Some(Throughput(leadTimeMetric, releaseIntervalMetric))
+      case _ => Some(Throughput(leadTimeMetric, deploymentIntervalMetric))
     }
   }
 
 
-  private def calculateMeasureResult(releases: Seq[Release], measureReader: (Release) => Option[Long]): Option[MeasureResult] = {
+  private def calculateMeasureResult(deployments: Seq[Deployment], measureReader: (Deployment) => Option[Long]): Option[MeasureResult] = {
 
     val measures: Iterable[Long] = for {
-      release <- releases
-      measure <- measureReader(release)
+      deployment <- deployments
+      measure <- measureReader(deployment)
     } yield measure
 
     measures.median.map(MeasureResult.toMeasureResult)
   }
 
 
-  private def calculateReleaseStabilityMetric(releases: Seq[Release]): Option[Stability] = {
+  private def calculateDeploymentStabilityMetric(deployments: Seq[Deployment]): Option[Stability] = {
 
-    val (baseReleases, hotfixReleases) = releases.partition(_.version.endsWith(".0"))
+    val (baseDeployments, hotfixDeployments) = deployments.partition(_.version.endsWith(".0"))
 
-    val hotfixRate = ratio(hotfixReleases.size, releases.size)
+    val hotfixRate = ratio(hotfixDeployments.size, deployments.size)
 
-    val intervalMeasure: Option[MeasureResult] = calculateMeasureResult(hotfixReleases, _.interval)
+    val intervalMeasure: Option[MeasureResult] = calculateMeasureResult(hotfixDeployments, _.interval)
 
     (hotfixRate, intervalMeasure) match {
       case (None, None) => None
@@ -89,11 +89,11 @@ class ReleaseMetricCalculator(clock : Clock = Clock.systemUTC()) {
     }
   }
 
-  private def getReleaseBuckets[T <: MetricsResult](releases: Seq[Release], requiredPeriod: Int): Seq[Iterable[(YearMonth, Seq[Release])]] = {
-    val monthlyReleaseIntervalBuckets: YearMonthTimeSeries[Release] = MonthlyBucketBuilder(releases, requiredPeriod)(_.productionDate)
+  private def getDeploymentBuckets[T <: MetricsResult](deployments: Seq[Deployment], requiredPeriod: Int): Seq[Iterable[(YearMonth, Seq[Deployment])]] = {
+    val monthlyDeploymentIntervalBuckets: YearMonthTimeSeries[Deployment] = MonthlyBucketBuilder(deployments, requiredPeriod)(_.productionDate)
 
-    val releaseBuckets = monthlyReleaseIntervalBuckets.slidingWindow(monthlyWindowSize)
-    releaseBuckets
+    val deploymentBuckets = monthlyDeploymentIntervalBuckets.slidingWindow(monthlyWindowSize)
+    deploymentBuckets
   }
 
   private def withLookBack[T](requiredPeriod: Int)(f: Int => Seq[T]): Seq[T] = {
@@ -103,15 +103,15 @@ class ReleaseMetricCalculator(clock : Clock = Clock.systemUTC()) {
   private case class DateData(period: YearMonth, from: LocalDate, to: LocalDate)
 
   private object DateData {
-    def apply(releaseBucketSize: Int,
-              bucket: Iterable[(YearMonth, Seq[Release])],
+    def apply(deploymentBucketSize: Int,
+              bucket: Iterable[(YearMonth, Seq[Deployment])],
               indx: Int)(implicit clock: Clock): DateData = {
 
       val (period, _) = bucket.last
       val (from, _) = bucket.head
 
       val toDate =
-        if (indx == (releaseBucketSize - 1))
+        if (indx == (deploymentBucketSize - 1))
           period.atDay(LocalDate.now(clock).getDayOfMonth)
         else period.atEndOfMonth()
 

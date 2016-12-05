@@ -25,9 +25,9 @@ class LeadTimeResultSpec extends WordSpec with Matchers {
   "LeadTimeResult.of" should {
     "construct LeadTimeResult by rounding" in {
       val now: YearMonth = YearMonth.now()
-      ReleaseLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some (BigDecimal(4.5))).median shouldBe Some(5)
-      ReleaseLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4))).median shouldBe Some(4)
-      ReleaseLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4.3))).median shouldBe Some(4)
+      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some (BigDecimal(4.5))).median shouldBe Some(5)
+      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4))).median shouldBe Some(4)
+      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4.3))).median shouldBe Some(4)
     }
   }
 

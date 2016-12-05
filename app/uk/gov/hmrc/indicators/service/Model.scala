@@ -62,18 +62,18 @@ abstract class MetricsResult {
 }
 
 
-case class ReleaseLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
+case class DeploymentLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
 
-case class ReleaseIntervalResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
+case class DeploymentIntervalResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
 
-object ReleaseIntervalResult {
+object DeploymentIntervalResult {
 
-  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseIntervalResult =
-    ReleaseIntervalResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
+  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): DeploymentIntervalResult =
+    DeploymentIntervalResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
 }
 
-object ReleaseLeadTimeResult {
+object DeploymentLeadTimeResult {
 
-  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseLeadTimeResult =
-    ReleaseLeadTimeResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
+  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): DeploymentLeadTimeResult =
+    DeploymentLeadTimeResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
 }

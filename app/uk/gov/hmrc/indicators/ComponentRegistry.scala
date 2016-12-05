@@ -17,11 +17,11 @@
 package uk.gov.hmrc.indicators
 
 import uk.gov.hmrc.indicators.datasource._
-import uk.gov.hmrc.indicators.service.{IndicatorsService, ReleaseMetricCalculator}
+import uk.gov.hmrc.indicators.service.{IndicatorsService, DeploymentMetricCalculator}
 
 object ComponentRegistry extends IndicatorsConfigProvider {
-  val releasesDataSource = new ReleasesClient(releasesApiBase)
+  val deploymentsDataSource = new DeploymentsClient(deploymentsApiBase)
   val teamsAndRepositoriesDataSource = new TeamsAndRepositoriesClient(teamsAndRepositoryApiBase)
-  val releaseMetricCalculator = new ReleaseMetricCalculator()
-  val indicatorsService = new IndicatorsService(releasesDataSource, teamsAndRepositoriesDataSource, releaseMetricCalculator)
+  val deploymentMetricCalculator = new DeploymentMetricCalculator()
+  val indicatorsService = new IndicatorsService(deploymentsDataSource, teamsAndRepositoriesDataSource, deploymentMetricCalculator)
 }

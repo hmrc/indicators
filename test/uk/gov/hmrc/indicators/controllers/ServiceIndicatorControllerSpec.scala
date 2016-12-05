@@ -39,7 +39,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
   "ServiceIndicatorController.serviceDeploymentMetrics" should {
 
 
-    "return Frequent release metric for a given service in json format" in {
+    "return Frequent deployment metric for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 
@@ -77,7 +77,7 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
   "ServiceIndicatorController.teamDeploymentMetrics" should {
 
 
-    "return Frequent release metric for a given service in json format" in {
+    "return Frequent deployment metric for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 

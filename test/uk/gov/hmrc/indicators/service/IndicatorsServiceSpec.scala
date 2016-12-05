@@ -33,9 +33,9 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
   trait SetUp {
 
 
-    val releasesClient = mock[ReleasesDataSource]
+    val deploymentsClient = mock[DeploymentsDataSource]
     val teamsAndRepositoriesDataSource = mock[TeamsAndRepositoriesDataSource]
-    val releaseMetricCalculator = mock[ReleaseMetricCalculator]
+    val deploymentMetricCalculator = mock[DeploymentMetricCalculator]
 
     val Feb_1st = LocalDateTime.of(2000, 2, 1, 0, 0, 0)
     val Feb_4th = LocalDateTime.of(2000, 2, 4, 0, 0, 0)
@@ -45,14 +45,14 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     val Feb_18th = LocalDateTime.of(2000, 2, 18, 0, 0, 0)
     val now = DateHelper.clockFrom(Feb_18th)
 
-    val indicatorsService = new IndicatorsService(releasesClient, teamsAndRepositoriesDataSource, releaseMetricCalculator)
+    val indicatorsService = new IndicatorsService(deploymentsClient, teamsAndRepositoriesDataSource, deploymentMetricCalculator)
   }
 
   val serviceName = "test-service"
 
 
-  def release(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Release = {
-    Release(name, version, creationDate, leadTime, interval)
+  def deployment(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Deployment = {
+    Deployment(name, version, creationDate, leadTime, interval)
   }
 
   val deploymentsMetricResult: DeploymentsMetricResult = mock[DeploymentsMetricResult]
@@ -60,26 +60,26 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
   "IndicatorService" should {
 
     "calculates DeploymentsMetricResult for a service" in new SetUp {
-      val releases = List(
-        release(serviceName, Feb_4th, leadTime = Some(3)),
-        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
+      val deployments = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(3)),
+        deployment(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
 
-      when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
-      when(releaseMetricCalculator.calculateDeploymentMetrics(releases, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentsClient.getForService("test-service")).thenReturn(Future.successful(deployments))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1)).thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
 
 
-    "calculates DeploymentsMetricResult ignoring releases with negative leadTime" in new SetUp {
-      val correctReleases = release(serviceName, Feb_4th, leadTime = Some(3))
-      val releases = List(
-        correctReleases,
-        release(serviceName, Feb_6th, leadTime = Some(-1), interval = Some(2)))
+    "calculates DeploymentsMetricResult ignoring deployments with negative leadTime" in new SetUp {
+      val correctDeployments = deployment(serviceName, Feb_4th, leadTime = Some(3))
+      val deployments = List(
+        correctDeployments,
+        deployment(serviceName, Feb_6th, leadTime = Some(-1), interval = Some(2)))
 
-      when(releasesClient.getForService("test-service")).thenReturn(Future.successful(releases))
-      when(releaseMetricCalculator.calculateDeploymentMetrics(List(correctReleases), 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentsClient.getForService("test-service")).thenReturn(Future.successful(deployments))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(List(correctDeployments), 1)).thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
@@ -87,66 +87,66 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
 
     "returns None if the service is not found" in new SetUp {
-      when(releasesClient.getForService("test-service")).thenReturn(Future.failed(new RuntimeException("404")))
+      when(deploymentsClient.getForService("test-service")).thenReturn(Future.failed(new RuntimeException("404")))
 
       indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue shouldBe None
     }
 
     "calculates DeploymentsMetricResult for a team" in new SetUp {
-      val releases1 = List(
-        release(serviceName, Feb_4th, leadTime = Some(3)),
-        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
+      val deployments1 = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(3)),
+        deployment(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
 
-      val releases2 = List(
-        release(serviceName, Feb_4th, leadTime = Some(5)),
-        release(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
+      val deployments2 = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(5)),
+        deployment(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
 
       when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(List("Service1", "Service2")))
 
-      when(releasesClient.getForService("Service1")).thenReturn(Future.successful(releases1))
-      when(releasesClient.getForService("Service2")).thenReturn(Future.successful(releases2))
-      when(releaseMetricCalculator.calculateDeploymentMetrics(releases1 ++ releases2, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentsClient.getForService("Service1")).thenReturn(Future.successful(deployments1))
+      when(deploymentsClient.getForService("Service2")).thenReturn(Future.successful(deployments2))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1)).thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
 
-    "calculates DeploymentsMetricResult for a team ignoring services with no releases" in new SetUp {
-      val releases1 = List(
-        release(serviceName, Feb_4th, leadTime = Some(3)),
-        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
+    "calculates DeploymentsMetricResult for a team ignoring services with no deployments" in new SetUp {
+      val deployments1 = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(3)),
+        deployment(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
 
-      val releases2 = List(
-        release(serviceName, Feb_4th, leadTime = Some(5)),
-        release(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
+      val deployments2 = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(5)),
+        deployment(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
 
       when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(List("Service1", "Service2", "Service3")))
 
-      when(releasesClient.getForService("Service1")).thenReturn(Future.successful(releases1))
-      when(releasesClient.getForService("Service2")).thenReturn(Future.successful(releases2))
-      when(releasesClient.getForService("Service3")).thenReturn(Future.failed(new RuntimeException))
-      when(releaseMetricCalculator.calculateDeploymentMetrics(releases1 ++ releases2, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentsClient.getForService("Service1")).thenReturn(Future.successful(deployments1))
+      when(deploymentsClient.getForService("Service2")).thenReturn(Future.successful(deployments2))
+      when(deploymentsClient.getForService("Service3")).thenReturn(Future.failed(new RuntimeException))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1)).thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
 
 
-    "calculates DeploymentsMetricResult for a team ignoring releases with negative lead time" in new SetUp {
-      val releases1 = List(
-        release(serviceName, Feb_4th, leadTime = Some(3)),
-        release(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
+    "calculates DeploymentsMetricResult for a team ignoring deployments with negative lead time" in new SetUp {
+      val deployments1 = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(3)),
+        deployment(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
 
-      val releases2 = List(
-        release(serviceName, Feb_4th, leadTime = Some(5)),
-        release(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
+      val deployments2 = List(
+        deployment(serviceName, Feb_4th, leadTime = Some(5)),
+        deployment(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
 
       when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(List("Service1", "Service2", "Service3")))
 
-      when(releasesClient.getForService("Service1")).thenReturn(Future.successful(releases1))
-      when(releasesClient.getForService("Service2")).thenReturn(Future.successful(releases2))
-      when(releasesClient.getForService("Service3")).thenReturn(Future.successful(List(release(serviceName, Feb_4th, leadTime = Some(-5)))))
-      when(releaseMetricCalculator.calculateDeploymentMetrics(releases1 ++ releases2, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentsClient.getForService("Service1")).thenReturn(Future.successful(deployments1))
+      when(deploymentsClient.getForService("Service2")).thenReturn(Future.successful(deployments2))
+      when(deploymentsClient.getForService("Service3")).thenReturn(Future.successful(List(deployment(serviceName, Feb_4th, leadTime = Some(-5)))))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1)).thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
@@ -174,13 +174,13 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       val teamServices = List("service1", "service2")
 
-      val emptyReleases = List()
+      val emptyDeployments = List()
 
 
-      when(releasesClient.getForService("service1")).thenReturn(Future.successful(emptyReleases))
-      when(releasesClient.getForService("service2")).thenReturn(Future.successful(emptyReleases))
+      when(deploymentsClient.getForService("service1")).thenReturn(Future.successful(emptyDeployments))
+      when(deploymentsClient.getForService("service2")).thenReturn(Future.successful(emptyDeployments))
       when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(teamServices))
-      when(releaseMetricCalculator.calculateDeploymentMetrics(emptyReleases, 1)).thenReturn(noMetricResult)
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(emptyDeployments, 1)).thenReturn(noMetricResult)
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue shouldBe None
     }

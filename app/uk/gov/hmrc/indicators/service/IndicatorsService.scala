@@ -23,49 +23,49 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class IndicatorsService(releasesDataSource: ReleasesDataSource,
+class IndicatorsService(deploymentsDataSource: DeploymentsDataSource,
                         teamsAndRepositoriesDataSource: TeamsAndRepositoriesDataSource,
-                        releaseMetricCalculator: ReleaseMetricCalculator) {
+                        deploymentMetricCalculator: DeploymentMetricCalculator) {
 
 
   def getServiceDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
 
-    getServiceReleases(serviceName).map { releases =>
+    getServiceDeployments(serviceName).map { deployments =>
 
       Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
-      Logger.info(s"Total production releases for :$serviceName total : ${releases.size}")
+      Logger.info(s"Total production deployments for :$serviceName total : ${deployments.size}")
 
-      Some(releaseMetricCalculator.calculateDeploymentMetrics(releases, periodInMonths))
+      Some(deploymentMetricCalculator.calculateDeploymentMetrics(deployments, periodInMonths))
 
     }.recoverWith { case ex => Future.successful(None) }
 
   def getTeamDeploymentMetrics(teamName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] = {
     teamsAndRepositoriesDataSource.getServicesForTeam(teamName).flatMap { services =>
       Future.traverse(services) { s =>
-        getServiceReleases(s).recoverWith { case _ => Future.successful(List()) }
+        getServiceDeployments(s).recoverWith { case _ => Future.successful(List()) }
       }
         .map(_.flatten)
         .map(getMetrics(periodInMonths))
     }.recoverWith { case ex => Future.successful(None) }
   }
 
-  private def getMetrics(periodInMonths: Int)(releases: Seq[Release]) =
-    releases match {
+  private def getMetrics(periodInMonths: Int)(deployments: Seq[Deployment]) =
+    deployments match {
       case Nil => None
-      case l => Some(releaseMetricCalculator.calculateDeploymentMetrics(l, periodInMonths))
+      case l => Some(deploymentMetricCalculator.calculateDeploymentMetrics(l, periodInMonths))
     }
 
-  def getServiceReleases(service: String): Future[List[Release]] = {
-    releasesDataSource.getForService(service).map { rs =>
-      val (invalidReleases, validReleases) = rs.partition(r => r.leadTime.isDefined && r.leadTime.exists(_ < 0))
-      logInvalidReleases(invalidReleases)
-      validReleases
+  def getServiceDeployments(service: String): Future[List[Deployment]] = {
+    deploymentsDataSource.getForService(service).map { rs =>
+      val (invalidDeployments, validDeployments) = rs.partition(r => r.leadTime.isDefined && r.leadTime.exists(_ < 0))
+      logInvalidDeployments(invalidDeployments)
+      validDeployments
     }
   }
 
-  private def logInvalidReleases(releases: List[Release]) {
+  private def logInvalidDeployments(deployments: List[Deployment]) {
     Future {
-      releases.foreach(r => Logger.warn(s"Invalid Release service:${r.name} version: ${r.version} leadTime : ${r.leadTime}"))
+      deployments.foreach(r => Logger.warn(s"Invalid Deployment service:${r.name} version: ${r.version} leadTime : ${r.leadTime}"))
     }
   }
 

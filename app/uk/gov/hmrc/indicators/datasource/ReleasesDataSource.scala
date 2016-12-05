@@ -25,18 +25,18 @@ import uk.gov.hmrc.indicators.http.HttpClient
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class Release(name: String, version: String, productionDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None)
+case class Deployment(name: String, version: String, productionDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None)
 
-trait ReleasesDataSource {
-  def getForService(serviceName: String): Future[List[Release]]
+trait DeploymentsDataSource {
+  def getForService(serviceName: String): Future[List[Deployment]]
 }
 
-class ReleasesClient(releasesApiBase: String) extends ReleasesDataSource {
+class DeploymentsClient(deploymentsApiBase: String) extends DeploymentsDataSource {
 
   import JavaDateTimeImplicits._
 
-  implicit val reads = Json.reads[Release]
+  implicit val reads = Json.reads[Deployment]
 
-  def getForService(serviceName: String): Future[List[Release]] =
-    HttpClient.get[List[Release]](s"$releasesApiBase/$serviceName")
+  def getForService(serviceName: String): Future[List[Deployment]] =
+    HttpClient.get[List[Deployment]](s"$deploymentsApiBase/$serviceName")
 }

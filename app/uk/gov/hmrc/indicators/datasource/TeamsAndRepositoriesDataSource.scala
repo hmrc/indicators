@@ -34,7 +34,7 @@ class TeamsAndRepositoriesClient(teamsAndRepositoriesApiBase: String) extends Te
 
   import JavaDateTimeImplicits._
 
-  implicit val reads = Json.reads[Release]
+  implicit val reads = Json.reads[Deployment]
 
   def getServicesForTeam(teamName: String): Future[List[String]] =
     HttpClient.getWithParsing[List[String]](s"$teamsAndRepositoriesApiBase/teams/$teamName"){json =>

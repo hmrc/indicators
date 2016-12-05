@@ -20,9 +20,9 @@ import java.time.{LocalDate, LocalDateTime, LocalTime, YearMonth}
 
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
-import uk.gov.hmrc.indicators.datasource.Release
+import uk.gov.hmrc.indicators.datasource.Deployment
 
-class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
+class DeploymentMonthlyBucketBuilderSpec extends WordSpec with Matchers {
 
   trait SetUp {
     private val midNight: LocalTime = LocalTime.of(0, 0)
@@ -58,45 +58,45 @@ class ReleaseMonthlyBucketBuilderSpec extends WordSpec with Matchers {
   }
 
 
-  def release(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Release = {
-    Release(name, version, creationDate, leadTime, interval)
+  def deployment(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Deployment = {
+    Deployment(name, version, creationDate, leadTime, interval)
   }
 
 
-  "MonthlyReleaseBucketBuilder" should {
+  "MonthlyDeploymentBucketBuilder" should {
     val serviceName = "test-service"
 
-    "create YearMonthTimeSeries with release in each monthly buckets based on release date" in new SetUp {
+    "create YearMonthTimeSeries with deployment in each monthly buckets based on deployment date" in new SetUp {
 
-      val releases = List(
-        release(serviceName, Apr_1st),
-        release(serviceName, Apr_11th),
-        release(serviceName, Feb_4th),
-        release(serviceName, Feb_10th),
-        release(serviceName, Feb_16th),
-        release(serviceName, Feb_18th),
-        release(serviceName, Mar_1st),
-        release(serviceName, Mar_27th),
-        release(serviceName, May_11th),
-        release(serviceName, June_5th))
+      val deployments = List(
+        deployment(serviceName, Apr_1st),
+        deployment(serviceName, Apr_11th),
+        deployment(serviceName, Feb_4th),
+        deployment(serviceName, Feb_10th),
+        deployment(serviceName, Feb_16th),
+        deployment(serviceName, Feb_18th),
+        deployment(serviceName, Mar_1st),
+        deployment(serviceName, Mar_27th),
+        deployment(serviceName, May_11th),
+        deployment(serviceName, June_5th))
 
-      MonthlyBucketBuilder(releases, 7)(_.productionDate)(clock).toSeq shouldBe Seq(
+      MonthlyBucketBuilder(deployments, 7)(_.productionDate)(clock).toSeq shouldBe Seq(
         (Nov_2015, Seq()),
         (YearMonth.from(Dec_1st_2015), Seq()),
         (YearMonth.from(Jan_1st), Seq()),
         (YearMonth.from(Feb_1st), Seq(
-          release(serviceName, Feb_4th),
-          release(serviceName, Feb_10th),
-          release(serviceName, Feb_16th),
-          release(serviceName, Feb_18th))),
+          deployment(serviceName, Feb_4th),
+          deployment(serviceName, Feb_10th),
+          deployment(serviceName, Feb_16th),
+          deployment(serviceName, Feb_18th))),
         (YearMonth.from(Mar_1st), Seq(
-          release(serviceName, Mar_1st),
-          release(serviceName, Mar_27th))),
+          deployment(serviceName, Mar_1st),
+          deployment(serviceName, Mar_27th))),
         (YearMonth.from(Apr_1st), Seq(
-          release(serviceName, Apr_1st),
-          release(serviceName, Apr_11th))),
+          deployment(serviceName, Apr_1st),
+          deployment(serviceName, Apr_11th))),
         (YearMonth.from(May_1st), Seq(
-          release(serviceName, May_11th)))
+          deployment(serviceName, May_11th)))
       )
     }
   }
