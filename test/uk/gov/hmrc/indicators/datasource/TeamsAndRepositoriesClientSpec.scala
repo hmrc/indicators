@@ -42,7 +42,7 @@ class TeamsAndRepositoriesClientSpec extends WordSpec with Matchers with WireMoc
             Some(
               s"""
                  |{
-                 |   "Deployable" : [
+                 |   "Service" : [
                  |        "Service1",
                  |        "Service2",
                  |        "Service3"

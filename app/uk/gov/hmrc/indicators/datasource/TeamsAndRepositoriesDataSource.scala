@@ -38,6 +38,6 @@ class TeamsAndRepositoriesClient(teamsAndRepositoriesApiBase: String) extends Te
 
   def getServicesForTeam(teamName: String): Future[List[String]] =
     HttpClient.getWithParsing[List[String]](s"$teamsAndRepositoriesApiBase/teams/$teamName"){json =>
-      (json \ "Deployable").as[List[String]]
+      (json \ "Service").as[List[String]]
     }
 }
