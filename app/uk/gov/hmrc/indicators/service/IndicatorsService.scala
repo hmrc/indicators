@@ -25,7 +25,9 @@ import scala.concurrent.Future
 
 class IndicatorsService(deploymentsDataSource: DeploymentsDataSource,
                         teamsAndRepositoriesDataSource: TeamsAndRepositoriesDataSource,
-                        deploymentMetricCalculator: DeploymentMetricCalculator) {
+                        repositoryJobsDataSource: RepositoryJobsDataSource,
+                        deploymentMetricCalculator: DeploymentMetricCalculator,
+                        jobExecutionTimeMetricCalculator: JobExecutionTimeMetricCalculator) {
 
 
   def getServiceDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
@@ -62,6 +64,13 @@ class IndicatorsService(deploymentsDataSource: DeploymentsDataSource,
       validDeployments
     }
   }
+
+  def getJobExecutionTimeMetrics(repositoryName: String, periodInMonths: Int = 12): Future[Option[Seq[JobExecutionTimeMetricResult]]] = {
+    repositoryJobsDataSource.getBuildsForRepository(repositoryName).map { builds =>
+      Some(jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, periodInMonths))
+    }.recoverWith { case _ => Future.successful(None) }
+  }
+
 
   private def logInvalidDeployments(deployments: List[Deployment]) {
     Future {

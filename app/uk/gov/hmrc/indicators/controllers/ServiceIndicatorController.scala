@@ -52,5 +52,13 @@ trait ServiceIndicatorController extends BaseController {
     }
   }
 
+  def jobExecutionTimeMetrics(repoName: String) = Action.async { implicit request =>
+
+    indicatorsService.getJobExecutionTimeMetrics(repoName) map {
+      case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
+      case _ => NotFound
+    }
+  }
+
 
 }

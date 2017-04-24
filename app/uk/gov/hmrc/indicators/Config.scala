@@ -25,6 +25,7 @@ trait ConfigProvider {
 
   lazy val deploymentsApiBase: String = requiredConf("deployments.api.base")
   lazy val teamsAndRepositoryApiBase : String = requiredConf("teamsandrepositories.api.base")
+  lazy val repositoryJobsApiBase : String = requiredConf("repositoryjobs.api.base")
 
   private def optionalConf(path: String): Option[String] = configs.config(path)
   private def requiredConf(path: String): String = configs.config(path).getOrElse(
