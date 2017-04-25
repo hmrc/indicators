@@ -112,5 +112,41 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
   }
 
+  "ServiceIndicatorController.jobExecutionTimeMetrics" should {
+
+    "return job execution time metrics for a given service in json format" in {
+
+      val date = LocalDate.of(2016, 9, 13)
+
+      when(mockIndicatorsService.getJobExecutionTimeMetrics("test-repo")).thenReturn(Future.successful(
+        Some(List(
+          JobExecutionTimeMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4))),
+          JobExecutionTimeMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)))
+        )))
+      )
+
+      val result = controller.jobExecutionTimeMetrics("test-repo")(FakeRequest())
+
+      contentAsJson(result) mustBe
+        """[
+          |{"period" : "2016-04", "from" : "2016-09-13", "to" : "2016-09-13", "duration": {"median" : 4}},
+          |{"period" : "2016-05", "from" : "2016-09-13", "to" : "2016-09-13", "duration": {"median" : 5}}
+          |]""".stripMargin.toJson
+
+      contentType(result).value mustBe "application/json"
+    }
+
+
+    "return NotFound if None builds returned" in {
+      when(mockIndicatorsService.getJobExecutionTimeMetrics("test-repo")).thenReturn(Future.successful(None))
+
+      val result = controller.jobExecutionTimeMetrics("test-repo")(FakeRequest())
+
+      status(result) mustBe NOT_FOUND
+
+    }
+
+  }
+
 
 }

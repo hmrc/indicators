@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.indicators.service
 
-import java.time.{LocalDate, LocalDateTime, YearMonth}
+import java.time.{LocalDate, LocalDateTime, YearMonth, ZoneOffset}
 
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
@@ -34,8 +34,10 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
 
     val deploymentsClient = mock[DeploymentsDataSource]
+    val repositoryJobsDataSource = mock[RepositoryJobsDataSource]
     val teamsAndRepositoriesDataSource = mock[TeamsAndRepositoriesDataSource]
     val deploymentMetricCalculator = mock[DeploymentMetricCalculator]
+    val jobExecutionTimeMetricCalculator = mock[JobExecutionTimeMetricCalculator]
 
     val Feb_1st = LocalDateTime.of(2000, 2, 1, 0, 0, 0)
     val Feb_4th = LocalDateTime.of(2000, 2, 4, 0, 0, 0)
@@ -45,7 +47,12 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     val Feb_18th = LocalDateTime.of(2000, 2, 18, 0, 0, 0)
     val now = DateHelper.clockFrom(Feb_18th)
 
-    val indicatorsService = new IndicatorsService(deploymentsClient, teamsAndRepositoriesDataSource, deploymentMetricCalculator)
+    val indicatorsService = new IndicatorsService(
+      deploymentsClient,
+      teamsAndRepositoriesDataSource,
+      repositoryJobsDataSource,
+      deploymentMetricCalculator,
+      jobExecutionTimeMetricCalculator)
   }
 
   val serviceName = "test-service"
@@ -55,7 +62,8 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     Deployment(name, version, creationDate, leadTime, interval)
   }
 
-  val deploymentsMetricResult: DeploymentsMetricResult = mock[DeploymentsMetricResult]
+  val deploymentsMetricResult = mock[DeploymentsMetricResult]
+  val jobExecutionTimeMetricResult = mock[JobExecutionTimeMetricResult]
 
   "IndicatorService" should {
 
@@ -184,5 +192,22 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue shouldBe None
     }
+
+    "calculates JobExecutionTimeMetricResult for a repository" in new SetUp {
+      private val repoName = "test-repo"
+      val builds = List(
+        build(repoName, Feb_4th.toEpochSecond(ZoneOffset.UTC), 3),
+        build(repoName, Feb_6th.toEpochSecond(ZoneOffset.UTC), 6))
+
+      when(repositoryJobsDataSource.getBuildsForRepository(repoName)).thenReturn(Future.successful(builds))
+      when(jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, 1)).thenReturn(Seq(jobExecutionTimeMetricResult))
+
+      indicatorsService.getJobExecutionTimeMetrics(repoName, 1).futureValue.value shouldBe
+        List(jobExecutionTimeMetricResult)
+    }
   }
+
+  def build(repoName: String, epochSecond: Long, duration: Int) = Build(repoName, "jobName", "jobUrl", 1234, Some("SUCCESS"), epochSecond, duration, "some.url", "slave-1")
+
+
 }

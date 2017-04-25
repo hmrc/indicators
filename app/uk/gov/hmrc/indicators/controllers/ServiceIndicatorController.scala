@@ -28,6 +28,7 @@ object ServiceIndicatorController extends ServiceIndicatorController {
 
   override val indicatorsService: IndicatorsService = ComponentRegistry.indicatorsService
 
+
 }
 
 
@@ -48,6 +49,16 @@ trait ServiceIndicatorController extends BaseController {
 
     indicatorsService.getTeamDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
+      case _ => NotFound
+    }
+  }
+
+  def jobExecutionTimeMetrics(repoName: String) = Action.async { implicit request =>
+
+    val metrics = indicatorsService.getJobExecutionTimeMetrics(repoName)
+    metrics map {
+      case Some(ls) =>
+        Ok(Json.toJson(ls)).as("application/json")
       case _ => NotFound
     }
   }
