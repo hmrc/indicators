@@ -21,8 +21,15 @@ import uk.gov.hmrc.indicators.http.HttpClient
 
 import scala.concurrent.Future
 
-case class Build(repositoryName: String, jobName: String, jobUrl: String, buildNumber: Int, result: String,
-                 timestamp: Long, duration: Int, buildUrl: String, builtOn: String)
+case class Build(repositoryName: String,
+                 jobName: String,
+                 jobUrl: String,
+                 buildNumber: Int,
+                 result: Option[String],
+                 timestamp: Long,
+                 duration: Int,
+                 buildUrl: String,
+                 builtOn: String)
 
 trait RepositoryJobsDataSource {
   def getBuildsForRepository(repositoryName: String): Future[Seq[Build]]

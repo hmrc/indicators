@@ -66,7 +66,9 @@ class IndicatorsService(deploymentsDataSource: DeploymentsDataSource,
   }
 
   def getJobExecutionTimeMetrics(repositoryName: String, periodInMonths: Int = 12): Future[Option[Seq[JobExecutionTimeMetricResult]]] = {
-    repositoryJobsDataSource.getBuildsForRepository(repositoryName).map { builds =>
+    val repository = repositoryJobsDataSource.getBuildsForRepository(repositoryName)
+
+    repository.map { builds =>
       Some(jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, periodInMonths))
     }.recoverWith { case _ => Future.successful(None) }
   }

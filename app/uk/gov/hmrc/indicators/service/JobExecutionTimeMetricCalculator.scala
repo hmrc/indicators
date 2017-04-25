@@ -62,10 +62,10 @@ class JobExecutionTimeMetricCalculator(clock : Clock = Clock.systemUTC()) {
     measures.median.map(MeasureResult.toMeasureResult)
   }
 
-  private def epochToDate(epoch: Long) = LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
+  private def epochMillisToLocalDateTime(epochMillis: Long) = LocalDateTime.ofEpochSecond(epochMillis/1000, 0, ZoneOffset.UTC)
 
   private def getJobExecutionBuckets[T <: MetricsResult](builds: Seq[Build], requiredPeriod: Int) =
-    MonthlyBucketBuilder(builds, requiredPeriod)(o => epochToDate(o.timestamp)).slidingWindow(monthlyWindowSize)
+    MonthlyBucketBuilder(builds, requiredPeriod)(build => epochMillisToLocalDateTime(build.timestamp)).slidingWindow(monthlyWindowSize)
 
   private def withLookBack[T](requiredPeriod: Int)(f: Int => Seq[T]): Seq[T] = {
     f(requiredPeriod + monthsToLookBack).takeRight(requiredPeriod)

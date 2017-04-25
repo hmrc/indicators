@@ -207,7 +207,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     }
   }
 
-  def build(repoName: String, epochSecond: Long, duration: Int) = Build(repoName, "jobName", "jobUrl", 1234, "SUCCESS", epochSecond, duration, "some.url", "slave-1")
+  def build(repoName: String, epochSecond: Long, duration: Int) = Build(repoName, "jobName", "jobUrl", 1234, Some("SUCCESS"), epochSecond, duration, "some.url", "slave-1")
 
 
 }

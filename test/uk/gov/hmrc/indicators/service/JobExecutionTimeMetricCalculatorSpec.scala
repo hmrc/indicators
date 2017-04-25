@@ -93,6 +93,10 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
 
   }
 
+  def toEpochMillis(localDateTime: LocalDateTime) = {
+    localDateTime.toEpochSecond(ZoneOffset.UTC) * 1000
+  }
+
   import ResultExtractor._
 
   "DeploymentMetricCalculator for stability" should {
@@ -101,10 +105,10 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
       override val clock: Clock = clockFrom(Feb_18th)
 
       val builds = List(
-        build(Feb_4th.toEpochSecond(ZoneOffset.UTC), 1),
-        build(Feb_4th.toEpochSecond(ZoneOffset.UTC), 2),
-        build(Feb_4th.toEpochSecond(ZoneOffset.UTC), 2),
-        build(Feb_18th.toEpochSecond(ZoneOffset.UTC), 4))
+        build(toEpochMillis(Feb_4th), 1),
+        build(toEpochMillis(Feb_4th), 2),
+        build(toEpochMillis(Feb_4th), 2),
+        build(toEpochMillis(Feb_18th), 4))
 
       jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(2)))
@@ -114,17 +118,17 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
       override val clock: Clock = clockFrom(Jun_5th)
 
       val builds = List(
-        build(Feb_4th.toEpochSecond(ZoneOffset.UTC),  3),
-        build(Feb_10th.toEpochSecond(ZoneOffset.UTC), 6),
-        build(Feb_16th.toEpochSecond(ZoneOffset.UTC), 4),
-        build(Feb_18th.toEpochSecond(ZoneOffset.UTC), 2),
-        build(Mar_1st.toEpochSecond(ZoneOffset.UTC), 12),
-        build(Mar_27th.toEpochSecond(ZoneOffset.UTC), 23),
+        build(toEpochMillis(Feb_4th),  3),
+        build(toEpochMillis(Feb_10th), 6),
+        build(toEpochMillis(Feb_16th), 4),
+        build(toEpochMillis(Feb_18th), 2),
+        build(toEpochMillis(Mar_1st), 12),
+        build(toEpochMillis(Mar_27th), 23),
 
-        build( Apr_1st.toEpochSecond(ZoneOffset.UTC), 5),
-        build( Apr_11th.toEpochSecond(ZoneOffset.UTC), 7),
-        build( May_11th.toEpochSecond(ZoneOffset.UTC), 10), // lead times =   5, 7, 10, 12, 23
-        build( Jun_5th.toEpochSecond(ZoneOffset.UTC), 4) // leadt times of hotfixes = 5 , 10 = 8 median
+        build(toEpochMillis(Apr_1st), 5),
+        build(toEpochMillis(Apr_11th), 7),
+        build(toEpochMillis(May_11th), 10), // lead times =   5, 7, 10, 12, 23
+        build(toEpochMillis(Jun_5th), 4) // leadt times of hotfixes = 5 , 10 = 8 median
       )
 
       jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, 7).stability shouldBe Seq(
@@ -142,7 +146,7 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
 
   def toEndOfMonth(date: LocalDateTime): LocalDate = YearMonth.from(date).atEndOfMonth()
 
-  def build(epochSecond: Long, duration: Int) = Build(repositoryName, jobName, jobUrl, 1234, "SUCCESS", epochSecond, duration, "some.url", "slave-1")
+  def build(epochSecond: Long, duration: Int) = Build(repositoryName, jobName, jobUrl, 1234, Some("SUCCESS"), epochSecond, duration, "some.url", "slave-1")
 
 
 }

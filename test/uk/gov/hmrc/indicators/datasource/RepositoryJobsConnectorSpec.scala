@@ -32,7 +32,8 @@ class RepositoryJobsConnectorSpec extends WordSpec with Matchers with WireMockSp
       running(app) {
         givenRequestExpects(
           method = GET,
-          url = s"$endpointMockUrl/builds/test-repo",
+//          url = s"$endpointMockUrl/builds/test-repo",
+          url = s"$endpointMockUrl/api/builds/test-repo",
           willRespondWith = (200,
             Some(
               s"""
@@ -66,8 +67,8 @@ class RepositoryJobsConnectorSpec extends WordSpec with Matchers with WireMockSp
         val connector = new RepositoryJobsConnector(endpointMockUrl)
         val results = connector.getBuildsForRepository("test-repo").futureValue
 
-        val build1 = Build("test-repo", "repository-abcd", "job.url", 1, "SUCCESS", 1486571562000l, 218869, "build.url", "built-on")
-        val build2 = Build("test-repo", "repository-abcd", "job.url", 5, "SUCCESS", 1486571562000l, 218869, "build.url", "built-on")
+        val build1 = Build("test-repo", "repository-abcd", "job.url", 1, Some("SUCCESS"), 1486571562000l, 218869, "build.url", "built-on")
+        val build2 = Build("test-repo", "repository-abcd", "job.url", 5, Some("SUCCESS"), 1486571562000l, 218869, "build.url", "built-on")
 
         results.length shouldBe 2
         results.head shouldBe build1
