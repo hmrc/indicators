@@ -21,17 +21,20 @@ import java.time._
 import play.api.libs.json.Json
 import uk.gov.hmrc.indicators.datasource.{Build, Deployment}
 
-object JobExecutionTimeMetricResult {
+import scala.util.Try
+
+object JobMetric {
   import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
-  implicit val writes = Json.writes[JobExecutionTimeMetricResult]
+  implicit val writes = Json.writes[JobMetric]
 }
 
-case class JobExecutionTimeMetricResult(period: YearMonth,
-                                   from: LocalDate,
-                                   to: LocalDate,
-                                   duration: Option[MeasureResult])
+case class JobMetric(period: YearMonth,
+                     from: LocalDate,
+                     to: LocalDate,
+                     duration: Option[MeasureResult],
+                     successRate: Option[Double])
 
-class JobExecutionTimeMetricCalculator(clock : Clock = Clock.systemUTC()) {
+class JobMetricCalculator(clock : Clock = Clock.systemUTC()) {
 
   implicit val c = clock
 
@@ -39,7 +42,7 @@ class JobExecutionTimeMetricCalculator(clock : Clock = Clock.systemUTC()) {
   val monthlyWindowSize: Int = 3
   val monthsToLookBack = 3
 
-  def calculateJobExecutionTimeMetrics(builds: Seq[Build], requiredPeriodInMonths: Int): Seq[JobExecutionTimeMetricResult] = {
+  def calculateJobMetrics(builds: Seq[Build], requiredPeriodInMonths: Int): Seq[JobMetric] = {
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
       val buildBuckets = getJobExecutionBuckets(builds, requiredMonths)
 
@@ -47,8 +50,24 @@ class JobExecutionTimeMetricCalculator(clock : Clock = Clock.systemUTC()) {
         val dateData = DateData(buildBuckets.size, bucket, index)
 
         val allBuildsInBucket: Seq[Build] = bucket.flatMap(_._2).toSeq
-        JobExecutionTimeMetricResult(dateData.period, dateData.from, dateData.to, calculateMeasureResult(allBuildsInBucket, _.duration))
+
+        JobMetric(dateData.period, dateData.from, dateData.to, calculateMeasureResult(allBuildsInBucket, _.duration), calculateSuccessRate(allBuildsInBucket))
       }
+    }
+  }
+
+  private def calculateSuccessRate(builds: Seq[Build]): Option[Double] = {
+
+    def isBuildValid(build: Build) =
+      build.result.isDefined && (build.result.contains("SUCCESS") || build.result.contains("FAILURE"))
+
+    val buildResults = builds.filter(isBuildValid).flatMap(_.result)
+
+    val successCount = buildResults.count(_ == "SUCCESS")
+
+    buildResults.length match {
+      case 0 => None
+      case count => Some(successCount.toDouble / count.toDouble)
     }
   }
 
@@ -70,7 +89,7 @@ class JobExecutionTimeMetricCalculator(clock : Clock = Clock.systemUTC()) {
   private def withLookBack[T](requiredPeriod: Int)(f: Int => Seq[T]): Seq[T] = {
     f(requiredPeriod + monthsToLookBack).takeRight(requiredPeriod)
   }
-  
+
   private case class DateData(period: YearMonth, from: LocalDate, to: LocalDate)
 
   private object DateData {

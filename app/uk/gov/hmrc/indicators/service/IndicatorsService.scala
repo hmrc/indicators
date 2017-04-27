@@ -27,7 +27,7 @@ class IndicatorsService(deploymentsDataSource: DeploymentsDataSource,
                         teamsAndRepositoriesDataSource: TeamsAndRepositoriesDataSource,
                         repositoryJobsDataSource: RepositoryJobsDataSource,
                         deploymentMetricCalculator: DeploymentMetricCalculator,
-                        jobExecutionTimeMetricCalculator: JobExecutionTimeMetricCalculator) {
+                        jobExecutionTimeMetricCalculator: JobMetricCalculator) {
 
 
   def getServiceDeploymentMetrics(serviceName: String, periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
@@ -65,11 +65,11 @@ class IndicatorsService(deploymentsDataSource: DeploymentsDataSource,
     }
   }
 
-  def getJobExecutionTimeMetrics(repositoryName: String, periodInMonths: Int = 12): Future[Option[Seq[JobExecutionTimeMetricResult]]] = {
+  def getJobMetrics(repositoryName: String, periodInMonths: Int = 12): Future[Option[Seq[JobMetric]]] = {
     val repository = repositoryJobsDataSource.getBuildsForRepository(repositoryName)
 
     repository.map { builds =>
-      Some(jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, periodInMonths))
+      Some(jobExecutionTimeMetricCalculator.calculateJobMetrics(builds, periodInMonths))
     }.recoverWith { case _ => Future.successful(None) }
   }
 

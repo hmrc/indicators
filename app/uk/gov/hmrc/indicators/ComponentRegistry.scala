@@ -17,7 +17,7 @@
 package uk.gov.hmrc.indicators
 
 import uk.gov.hmrc.indicators.datasource._
-import uk.gov.hmrc.indicators.service.{DeploymentMetricCalculator, IndicatorsService, JobExecutionTimeMetricCalculator}
+import uk.gov.hmrc.indicators.service.{DeploymentMetricCalculator, IndicatorsService, JobMetricCalculator}
 
 object ComponentRegistry extends IndicatorsConfigProvider {
   val deploymentsDataSource = new DeploymentsClient(deploymentsApiBase)
@@ -25,7 +25,7 @@ object ComponentRegistry extends IndicatorsConfigProvider {
   val deploymentMetricCalculator = new DeploymentMetricCalculator()
 
   val repositoryJobsDataSource = new RepositoryJobsConnector(repositoryJobsApiBase)
-  val jobExecutionTimeMetricCalculator = new JobExecutionTimeMetricCalculator()
+  val jobExecutionTimeMetricCalculator = new JobMetricCalculator()
 
   val indicatorsService = new IndicatorsService(
     deploymentsDataSource,

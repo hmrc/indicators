@@ -18,12 +18,14 @@ package uk.gov.hmrc.indicators.service
 
 import java.time._
 
+import org.scalactic.{TripleEqualsSupport, TypeCheckedTripleEquals}
 import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper.clockFrom
 import uk.gov.hmrc.indicators.datasource.Build
+import org.scalactic.TypeCheckedTripleEquals._
 
 
-class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
+class JobMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTripleEquals {
 
   private val repositoryName: String = "test-repo"
   private val jobName: String = "some-job"
@@ -73,7 +75,7 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
     val August_2016 = YearMonth.of(2016, 8)
 
 
-    def jobExecutionTimeMetricCalculator = new JobExecutionTimeMetricCalculator(clock)
+    def jobMetricCalculator = new JobMetricCalculator(clock)
 
     def clock = clockFrom(May_10th)
 
@@ -81,11 +83,11 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
 
   object ResultExtractor {
 
-    implicit class MeasureExtractor(jobExecutionTimeResult: Seq[JobExecutionTimeMetricResult]) {
+    implicit class MeasureExtractor(jobExecutionTimeResult: Seq[JobMetric]) {
 
-      def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] = {
+      def jobMetricDetails: Seq[(YearMonth, LocalDate, LocalDate, Option[Int], Option[Double])] = {
         jobExecutionTimeResult.map { x =>
-          (x.period, x.from, x.to, x.duration.map(_.median))
+          (x.period, x.from, x.to, x.duration.map(_.median), x.successRate)
         }
       }
 
@@ -99,54 +101,80 @@ class JobExecutionTimeMetricCalculatorSpec extends WordSpec with Matchers  {
 
   import ResultExtractor._
 
-  "DeploymentMetricCalculator for stability" should {
+  "JobMetricCalculator" should {
 
-    "calculates median build duration" in new SetUp {
+    "calculate median build duration" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
 
       val builds = List(
-        build(toEpochMillis(Feb_4th), 1),
-        build(toEpochMillis(Feb_4th), 2),
-        build(toEpochMillis(Feb_4th), 2),
-        build(toEpochMillis(Feb_18th), 4))
+        build(toEpochMillis(Feb_4th), 1, Some("SUCCESS")),
+        build(toEpochMillis(Feb_4th), 2, Some("SUCCESS")),
+        build(toEpochMillis(Feb_4th), 2, Some("SUCCESS")),
+        build(toEpochMillis(Feb_18th), 4, Some("SUCCESS")))
 
-      jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, 1).stability shouldBe
-        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(2)))
+      jobMetricCalculator.calculateJobMetrics(builds, 1).jobMetricDetails shouldBe
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(2), Some(1.0)))
     }
 
-    "calculates median build duration in mulitple months, some empty" in new SetUp {
+    "calculate median build duration in multiple months, some empty" in new SetUp {
       override val clock: Clock = clockFrom(Jun_5th)
 
       val builds = List(
-        build(toEpochMillis(Feb_4th),  3),
-        build(toEpochMillis(Feb_10th), 6),
-        build(toEpochMillis(Feb_16th), 4),
-        build(toEpochMillis(Feb_18th), 2),
-        build(toEpochMillis(Mar_1st), 12),
-        build(toEpochMillis(Mar_27th), 23),
+        build(toEpochMillis(Feb_4th), 3, Some("SUCCESS")),
+        build(toEpochMillis(Feb_10th), 6, Some("SUCCESS")),
+        build(toEpochMillis(Feb_16th), 4, Some("SUCCESS")),
+        build(toEpochMillis(Feb_18th), 2, Some("SUCCESS")),
+        build(toEpochMillis(Mar_1st), 12, Some("SUCCESS")),
+        build(toEpochMillis(Mar_27th), 23, Some("SUCCESS")),
 
-        build(toEpochMillis(Apr_1st), 5),
-        build(toEpochMillis(Apr_11th), 7),
-        build(toEpochMillis(May_11th), 10), // lead times =   5, 7, 10, 12, 23
-        build(toEpochMillis(Jun_5th), 4) // leadt times of hotfixes = 5 , 10 = 8 median
+        build(toEpochMillis(Apr_1st), 5, Some("SUCCESS")),
+        build(toEpochMillis(Apr_11th), 7, Some("SUCCESS")),
+        build(toEpochMillis(May_11th), 10, Some("SUCCESS")), // lead times =   5, 7, 10, 12, 23
+        build(toEpochMillis(Jun_5th), 4, Some("SUCCESS")) // leadt times of hotfixes = 5 , 10 = 8 median
       )
 
-      jobExecutionTimeMetricCalculator.calculateJobExecutionTimeMetrics(builds, 7).stability shouldBe Seq(
-        (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None),
-        (Jan_2016, Nov_1st_2015.toLocalDate, toEndOfMonth(Jan_1st), None),
-        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(4)),
-        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(5)),
-        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(6)),
-        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(10)),
-        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(6))
-      )
+      jobMetricCalculator.calculateJobMetrics(builds, 7).jobMetricDetails shouldBe Seq(
+        (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None, None),
+        (Jan_2016, Nov_1st_2015.toLocalDate, toEndOfMonth(Jan_1st), None, None),
+        (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(4), Some(1.0)),
+        (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(5), Some(1.0)),
+        (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(6), Some(1.0)),
+        (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(10), Some(1.0)),
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(6), Some(1.0)))
     }
 
+    "calculate the job success rate for a given month" in new SetUp {
+      override val clock: Clock = clockFrom(Feb_18th)
+
+      val builds = List(
+        build(toEpochMillis(Feb_4th), 1, Some("SUCCESS")),
+        build(toEpochMillis(Feb_4th), 2, Some("FAILURE")),
+        build(toEpochMillis(Feb_4th), 2, Some("FAILURE")),
+        build(toEpochMillis(Feb_18th), 4, Some("FAILURE")))
+
+      jobMetricCalculator.calculateJobMetrics(builds, 1).jobMetricDetails shouldBe
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(2), Some(0.25)))
+    }
+
+    "calculate the job success rate for a given month when some build results are empty or not valid" in new SetUp {
+      override val clock: Clock = clockFrom(Feb_18th)
+
+      val builds = List(
+        build(toEpochMillis(Feb_4th), 1, Some("SUCCESS")),
+        build(toEpochMillis(Feb_4th), 2, Some("FAILURE")),
+        build(toEpochMillis(Feb_18th), 2, None),
+        build(toEpochMillis(Feb_18th), 2, Some("NOT_VALID_RESULT")),
+        build(toEpochMillis(Feb_18th), 4, Some("FAILURE")),
+      build(toEpochMillis(Feb_18th), 4, Some("FAILURE")))
+
+      jobMetricCalculator.calculateJobMetrics(builds, 1).jobMetricDetails shouldBe
+        Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(2), Some(0.25)))
+    }
   }
 
   def toEndOfMonth(date: LocalDateTime): LocalDate = YearMonth.from(date).atEndOfMonth()
 
-  def build(epochSecond: Long, duration: Int) = Build(repositoryName, jobName, jobUrl, 1234, Some("SUCCESS"), epochSecond, duration, "some.url", "slave-1")
+  def build(epochSecond: Long, duration: Int, result: Option[String]) = Build(repositoryName, jobName, jobUrl, 1234, result, epochSecond, duration, "some.url", "slave-1")
 
 
 }

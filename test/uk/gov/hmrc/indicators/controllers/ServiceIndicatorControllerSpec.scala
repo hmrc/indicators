@@ -112,25 +112,25 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
   }
 
-  "ServiceIndicatorController.jobExecutionTimeMetrics" should {
+  "ServiceIndicatorController.jobMetrics" should {
 
-    "return job execution time metrics for a given service in json format" in {
+    "return job metrics for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getJobExecutionTimeMetrics("test-repo")).thenReturn(Future.successful(
+      when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(
         Some(List(
-          JobExecutionTimeMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4))),
-          JobExecutionTimeMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)))
+          JobMetric(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4)), Some(0.01)),
+          JobMetric(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)), Some(0.02))
         )))
       )
 
-      val result = controller.jobExecutionTimeMetrics("test-repo")(FakeRequest())
+      val result = controller.jobMetrics("test-repo")(FakeRequest())
 
       contentAsJson(result) mustBe
         """[
-          |{"period" : "2016-04", "from" : "2016-09-13", "to" : "2016-09-13", "duration": {"median" : 4}},
-          |{"period" : "2016-05", "from" : "2016-09-13", "to" : "2016-09-13", "duration": {"median" : 5}}
+          |{"period" : "2016-04", "from" : "2016-09-13", "to" : "2016-09-13", "duration": {"median" : 4}, "successRate": 0.01},
+          |{"period" : "2016-05", "from" : "2016-09-13", "to" : "2016-09-13", "duration": {"median" : 5}, "successRate": 0.02}
           |]""".stripMargin.toJson
 
       contentType(result).value mustBe "application/json"
@@ -138,9 +138,9 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
 
     "return NotFound if None builds returned" in {
-      when(mockIndicatorsService.getJobExecutionTimeMetrics("test-repo")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(None))
 
-      val result = controller.jobExecutionTimeMetrics("test-repo")(FakeRequest())
+      val result = controller.jobMetrics("test-repo")(FakeRequest())
 
       status(result) mustBe NOT_FOUND
 
