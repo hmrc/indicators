@@ -22,32 +22,17 @@ private object AppDependencies {
   import play.core.PlayVersion
   import play.sbt.PlayImport._
 
-
-  private val microserviceBootstrapVersion = "5.16.0"
-  private val playAuthVersion = "4.3.0"
-  private val playHealthVersion = "2.0.0"
-  private val playJsonLoggerVersion = "3.1.0"
-  private val playLogbackJsonLoggerVersion = "3.0.0"
+  private val microserviceBootstrapVersion = "6.7.0"
   private val playUrlBindersVersion = "2.1.0"
-  private val playConfigVersion = "3.0.0"
   private val domainVersion = "4.1.0"
   private val hmrcTestVersion = "2.3.0"
-  private val scalaTestVersion = "2.2.6"
-  private val pegdownVersion = "1.6.0"
-
-
-
 
   resolvers += "Sonatype OSS Snapshots" at "http://jcenter.bintray.com"
 
 
   val compile = Seq(
     "uk.gov.hmrc" %% "microservice-bootstrap" % microserviceBootstrapVersion,
-    "uk.gov.hmrc" %% "play-authorisation" % playAuthVersion,
-    "uk.gov.hmrc" %% "play-health" % playHealthVersion,
     "uk.gov.hmrc" %% "play-url-binders" % playUrlBindersVersion,
-    "uk.gov.hmrc" %% "play-config" % playConfigVersion,
-    "uk.gov.hmrc" %% "play-json-logger" % playJsonLoggerVersion,
     "uk.gov.hmrc" %% "domain" % domainVersion,
     "uk.gov.hmrc" %% "git-client" % "0.6.0",
     "uk.gov.hmrc" %% "github-client" % "1.14.0",
