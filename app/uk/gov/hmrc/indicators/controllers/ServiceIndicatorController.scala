@@ -20,7 +20,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.indicators.ComponentRegistry
 import uk.gov.hmrc.indicators.service.IndicatorsService
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
