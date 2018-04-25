@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,19 @@ import java.time.{Clock, YearMonth}
 
 object MonthlyBucketBuilder {
 
-  def apply[T](items: Seq[T], months: Int)(dateExtractor: T => TemporalAccessor)(implicit clock: Clock): YearMonthTimeSeries[T] = {
+  def apply[T](items: Seq[T], months: Int)(dateExtractor: T => TemporalAccessor)(
+    implicit clock: Clock): YearMonthTimeSeries[T] = {
 
     val start = YearMonth.now(clock).minusMonths(months - 1)
 
     val end = YearMonth.now(clock)
 
-    def itemsForYearMonth(ym: YearMonth): Seq[T] = {
+    def itemsForYearMonth(ym: YearMonth): Seq[T] =
       items
         .filter(r => YearMonth.from(dateExtractor(r)) == ym)
-    }
 
     YearMonthTimeSeries(start, end, bucketBuilder = itemsForYearMonth)
 
   }
-
 
 }

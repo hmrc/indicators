@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,24 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
   "ServiceIndicatorController.serviceDeploymentMetrics" should {
 
-
     "return Frequent deployment metric for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(
-        Some(List(
-          DeploymentsMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))), None),
-          DeploymentsMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(Throughput(Some(MeasureResult(6)), None)), None)
-        )))
-      )
+      when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(Some(List(
+        DeploymentsMetricResult(
+          YearMonth.of(2016, 4),
+          from = date,
+          to   = date,
+          Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))),
+          None),
+        DeploymentsMetricResult(
+          YearMonth.of(2016, 5),
+          from = date,
+          to   = date,
+          Some(Throughput(Some(MeasureResult(6)), None)),
+          None)
+      ))))
 
       val result = controller.serviceDeploymentMetrics("serviceName")(FakeRequest())
 
@@ -60,7 +67,6 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       contentType(result).value mustBe "application/json"
     }
-
 
     "return NotFound if None lead times returned" in {
       when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(None))
@@ -69,24 +75,30 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       status(result) mustBe NOT_FOUND
 
-
     }
 
   }
 
   "ServiceIndicatorController.teamDeploymentMetrics" should {
 
-
     "return Frequent deployment metric for a given service in json format" in {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(
-        Some(List(
-          DeploymentsMetricResult(YearMonth.of(2016, 4), from = date, to = date, Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))), None),
-          DeploymentsMetricResult(YearMonth.of(2016, 5), from = date, to = date, Some(Throughput(Some(MeasureResult(6)), None)), None)
-        )))
-      )
+      when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(Some(List(
+        DeploymentsMetricResult(
+          YearMonth.of(2016, 4),
+          from = date,
+          to   = date,
+          Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))),
+          None),
+        DeploymentsMetricResult(
+          YearMonth.of(2016, 5),
+          from = date,
+          to   = date,
+          Some(Throughput(Some(MeasureResult(6)), None)),
+          None)
+      ))))
 
       val result = controller.teamDeploymentMetrics("teamName")(FakeRequest())
 
@@ -99,14 +111,12 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
       contentType(result).value mustBe "application/json"
     }
 
-
     "return NotFound if None lead times returned" in {
       when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(None))
 
       val result = controller.teamDeploymentMetrics("teamName")(FakeRequest())
 
       status(result) mustBe NOT_FOUND
-
 
     }
 
@@ -118,12 +128,10 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(
-        Some(List(
-          JobMetric(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4)), Some(0.01)),
-          JobMetric(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)), Some(0.02))
-        )))
-      )
+      when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(Some(List(
+        JobMetric(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4)), Some(0.01)),
+        JobMetric(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)), Some(0.02))
+      ))))
 
       val result = controller.jobMetrics("test-repo")(FakeRequest())
 
@@ -136,7 +144,6 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
       contentType(result).value mustBe "application/json"
     }
 
-
     "return NotFound if None builds returned" in {
       when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(None))
 
@@ -147,6 +154,5 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
   }
-
 
 }

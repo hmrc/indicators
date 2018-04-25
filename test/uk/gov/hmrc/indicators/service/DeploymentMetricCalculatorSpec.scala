@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,96 +23,100 @@ import org.scalatest.{LoneElement, Matchers, OptionValues, WordSpec}
 import uk.gov.hmrc.indicators.DateHelper._
 import uk.gov.hmrc.indicators.datasource.Deployment
 
-
-class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTripleEquals with LoneElement with OptionValues {
-
+class DeploymentMetricCalculatorSpec
+    extends WordSpec
+    with Matchers
+    with TypeCheckedTripleEquals
+    with LoneElement
+    with OptionValues {
 
   object ResultExtractor {
 
     implicit class MeasureExtractor(deploymentsMetricResult: Seq[DeploymentsMetricResult]) {
-      def leadTimes: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] = {
+      def leadTimes: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] =
         deploymentsMetricResult.map { x =>
-
           (x.period, x.from, x.to, x.throughput.flatMap(_.leadTime).map(_.median))
         }
-      }
 
-      def intervals: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] = {
+      def intervals: Seq[(YearMonth, LocalDate, LocalDate, Option[Int])] =
         deploymentsMetricResult.map { x =>
-
           (x.period, x.from, x.to, x.throughput.flatMap(_.interval).map(_.median))
         }
-      }
 
-      def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Double], Option[Int])] = {
+      def stability: Seq[(YearMonth, LocalDate, LocalDate, Option[Double], Option[Int])] =
         deploymentsMetricResult.map { x =>
-
-          (x.period, x.from, x.to, x.stability.flatMap(_.hotfixRate), x.stability.flatMap(_.hotfixInterval.map(_.median)))
+          (
+            x.period,
+            x.from,
+            x.to,
+            x.stability.flatMap(_.hotfixRate),
+            x.stability.flatMap(_.hotfixInterval.map(_.median)))
 
         }
-      }
 
     }
 
   }
 
-
   trait SetUp {
     private val midNight: LocalTime = LocalTime.of(0, 0)
 
-    val Oct_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 10, 1), midNight)
-    val Nov_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 11, 1), midNight)
+    val Oct_1st_2015  = LocalDateTime.of(LocalDate.of(2015, 10, 1), midNight)
+    val Nov_1st_2015  = LocalDateTime.of(LocalDate.of(2015, 11, 1), midNight)
     val Nov_26th_2015 = LocalDateTime.of(LocalDate.of(2015, 11, 26), midNight)
-    val Dec_1st_2015 = LocalDateTime.of(LocalDate.of(2015, 12, 1), midNight)
-    val Dec_2nd_2015 = LocalDateTime.of(LocalDate.of(2015, 12, 2), midNight)
+    val Dec_1st_2015  = LocalDateTime.of(LocalDate.of(2015, 12, 1), midNight)
+    val Dec_2nd_2015  = LocalDateTime.of(LocalDate.of(2015, 12, 2), midNight)
 
-    val Jan_1st = LocalDateTime.of(LocalDate.of(2016, 1, 1), midNight)
-    val Jan_10th = LocalDateTime.of(LocalDate.of(2016, 1, 10), midNight)
-    val Feb_1st = LocalDateTime.of(LocalDate.of(2016, 2, 1), midNight)
-    val Feb_4th = LocalDateTime.of(LocalDate.of(2016, 2, 4), midNight)
-    val Feb_6th = LocalDateTime.of(LocalDate.of(2016, 2, 6), midNight)
-    val Feb_9th = LocalDateTime.of(LocalDate.of(2016, 2, 9), midNight)
-    val Feb_10th = LocalDateTime.of(LocalDate.of(2016, 2, 10), midNight)
-    val Feb_12th = LocalDateTime.of(LocalDate.of(2016, 2, 12), midNight)
-    val Feb_16th = LocalDateTime.of(LocalDate.of(2016, 2, 16), midNight)
-    val Feb_18th = LocalDateTime.of(LocalDate.of(2016, 2, 18), midNight)
-    val Feb_20st = LocalDateTime.of(LocalDate.of(2016, 2, 20), midNight)
-    val Mar_1st = LocalDateTime.of(LocalDate.of(2016, 3, 1), midNight)
-    val Mar_4th = LocalDateTime.of(LocalDate.of(2016, 3, 4), midNight)
+    val Jan_1st    = LocalDateTime.of(LocalDate.of(2016, 1, 1), midNight)
+    val Jan_10th   = LocalDateTime.of(LocalDate.of(2016, 1, 10), midNight)
+    val Feb_1st    = LocalDateTime.of(LocalDate.of(2016, 2, 1), midNight)
+    val Feb_4th    = LocalDateTime.of(LocalDate.of(2016, 2, 4), midNight)
+    val Feb_6th    = LocalDateTime.of(LocalDate.of(2016, 2, 6), midNight)
+    val Feb_9th    = LocalDateTime.of(LocalDate.of(2016, 2, 9), midNight)
+    val Feb_10th   = LocalDateTime.of(LocalDate.of(2016, 2, 10), midNight)
+    val Feb_12th   = LocalDateTime.of(LocalDate.of(2016, 2, 12), midNight)
+    val Feb_16th   = LocalDateTime.of(LocalDate.of(2016, 2, 16), midNight)
+    val Feb_18th   = LocalDateTime.of(LocalDate.of(2016, 2, 18), midNight)
+    val Feb_20st   = LocalDateTime.of(LocalDate.of(2016, 2, 20), midNight)
+    val Mar_1st    = LocalDateTime.of(LocalDate.of(2016, 3, 1), midNight)
+    val Mar_4th    = LocalDateTime.of(LocalDate.of(2016, 3, 4), midNight)
     val March_10th = LocalDateTime.of(LocalDate.of(2016, 3, 10), midNight)
-    val Mar_27th = LocalDateTime.of(LocalDate.of(2016, 3, 27), midNight)
-    val Apr_1st = LocalDateTime.of(LocalDate.of(2016, 4, 1), midNight)
-    val Apr_4th = LocalDateTime.of(LocalDate.of(2016, 4, 4), midNight)
-    val Apr_10th = LocalDateTime.of(LocalDate.of(2016, 4, 10), midNight)
-    val Apr_11th = LocalDateTime.of(LocalDate.of(2016, 4, 11), midNight)
-    val May_1st = LocalDateTime.of(LocalDate.of(2016, 5, 1), midNight)
-    val May_10th = LocalDateTime.of(LocalDate.of(2016, 5, 10), midNight)
-    val May_11th = LocalDateTime.of(LocalDate.of(2016, 5, 11), midNight)
-    val June_1st = LocalDateTime.of(LocalDate.of(2016, 6, 1), midNight)
-    val Jun_5th = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
+    val Mar_27th   = LocalDateTime.of(LocalDate.of(2016, 3, 27), midNight)
+    val Apr_1st    = LocalDateTime.of(LocalDate.of(2016, 4, 1), midNight)
+    val Apr_4th    = LocalDateTime.of(LocalDate.of(2016, 4, 4), midNight)
+    val Apr_10th   = LocalDateTime.of(LocalDate.of(2016, 4, 10), midNight)
+    val Apr_11th   = LocalDateTime.of(LocalDate.of(2016, 4, 11), midNight)
+    val May_1st    = LocalDateTime.of(LocalDate.of(2016, 5, 1), midNight)
+    val May_10th   = LocalDateTime.of(LocalDate.of(2016, 5, 10), midNight)
+    val May_11th   = LocalDateTime.of(LocalDate.of(2016, 5, 11), midNight)
+    val June_1st   = LocalDateTime.of(LocalDate.of(2016, 6, 1), midNight)
+    val Jun_5th    = LocalDateTime.of(LocalDate.of(2016, 6, 5), midNight)
 
-    val Nov_2015 = YearMonth.of(2015, 11)
-    val Dec_2015 = YearMonth.of(2015, 12)
-    val Jan_2016 = YearMonth.of(2016, 1)
-    val Feb_2016 = YearMonth.of(2016, 2)
-    val Mar_2016 = YearMonth.of(2016, 3)
-    val Apr_2016 = YearMonth.of(2016, 4)
-    val May_2016 = YearMonth.of(2016, 5)
-    val Jun_2016 = YearMonth.of(2016, 6)
-    val July_2016 = YearMonth.of(2016, 7)
+    val Nov_2015    = YearMonth.of(2015, 11)
+    val Dec_2015    = YearMonth.of(2015, 12)
+    val Jan_2016    = YearMonth.of(2016, 1)
+    val Feb_2016    = YearMonth.of(2016, 2)
+    val Mar_2016    = YearMonth.of(2016, 3)
+    val Apr_2016    = YearMonth.of(2016, 4)
+    val May_2016    = YearMonth.of(2016, 5)
+    val Jun_2016    = YearMonth.of(2016, 6)
+    val July_2016   = YearMonth.of(2016, 7)
     val August_2016 = YearMonth.of(2016, 8)
-    def clock = clockFrom(May_10th)
+    def clock       = clockFrom(May_10th)
 
     def deploymentMetricCalculator = new DeploymentMetricCalculator(clock)
 
   }
 
-  def deployment(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "1.0.0"): Deployment = {
+  def deployment(
+    name: String,
+    creationDate: LocalDateTime,
+    leadTime: Option[Long] = None,
+    interval: Option[Long] = None,
+    version: String        = "1.0.0"): Deployment =
     Deployment(name, version, creationDate, leadTime, interval)
-  }
 
   import ResultExtractor._
-
 
   private val serviceName: String = "test-service"
 
@@ -120,7 +124,7 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
 
     "calculates when there has been no deployment" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
-      val deployments = List()
+      val deployments           = List()
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, None, None))
@@ -129,10 +133,11 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
     "calculates hotfix rate based on (hotfix intervals only) when there has been some hotfix deployments" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
       val deployments = List(
-        deployment(serviceName, Feb_4th, version = "1.0.0"),
+        deployment(serviceName, Feb_4th, version              = "1.0.0"),
         deployment(serviceName, Feb_4th.plusDays(1), interval = Some(1), version = "1.0.1"),
         deployment(serviceName, Feb_4th.plusDays(2), interval = Some(1), version = "1.0.2"),
-        deployment(serviceName, Feb_18th, version = "2.0.0"))
+        deployment(serviceName, Feb_18th, version             = "2.0.0")
+      )
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(0.5), Some(1)))
@@ -141,9 +146,10 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
     "calculates hotfix rate when there has been no hotfix deployments" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
       val deployments = List(
-        deployment(serviceName, Feb_4th,  version = "1.0.0"),
+        deployment(serviceName, Feb_4th, version             = "1.0.0"),
         deployment(serviceName, Feb_4th.plusDays(1), version = "2.0.0"),
-        deployment(serviceName, Feb_18th, interval = Some(12), version = "3.0.0"))
+        deployment(serviceName, Feb_18th, interval           = Some(12), version = "3.0.0")
+      )
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(0), None))
@@ -153,17 +159,16 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       override val clock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
-        deployment("test-service", Feb_4th,  interval = Some(3), version = "3.1.1"),
-        deployment("test-service", Feb_10th, interval = Some(6), version = "4.1.1"),
-        deployment("test-service", Feb_16th, interval = Some(4), version = "5.1.1"),
-        deployment("test-service", Feb_18th, interval = Some(2), version = "6.1.1"),
-        deployment("test-service", Mar_1st, interval = Some(12), version = "7.1.1"),
+        deployment("test-service", Feb_4th, interval  = Some(3), version  = "3.1.1"),
+        deployment("test-service", Feb_10th, interval = Some(6), version  = "4.1.1"),
+        deployment("test-service", Feb_16th, interval = Some(4), version  = "5.1.1"),
+        deployment("test-service", Feb_18th, interval = Some(2), version  = "6.1.1"),
+        deployment("test-service", Mar_1st, interval  = Some(12), version = "7.1.1"),
         deployment("test-service", Mar_27th, interval = Some(23), version = "8.1.0"), // leadt times of hotfixes = 2,3,4,6,12 = 4 median
-
-        deployment("test-service", Apr_1st, interval = Some(5), version = "1.1.1"),
-        deployment("test-service", Apr_11th, interval = Some(7), version = "2.1.0"), // leadt times of hotfixes = 2,3,4,5,6,12 = 5 median
+        deployment("test-service", Apr_1st, interval  = Some(5), version  = "1.1.1"),
+        deployment("test-service", Apr_11th, interval = Some(7), version  = "2.1.0"), // leadt times of hotfixes = 2,3,4,5,6,12 = 5 median
         deployment("test-service", May_11th, interval = Some(10), version = "9.1.1"), // lead times =   5, 7, 10, 12, 23
-        deployment("test-service", Jun_5th, interval = Some(4), version = "10.1.0") // leadt times of hotfixes = 5 , 10 = 8 median
+        deployment("test-service", Jun_5th, interval  = Some(4), version  = "10.1.0") // leadt times of hotfixes = 5 , 10 = 8 median
       )
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 7).stability shouldBe Seq(
@@ -183,7 +188,6 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
 
     "calculate the correct median lead time for one tag and deployment in the same month 3 days apart" in new SetUp {
       override val clock: Clock = clockFrom(Feb_4th)
-
 
       val deploymentBucket = Seq(deployment(serviceName, Feb_4th, Some(3)))
 
@@ -211,13 +215,15 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 2).leadTimes shouldBe Seq(
         (YearMonth.from(Mar_1st), Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(3)),
-        (YearMonth.from(Apr_1st), Feb_1st.toLocalDate, Apr_10th.toLocalDate, Some(5)))
+        (YearMonth.from(Apr_1st), Feb_1st.toLocalDate, Apr_10th.toLocalDate, Some(5))
+      )
     }
 
     "calculate the correct median lead time for 3 deployments" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
 
-      val deployments = Seq(deployment("test-service", Feb_6th, Some(5)),
+      val deployments = Seq(
+        deployment("test-service", Feb_6th, Some(5)),
         deployment("test-service", Feb_12th, Some(6)),
         deployment("test-service", Feb_18th, Some(8)))
 
@@ -230,7 +236,8 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
     "calculate the correct median lead time for 3 deployments with one missing tag date" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
 
-      val deployments = Seq(deployment("test-service", Feb_6th, Some(5)),
+      val deployments = Seq(
+        deployment("test-service", Feb_6th, Some(5)),
         deployment("test-service", Feb_12th, None), // N/A
         deployment("test-service", Feb_20st, Some(8)))
 
@@ -242,7 +249,8 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
     "calculate the correct median lead time for 4 deployments (3, 6, 6, 2)" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
 
-      val deployments = Seq(deployment("test-service", Feb_4th, Some(3)),
+      val deployments = Seq(
+        deployment("test-service", Feb_4th, Some(3)),
         deployment("test-service", Feb_10th, Some(6)),
         deployment("test-service", Feb_16th, Some(6)),
         deployment("test-service", Feb_18th, Some(2))
@@ -284,21 +292,19 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       override val clock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
-
         deployment("test-service", Nov_26th_2015, leadTime = Some(10)),
-        deployment("test-service", Dec_2nd_2015, leadTime = Some(7)),
-        deployment("test-service", Jan_10th, leadTime = Some(41)),
-
-        deployment("test-service", Feb_4th, leadTime = Some(24)), // leadTime 24
-        deployment("test-service", Feb_10th, leadTime = Some(6)), // leadTime 6
-        deployment("test-service", Feb_16th, leadTime = Some(6)), // leadTime 6
-        deployment("test-service", Feb_18th, leadTime = Some(2)), // leadTime 2
-        deployment("test-service", Mar_1st, leadTime = Some(12)), //leadTime 12
-        deployment("test-service", Mar_27th, leadTime = Some(26)), //leadTime 26
-        deployment("test-service", Apr_1st, leadTime = Some(5)), //leadTime 5
-        deployment("test-service", Apr_11th, leadTime = Some(10)), //leadTime 10
-        deployment("test-service", May_11th, leadTime = Some(30)), //leadTime 30
-        deployment("test-service", Jun_5th, leadTime = Some(25)) //leadTime 25
+        deployment("test-service", Dec_2nd_2015, leadTime  = Some(7)),
+        deployment("test-service", Jan_10th, leadTime      = Some(41)),
+        deployment("test-service", Feb_4th, leadTime       = Some(24)), // leadTime 24
+        deployment("test-service", Feb_10th, leadTime      = Some(6)), // leadTime 6
+        deployment("test-service", Feb_16th, leadTime      = Some(6)), // leadTime 6
+        deployment("test-service", Feb_18th, leadTime      = Some(2)), // leadTime 2
+        deployment("test-service", Mar_1st, leadTime       = Some(12)), //leadTime 12
+        deployment("test-service", Mar_27th, leadTime      = Some(26)), //leadTime 26
+        deployment("test-service", Apr_1st, leadTime       = Some(5)), //leadTime 5
+        deployment("test-service", Apr_11th, leadTime      = Some(10)), //leadTime 10
+        deployment("test-service", May_11th, leadTime      = Some(30)), //leadTime 30
+        deployment("test-service", Jun_5th, leadTime       = Some(25)) //leadTime 25
       )
 
       //dec None
@@ -309,13 +315,13 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       //may 12,26,4,7,29 => 4,7,12,26,20 =12
       //june 5,10,30,25 => 5,10,25,30
 
-
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 5).leadTimes shouldBe Seq(
         (YearMonth.from(Feb_1st), Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(7)),
         (YearMonth.from(Mar_1st), Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(12)),
         (YearMonth.from(Apr_1st), Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(8)),
         (YearMonth.from(May_1st), Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(12)),
-        (YearMonth.from(June_1st), Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18)))
+        (YearMonth.from(June_1st), Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18))
+      )
     }
 
   }
@@ -338,12 +344,11 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
 
       override val clock: Clock = clockFrom(Jan_29th)
 
-      val Jan_7th = LocalDateTime.of(LocalDate.of(2016, 1, 7), LocalTime.of(12, 16, 3))
+      val Jan_7th  = LocalDateTime.of(LocalDate.of(2016, 1, 7), LocalTime.of(12, 16, 3))
       val Jan_28th = LocalDateTime.of(LocalDate.of(2016, 1, 28), LocalTime.of(11, 16, 3))
 
-
-      val deployments = Seq(deployment("test-service", Jan_7th), deployment("test-service", Jan_28th, interval = Some(21)))
-
+      val deployments =
+        Seq(deployment("test-service", Jan_7th), deployment("test-service", Jan_28th, interval = Some(21)))
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1).intervals shouldBe Seq(
         (Jan_2016, Nov_1st_2015.toLocalDate, Jan_29th.toLocalDate, Some(21))
@@ -353,7 +358,8 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
     "calculate the correct median deployment interval for deployments that spans two months" in new SetUp {
       override val clock: Clock = clockFrom(Apr_10th)
 
-      val deployments = Seq(deployment("test-service", Mar_4th), deployment("test-service", Apr_10th, interval = Some(37)))
+      val deployments =
+        Seq(deployment("test-service", Mar_4th), deployment("test-service", Apr_10th, interval = Some(37)))
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 2).intervals shouldBe Seq(
         (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), None),
@@ -364,7 +370,8 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
     "calculate the correct median deployment interval for 3 deployments" in new SetUp {
       override val clock: Clock = clockFrom(Feb_18th)
 
-      val deployments = Seq(deployment("test-service", Feb_4th),
+      val deployments = Seq(
+        deployment("test-service", Feb_4th),
         deployment("test-service", Feb_10th, interval = Some(6)),
         deployment("test-service", Feb_18th, interval = Some(8)))
 
@@ -377,10 +384,12 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       override val clock: Clock = clockFrom(Feb_18th)
 
       //6,6,2
-      val deployments = Seq(deployment("test-service", Feb_4th),
+      val deployments = Seq(
+        deployment("test-service", Feb_4th),
         deployment("test-service", Feb_10th, interval = Some(6)),
         deployment("test-service", Feb_16th, interval = Some(6)),
-        deployment("test-service", Feb_18th, interval = Some(2)))
+        deployment("test-service", Feb_18th, interval = Some(2))
+      )
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1).intervals shouldBe Seq(
         (Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, Some(6))
@@ -392,15 +401,15 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
 
       val deployments = List(
         deployment("test-service", May_11th, interval = Some(30)), //interval 30
-        deployment("test-service", Mar_1st, interval = Some(12)), //interval 12
+        deployment("test-service", Mar_1st, interval  = Some(12)), //interval 12
         deployment("test-service", Feb_10th, interval = Some(6)), // interval 6
         deployment("test-service", Feb_18th, interval = Some(2)), // interval 2
         deployment("test-service", Mar_27th, interval = Some(26)), //interval 26
         deployment("test-service", Apr_11th, interval = Some(10)), //interval 10
-        deployment("test-service", Apr_1st, interval = Some(5)), //interval 5
+        deployment("test-service", Apr_1st, interval  = Some(5)), //interval 5
         deployment("test-service", Feb_16th, interval = Some(6)), // interval 6
-        deployment("test-service", Feb_4th, interval = None), // interval None
-        deployment("test-service", Jun_5th, interval = Some(25)) //interval 25
+        deployment("test-service", Feb_4th, interval  = None), // interval None
+        deployment("test-service", Jun_5th, interval  = Some(25)) //interval 25
       )
 
       //dec None
@@ -410,7 +419,6 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       //april 2,6,6,12,26,5,10 => 2,5,6,6,10,12,26 = 6
       //may 12,26,4,7,29 => 4,7,12,26,20 =12
       //june 5,10,30,25 => 5,10,25,30
-
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 7).intervals shouldBe List(
         (Dec_2015, Oct_1st_2015.toLocalDate, toEndOfMonth(Dec_1st_2015), None),
@@ -427,21 +435,19 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       override val clock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
-
         deployment("test-service", Nov_26th_2015, interval = Some(10)),
-        deployment("test-service", Dec_2nd_2015, interval = Some(7)),
-        deployment("test-service", Jan_10th, interval = Some(41)),
-
-        deployment("test-service", Feb_4th, interval = Some(24)), // interval 24
-        deployment("test-service", Feb_10th, interval = Some(6)), // interval 6
-        deployment("test-service", Feb_16th, interval = Some(6)), // interval 6
-        deployment("test-service", Feb_18th, interval = Some(2)), // interval 2
-        deployment("test-service", Mar_1st, interval = Some(12)), //interval 12
-        deployment("test-service", Mar_27th, interval = Some(26)), //interval 26
-        deployment("test-service", Apr_1st, interval = Some(5)), //interval 5
-        deployment("test-service", Apr_11th, interval = Some(10)), //interval 10
-        deployment("test-service", May_11th, interval = Some(30)), //interval 30
-        deployment("test-service", Jun_5th, interval = Some(25)) //interval 25
+        deployment("test-service", Dec_2nd_2015, interval  = Some(7)),
+        deployment("test-service", Jan_10th, interval      = Some(41)),
+        deployment("test-service", Feb_4th, interval       = Some(24)), // interval 24
+        deployment("test-service", Feb_10th, interval      = Some(6)), // interval 6
+        deployment("test-service", Feb_16th, interval      = Some(6)), // interval 6
+        deployment("test-service", Feb_18th, interval      = Some(2)), // interval 2
+        deployment("test-service", Mar_1st, interval       = Some(12)), //interval 12
+        deployment("test-service", Mar_27th, interval      = Some(26)), //interval 26
+        deployment("test-service", Apr_1st, interval       = Some(5)), //interval 5
+        deployment("test-service", Apr_11th, interval      = Some(10)), //interval 10
+        deployment("test-service", May_11th, interval      = Some(30)), //interval 30
+        deployment("test-service", Jun_5th, interval       = Some(25)) //interval 25
       )
 
       //dec None
@@ -452,13 +458,13 @@ class DeploymentMetricCalculatorSpec extends WordSpec with Matchers with TypeChe
       //may 12,26,4,7,29 => 4,7,12,26,20 =12
       //june 5,10,30,25 => 5,10,25,30
 
-
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 5).intervals shouldBe List(
         (Feb_2016, Dec_1st_2015.toLocalDate, toEndOfMonth(Feb_1st), Some(7)),
         (Mar_2016, Jan_1st.toLocalDate, toEndOfMonth(Mar_1st), Some(12)),
         (Apr_2016, Feb_1st.toLocalDate, toEndOfMonth(Apr_1st), Some(8)),
         (May_2016, Mar_1st.toLocalDate, toEndOfMonth(May_1st), Some(12)),
-        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18)))
+        (Jun_2016, Apr_1st.toLocalDate, Jun_5th.toLocalDate, Some(18))
+      )
     }
   }
 

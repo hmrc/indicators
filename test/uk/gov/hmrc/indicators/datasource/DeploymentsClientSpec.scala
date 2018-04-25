@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.{LocalDateTime, ZoneOffset}
-
 import com.github.tomakehurst.wiremock.http.RequestMethod.GET
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec}
-import org.scalatestplus.play.{OneAppPerSuite, OneAppPerTest, OneServerPerSuite}
-import play.api.inject.guice.GuiceApplicationBuilder
+import org.scalatestplus.play.OneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 

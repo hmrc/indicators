@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.service.{DeploymentMetricCalculator, IndicatorsService, JobMetricCalculator}
 
 object ComponentRegistry extends IndicatorsConfigProvider {
-  val deploymentsDataSource = new DeploymentsClient(deploymentsApiBase)
+  val deploymentsDataSource          = new DeploymentsClient(deploymentsApiBase)
   val teamsAndRepositoriesDataSource = new TeamsAndRepositoriesClient(teamsAndRepositoryApiBase)
-  val deploymentMetricCalculator = new DeploymentMetricCalculator()
+  val deploymentMetricCalculator     = new DeploymentMetricCalculator()
 
-  val repositoryJobsDataSource = new RepositoryJobsConnector(repositoryJobsApiBase)
+  val repositoryJobsDataSource         = new RepositoryJobsConnector(repositoryJobsApiBase)
   val jobExecutionTimeMetricCalculator = new JobMetricCalculator()
 
   val indicatorsService = new IndicatorsService(

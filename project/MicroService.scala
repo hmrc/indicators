@@ -7,7 +7,6 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import uk.gov.hmrc.versioning.SbtGitVersioning
 
-
 trait MicroService {
 
   import uk.gov.hmrc._
@@ -19,13 +18,13 @@ trait MicroService {
   import play.sbt.PlayScala
   val appName: String
 
-  lazy val appDependencies : Seq[ModuleID] = ???
-  lazy val plugins: Seq[Plugins] = Seq()
-  lazy val playSettings : Seq[Setting[_]] = Seq.empty
+  lazy val appDependencies: Seq[ModuleID] = ???
+  lazy val plugins: Seq[Plugins]          = Seq()
+  lazy val playSettings: Seq[Setting[_]]  = Seq.empty
 
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(Seq(PlayScala) ++ plugins: _*)
-    .settings(playSettings : _*)
+    .settings(playSettings: _*)
     .settings(scalaSettings: _*)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
@@ -46,7 +45,7 @@ trait MicroService {
 private object TestPhases {
 
   def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
-    tests map {
-      test => new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
+    tests map { test =>
+      new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
     }
 }

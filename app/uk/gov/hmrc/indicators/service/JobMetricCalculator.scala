@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,33 +28,39 @@ object JobMetric {
   implicit val writes = Json.writes[JobMetric]
 }
 
-case class JobMetric(period: YearMonth,
-                     from: LocalDate,
-                     to: LocalDate,
-                     duration: Option[MeasureResult],
-                     successRate: Option[Double])
+case class JobMetric(
+  period: YearMonth,
+  from: LocalDate,
+  to: LocalDate,
+  duration: Option[MeasureResult],
+  successRate: Option[Double])
 
-class JobMetricCalculator(clock : Clock = Clock.systemUTC()) {
+class JobMetricCalculator(clock: Clock = Clock.systemUTC()) {
 
   implicit val c = clock
 
   type JobExecutionBucket = Iterable[(YearMonth, Seq[Deployment])]
   val monthlyWindowSize: Int = 3
-  val monthsToLookBack = 3
+  val monthsToLookBack       = 3
 
-  def calculateJobMetrics(builds: Seq[Build], requiredPeriodInMonths: Int): Seq[JobMetric] = {
+  def calculateJobMetrics(builds: Seq[Build], requiredPeriodInMonths: Int): Seq[JobMetric] =
     withLookBack(requiredPeriodInMonths) { requiredMonths =>
       val buildBuckets = getJobExecutionBuckets(builds, requiredMonths)
 
-      buildBuckets.zipWithIndex.map { case (bucket, index) =>
-        val dateData = DateData(buildBuckets.size, bucket, index)
+      buildBuckets.zipWithIndex.map {
+        case (bucket, index) =>
+          val dateData = DateData(buildBuckets.size, bucket, index)
 
-        val allBuildsInBucket: Seq[Build] = bucket.flatMap(_._2).toSeq
+          val allBuildsInBucket: Seq[Build] = bucket.flatMap(_._2).toSeq
 
-        JobMetric(dateData.period, dateData.from, dateData.to, calculateMeasureResult(allBuildsInBucket, _.duration), calculateSuccessRate(allBuildsInBucket))
+          JobMetric(
+            dateData.period,
+            dateData.from,
+            dateData.to,
+            calculateMeasureResult(allBuildsInBucket, _.duration),
+            calculateSuccessRate(allBuildsInBucket))
       }
     }
-  }
 
   private def calculateSuccessRate(builds: Seq[Build]): Option[Double] = {
 
@@ -66,7 +72,7 @@ class JobMetricCalculator(clock : Clock = Clock.systemUTC()) {
     val successCount = buildResults.count(_ == "SUCCESS")
 
     buildResults.length match {
-      case 0 => None
+      case 0     => None
       case count => Some(successCount.toDouble / count.toDouble)
     }
   }
@@ -81,24 +87,24 @@ class JobMetricCalculator(clock : Clock = Clock.systemUTC()) {
     measures.median.map(MeasureResult.toMeasureResult)
   }
 
-  private def epochMillisToLocalDateTime(epochMillis: Long) = LocalDateTime.ofEpochSecond(epochMillis/1000, 0, ZoneOffset.UTC)
+  private def epochMillisToLocalDateTime(epochMillis: Long) =
+    LocalDateTime.ofEpochSecond(epochMillis / 1000, 0, ZoneOffset.UTC)
 
   private def getJobExecutionBuckets[T <: MetricsResult](builds: Seq[Build], requiredPeriod: Int) =
-    MonthlyBucketBuilder(builds, requiredPeriod)(build => epochMillisToLocalDateTime(build.timestamp)).slidingWindow(monthlyWindowSize)
+    MonthlyBucketBuilder(builds, requiredPeriod)(build => epochMillisToLocalDateTime(build.timestamp))
+      .slidingWindow(monthlyWindowSize)
 
-  private def withLookBack[T](requiredPeriod: Int)(f: Int => Seq[T]): Seq[T] = {
+  private def withLookBack[T](requiredPeriod: Int)(f: Int => Seq[T]): Seq[T] =
     f(requiredPeriod + monthsToLookBack).takeRight(requiredPeriod)
-  }
 
   private case class DateData(period: YearMonth, from: LocalDate, to: LocalDate)
 
   private object DateData {
-    def apply(buildBucketSize: Int,
-              bucket: Iterable[(YearMonth, Seq[Build])],
-              indx: Int)(implicit clock: Clock): DateData = {
+    def apply(buildBucketSize: Int, bucket: Iterable[(YearMonth, Seq[Build])], indx: Int)(
+      implicit clock: Clock): DateData = {
 
       val (period, _) = bucket.last
-      val (from, _) = bucket.head
+      val (from, _)   = bucket.head
 
       val toDate =
         if (indx == (buildBucketSize - 1))
@@ -110,6 +116,5 @@ class JobMetricCalculator(clock : Clock = Clock.systemUTC()) {
       DateData(period, fromDate, toDate)
     }
   }
-
 
 }

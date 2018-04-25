@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,33 +28,27 @@ object ServiceIndicatorController extends ServiceIndicatorController {
 
   override val indicatorsService: IndicatorsService = ComponentRegistry.indicatorsService
 
-
 }
-
 
 trait ServiceIndicatorController extends BaseController {
 
   def indicatorsService: IndicatorsService
 
-
   def serviceDeploymentMetrics(serviceName: String) = Action.async { implicit request =>
-
     indicatorsService.getServiceDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
-      case _ => NotFound
+      case _        => NotFound
     }
   }
 
   def teamDeploymentMetrics(serviceName: String) = Action.async { implicit request =>
-
     indicatorsService.getTeamDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
-      case _ => NotFound
+      case _        => NotFound
     }
   }
 
   def jobMetrics(repoName: String) = Action.async { implicit request =>
-
     val metrics = indicatorsService.getJobMetrics(repoName)
     metrics map {
       case Some(ls) =>
@@ -62,6 +56,5 @@ trait ServiceIndicatorController extends BaseController {
       case _ => NotFound
     }
   }
-
 
 }

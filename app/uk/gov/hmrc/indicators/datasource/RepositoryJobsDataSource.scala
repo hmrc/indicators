@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,16 @@ import uk.gov.hmrc.indicators.http.HttpClient
 
 import scala.concurrent.Future
 
-case class Build(repositoryName: String,
-                 jobName: String,
-                 jobUrl: String,
-                 buildNumber: Int,
-                 result: Option[String],
-                 timestamp: Long,
-                 duration: Int,
-                 buildUrl: String,
-                 builtOn: String)
+case class Build(
+  repositoryName: String,
+  jobName: String,
+  jobUrl: String,
+  buildNumber: Int,
+  result: Option[String],
+  timestamp: Long,
+  duration: Int,
+  buildUrl: String,
+  builtOn: String)
 
 trait RepositoryJobsDataSource {
   def getBuildsForRepository(repositoryName: String): Future[Seq[Build]]
@@ -37,7 +38,7 @@ trait RepositoryJobsDataSource {
 
 class RepositoryJobsConnector(repositoryJobsApiBase: String) extends RepositoryJobsDataSource {
 
-  def getBuildsForRepository(repositoryName: String): Future[Seq[Build]] =  {
+  def getBuildsForRepository(repositoryName: String): Future[Seq[Build]] = {
     implicit val reads = Json.reads[Build]
     HttpClient.get[List[Build]](s"$repositoryJobsApiBase/api/builds/$repositoryName")
   }

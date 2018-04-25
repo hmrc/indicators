@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,20 @@ import uk.gov.hmrc.indicators.{DateHelper, DefaultPatienceConfig}
 import scala.collection.immutable
 import scala.concurrent.Future
 
-
-class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar with ScalaFutures with DefaultPatienceConfig with OptionValues {
+class IndicatorsServiceSpec
+    extends WordSpec
+    with Matchers
+    with MockitoSugar
+    with ScalaFutures
+    with DefaultPatienceConfig
+    with OptionValues {
 
   trait SetUp {
 
-
-    val deploymentsClient = mock[DeploymentsDataSource]
-    val repositoryJobsDataSource = mock[RepositoryJobsDataSource]
-    val teamsAndRepositoriesDataSource = mock[TeamsAndRepositoriesDataSource]
-    val deploymentMetricCalculator = mock[DeploymentMetricCalculator]
+    val deploymentsClient                = mock[DeploymentsDataSource]
+    val repositoryJobsDataSource         = mock[RepositoryJobsDataSource]
+    val teamsAndRepositoriesDataSource   = mock[TeamsAndRepositoriesDataSource]
+    val deploymentMetricCalculator       = mock[DeploymentMetricCalculator]
     val jobExecutionTimeMetricCalculator = mock[JobMetricCalculator]
 
     val Feb_1st = LocalDateTime.of(2000, 2, 1, 0, 0, 0)
@@ -46,7 +50,7 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
     val Feb_6th = LocalDateTime.of(2000, 2, 6, 0, 0, 0)
 
     val Feb_18th = LocalDateTime.of(2000, 2, 18, 0, 0, 0)
-    val now = DateHelper.clockFrom(Feb_18th)
+    val now      = DateHelper.clockFrom(Feb_18th)
 
     val indicatorsService = new IndicatorsService(
       deploymentsClient,
@@ -58,12 +62,15 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
   val serviceName = "test-service"
 
-
-  def deployment(name: String, creationDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None, version: String = "version"): Deployment = {
+  def deployment(
+    name: String,
+    creationDate: LocalDateTime,
+    leadTime: Option[Long] = None,
+    interval: Option[Long] = None,
+    version: String        = "version"): Deployment =
     Deployment(name, version, creationDate, leadTime, interval)
-  }
 
-  val deploymentsMetricResult = mock[DeploymentsMetricResult]
+  val deploymentsMetricResult      = mock[DeploymentsMetricResult]
   val jobExecutionTimeMetricResult = mock[JobMetric]
 
   "IndicatorService" should {
@@ -74,26 +81,25 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
         deployment(serviceName, Feb_6th, leadTime = Some(1), interval = Some(2)))
 
       when(deploymentsClient.getForService("test-service")).thenReturn(Future.successful(deployments))
-      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1))
+        .thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
-
 
     "calculates DeploymentsMetricResult ignoring deployments with negative leadTime" in new SetUp {
       val correctDeployments = deployment(serviceName, Feb_4th, leadTime = Some(3))
-      val deployments = List(
-        correctDeployments,
-        deployment(serviceName, Feb_6th, leadTime = Some(-1), interval = Some(2)))
+      val deployments =
+        List(correctDeployments, deployment(serviceName, Feb_6th, leadTime = Some(-1), interval = Some(2)))
 
       when(deploymentsClient.getForService("test-service")).thenReturn(Future.successful(deployments))
-      when(deploymentMetricCalculator.calculateDeploymentMetrics(List(correctDeployments), 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(List(correctDeployments), 1))
+        .thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getServiceDeploymentMetrics("test-service", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
-
 
     "returns None if the service is not found" in new SetUp {
       when(deploymentsClient.getForService("test-service")).thenReturn(Future.failed(new RuntimeException("404")))
@@ -110,11 +116,13 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
         deployment(serviceName, Feb_4th, leadTime = Some(5)),
         deployment(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
 
-      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(List("Service1", "Service2")))
+      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA"))
+        .thenReturn(Future.successful(List("Service1", "Service2")))
 
       when(deploymentsClient.getForService("Service1")).thenReturn(Future.successful(deployments1))
       when(deploymentsClient.getForService("Service2")).thenReturn(Future.successful(deployments2))
-      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1))
+        .thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
@@ -129,17 +137,18 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
         deployment(serviceName, Feb_4th, leadTime = Some(5)),
         deployment(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
 
-      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(List("Service1", "Service2", "Service3")))
+      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA"))
+        .thenReturn(Future.successful(List("Service1", "Service2", "Service3")))
 
       when(deploymentsClient.getForService("Service1")).thenReturn(Future.successful(deployments1))
       when(deploymentsClient.getForService("Service2")).thenReturn(Future.successful(deployments2))
       when(deploymentsClient.getForService("Service3")).thenReturn(Future.failed(new RuntimeException))
-      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1))
+        .thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
-
 
     "calculates DeploymentsMetricResult for a team ignoring deployments with negative lead time" in new SetUp {
       val deployments1 = List(
@@ -150,17 +159,19 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
         deployment(serviceName, Feb_4th, leadTime = Some(5)),
         deployment(serviceName, Feb_6th, leadTime = Some(6), interval = Some(7)))
 
-      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(List("Service1", "Service2", "Service3")))
+      when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA"))
+        .thenReturn(Future.successful(List("Service1", "Service2", "Service3")))
 
       when(deploymentsClient.getForService("Service1")).thenReturn(Future.successful(deployments1))
       when(deploymentsClient.getForService("Service2")).thenReturn(Future.successful(deployments2))
-      when(deploymentsClient.getForService("Service3")).thenReturn(Future.successful(List(deployment(serviceName, Feb_4th, leadTime = Some(-5)))))
-      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1)).thenReturn(Seq(deploymentsMetricResult))
+      when(deploymentsClient.getForService("Service3"))
+        .thenReturn(Future.successful(List(deployment(serviceName, Feb_4th, leadTime = Some(-5)))))
+      when(deploymentMetricCalculator.calculateDeploymentMetrics(deployments1 ++ deployments2, 1))
+        .thenReturn(Seq(deploymentsMetricResult))
 
       indicatorsService.getTeamDeploymentMetrics("teamA", 1).futureValue.value shouldBe
         List(deploymentsMetricResult)
     }
-
 
     "returns None if the team has no throughput or stability indicators" in new SetUp {
 
@@ -185,7 +196,6 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
       val emptyDeployments = List()
 
-
       when(deploymentsClient.getForService("service1")).thenReturn(Future.successful(emptyDeployments))
       when(deploymentsClient.getForService("service2")).thenReturn(Future.successful(emptyDeployments))
       when(teamsAndRepositoriesDataSource.getServicesForTeam("teamA")).thenReturn(Future.successful(teamServices))
@@ -201,7 +211,8 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
         build(repoName, Feb_6th.toEpochSecond(ZoneOffset.UTC), 6))
 
       when(repositoryJobsDataSource.getBuildsForRepository(repoName)).thenReturn(Future.successful(builds))
-      when(jobExecutionTimeMetricCalculator.calculateJobMetrics(builds, 1)).thenReturn(Seq(jobExecutionTimeMetricResult))
+      when(jobExecutionTimeMetricCalculator.calculateJobMetrics(builds, 1))
+        .thenReturn(Seq(jobExecutionTimeMetricResult))
 
       indicatorsService.getJobMetrics(repoName, 1).futureValue.value shouldBe
         List(jobExecutionTimeMetricResult)
@@ -210,6 +221,5 @@ class IndicatorsServiceSpec extends WordSpec with Matchers with MockitoSugar wit
 
   def build(repoName: String, epochSecond: Long, duration: Int) =
     Build(repoName, "jobName", "jobUrl", 1234, Some("SUCCESS"), epochSecond, duration, "some.url", "slave-1")
-
 
 }

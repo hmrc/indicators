@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,13 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 
-class TeamsAndRepositoriesClientSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig with OneAppPerSuite {
+class TeamsAndRepositoriesClientSpec
+    extends WordSpec
+    with Matchers
+    with WireMockSpec
+    with ScalaFutures
+    with DefaultPatienceConfig
+    with OneAppPerSuite {
 
   val teamsAndRepositoriesClient = new TeamsAndRepositoriesClient(endpointMockUrl)
 
@@ -37,8 +43,9 @@ class TeamsAndRepositoriesClientSpec extends WordSpec with Matchers with WireMoc
 
         givenRequestExpects(
           method = GET,
-          url = s"$endpointMockUrl/teams/test-team",
-          willRespondWith = (200,
+          url    = s"$endpointMockUrl/teams/test-team",
+          willRespondWith = (
+            200,
             Some(
               s"""
                  |{
@@ -59,7 +66,8 @@ class TeamsAndRepositoriesClientSpec extends WordSpec with Matchers with WireMoc
                  | ]
                  |}
             """.stripMargin
-            )))
+            ))
+        )
 
         val results: List[String] = teamsAndRepositoriesClient.getServicesForTeam(teamName).futureValue
         results shouldBe List("Service1", "Service2", "Service3")
@@ -68,6 +76,5 @@ class TeamsAndRepositoriesClientSpec extends WordSpec with Matchers with WireMoc
 
     }
   }
-
 
 }

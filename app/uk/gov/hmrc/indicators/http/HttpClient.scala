@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 package uk.gov.hmrc.indicators.http
 
 import play.Logger
-import play.api.libs.json.{Json, JsValue, Reads}
+import play.api.libs.json.{JsValue, Json, Reads}
 import play.api.libs.ws._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import play.api.Play.current
 import scala.concurrent.ExecutionContext.Implicits.global
-
 
 object HttpClient {
 
@@ -54,7 +53,6 @@ object HttpClient {
 
     }
 
-
   private def getResponseBody(url: String, header: List[(String, String)] = List()): Future[String] =
     withErrorHandling("GET", url)(header) {
       case s if s.status >= 200 && s.status < 300 => s.body
@@ -64,24 +62,33 @@ object HttpClient {
         throw new RuntimeException(msg)
     }
 
-  private def withErrorHandling[T](method: String, url: String, body: Option[JsValue] = None)(headers: List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] =
-    buildCall(method, url, body, headers).execute().transform(
-      f,
-      e => {
-        Logger.error(s"error connecting to $url", e)
-        throw new RuntimeException(s"Error connecting  $url", e)
-      }
-    )
+  private def withErrorHandling[T](method: String, url: String, body: Option[JsValue] = None)(
+    headers: List[(String, String)])(f: WSResponse => T)(implicit ec: ExecutionContext): Future[T] =
+    buildCall(method, url, body, headers)
+      .execute()
+      .transform(
+        f,
+        e => {
+          Logger.error(s"error connecting to $url", e)
+          throw new RuntimeException(s"Error connecting  $url", e)
+        }
+      )
 
-
-  private def buildCall(method: String, url: String, body: Option[JsValue] = None, headers: List[(String, String)] = List()) = {
-    val req = WS.client.url(url)
+  private def buildCall(
+    method: String,
+    url: String,
+    body: Option[JsValue]           = None,
+    headers: List[(String, String)] = List()) = {
+    val req = WS.client
+      .url(url)
       .withMethod(method)
       .withHeaders(headers: _*)
 
-    body.map { b =>
-      req.withBody(b)
-    }.getOrElse(req)
+    body
+      .map { b =>
+        req.withBody(b)
+      }
+      .getOrElse(req)
   }
 
 }

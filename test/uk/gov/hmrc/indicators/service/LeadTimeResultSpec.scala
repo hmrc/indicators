@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,10 @@ class LeadTimeResultSpec extends WordSpec with Matchers {
   "LeadTimeResult.of" should {
     "construct LeadTimeResult by rounding" in {
       val now: YearMonth = YearMonth.now()
-      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some (BigDecimal(4.5))).median shouldBe Some(5)
-      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4))).median shouldBe Some(4)
+      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4.5))).median shouldBe Some(5)
+      DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4))).median   shouldBe Some(4)
       DeploymentLeadTimeResult.of(now, now.atDay(1), now.atDay(2), Some(BigDecimal(4.3))).median shouldBe Some(4)
     }
   }
-
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,19 @@ import java.time.YearMonth
 
 object YearMonthTimeSeries {
 
-  def apply[B](start: YearMonth, endInclusive: YearMonth, bucketBuilder: (YearMonth) => Seq[B]): YearMonthTimeSeries[B] = {
+  def apply[B](
+    start: YearMonth,
+    endInclusive: YearMonth,
+    bucketBuilder: (YearMonth) => Seq[B]): YearMonthTimeSeries[B] =
     new YearMonthTimeSeries[B] {
       override def iterator: Iterator[(YearMonth, Seq[B])] = {
-        val map: Iterator[(YearMonth, Seq[B])] = Iterator.iterate(start)(_.plusMonths(1)).takeWhile(a => a.isBefore(endInclusive) || a.equals(endInclusive))
+        val map: Iterator[(YearMonth, Seq[B])] = Iterator
+          .iterate(start)(_.plusMonths(1))
+          .takeWhile(a => a.isBefore(endInclusive) || a.equals(endInclusive))
           .map(ym => ym -> bucketBuilder(ym))
         map
       }
     }
-  }
 }
 
 trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, Seq[B])] {
@@ -36,11 +40,11 @@ trait YearMonthTimeSeries[B] extends Iterable[(YearMonth, Seq[B])] {
 
   def mapBucketItems[T](f: B => T): YearMonthTimeSeries[T] =
     new YearMonthTimeSeries[T] {
-      override def iterator: Iterator[(YearMonth, Seq[T])] = {
-        self.map { case (month, items) =>
-          (month, items.map(f))
+      override def iterator: Iterator[(YearMonth, Seq[T])] =
+        self.map {
+          case (month, items) =>
+            (month, items.map(f))
         }.toIterator
-      }
     }
 
   def slidingWindow(windowSize: Int): Seq[Iterable[(YearMonth, Seq[B])]] = {

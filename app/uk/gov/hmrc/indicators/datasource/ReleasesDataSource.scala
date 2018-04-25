@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,12 @@ import uk.gov.hmrc.indicators.http.HttpClient
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class Deployment(name: String, version: String, productionDate: LocalDateTime, leadTime: Option[Long] = None, interval: Option[Long] = None)
+case class Deployment(
+  name: String,
+  version: String,
+  productionDate: LocalDateTime,
+  leadTime: Option[Long] = None,
+  interval: Option[Long] = None)
 
 trait DeploymentsDataSource {
   def getForService(serviceName: String): Future[List[Deployment]]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
 import play.api.test.FakeApplication
-import uk.gov.hmrc.indicators.{WireMockSpec, DefaultPatienceConfig}
+import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 
 import play.api.test._
 import play.api.test.Helpers._
-
 
 class HttpClientSpec extends WireMockSpec with ScalaFutures with Matchers with DefaultPatienceConfig {
 
@@ -35,22 +34,23 @@ class HttpClientSpec extends WireMockSpec with ScalaFutures with Matchers with D
     implicit val formats = Json.format[Response]
   }
 
-
   "HttpClientSpec.get" should {
 
     "report success with string body" in {
       running(FakeApplication()) {
 
         givenRequestExpects(
-          method = GET,
-          url = s"$endpointMockUrl/resource/1",
-          willRespondWith = (200, Some( """{"success" : true}""")),
-          headers = List(("content-type", "application/json"))
+          method          = GET,
+          url             = s"$endpointMockUrl/resource/1",
+          willRespondWith = (200, Some("""{"success" : true}""")),
+          headers         = List(("content-type", "application/json"))
         )
 
         printMappings()
 
-        HttpClient.get[Response](s"$endpointMockUrl/resource/1", List(("content-type", "application/json"))).futureValue should be(Response(success = true))
+        HttpClient
+          .get[Response](s"$endpointMockUrl/resource/1", List(("content-type", "application/json")))
+          .futureValue should be(Response(success = true))
       }
 
     }
@@ -59,15 +59,14 @@ class HttpClientSpec extends WireMockSpec with ScalaFutures with Matchers with D
       running(FakeApplication()) {
 
         givenRequestExpects(
-          method = GET,
-          url = s"$endpointMockUrl/resource/1",
+          method          = GET,
+          url             = s"$endpointMockUrl/resource/1",
           willRespondWith = (500, None)
         )
 
         a[RuntimeException] should be thrownBy HttpClient.get[Response](s"$endpointMockUrl/resource/1").futureValue
       }
     }
-
 
   }
 }

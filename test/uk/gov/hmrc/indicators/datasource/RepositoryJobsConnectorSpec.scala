@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,13 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.test.Helpers.running
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 
-class RepositoryJobsConnectorSpec extends WordSpec with Matchers with WireMockSpec with ScalaFutures with DefaultPatienceConfig with OneAppPerSuite {
+class RepositoryJobsConnectorSpec
+    extends WordSpec
+    with Matchers
+    with WireMockSpec
+    with ScalaFutures
+    with DefaultPatienceConfig
+    with OneAppPerSuite {
 
   "Repository jobs connector" should {
 
@@ -34,7 +40,8 @@ class RepositoryJobsConnectorSpec extends WordSpec with Matchers with WireMockSp
           method = GET,
 //          url = s"$endpointMockUrl/builds/test-repo",
           url = s"$endpointMockUrl/api/builds/test-repo",
-          willRespondWith = (200,
+          willRespondWith = (
+            200,
             Some(
               s"""
                  |[
@@ -62,17 +69,36 @@ class RepositoryJobsConnectorSpec extends WordSpec with Matchers with WireMockSp
                  |    }
                  |]
                """.stripMargin
-            )))
+            ))
+        )
 
         val connector = new RepositoryJobsConnector(endpointMockUrl)
-        val results = connector.getBuildsForRepository("test-repo").futureValue
+        val results   = connector.getBuildsForRepository("test-repo").futureValue
 
-        val build1 = Build("test-repo", "repository-abcd", "job.url", 1, Some("SUCCESS"), 1486571562000l, 218869, "build.url", "built-on")
-        val build2 = Build("test-repo", "repository-abcd", "job.url", 5, Some("SUCCESS"), 1486571562000l, 218869, "build.url", "built-on")
+        val build1 = Build(
+          "test-repo",
+          "repository-abcd",
+          "job.url",
+          1,
+          Some("SUCCESS"),
+          1486571562000l,
+          218869,
+          "build.url",
+          "built-on")
+        val build2 = Build(
+          "test-repo",
+          "repository-abcd",
+          "job.url",
+          5,
+          Some("SUCCESS"),
+          1486571562000l,
+          218869,
+          "build.url",
+          "built-on")
 
         results.length shouldBe 2
-        results.head shouldBe build1
-        results.last shouldBe build2
+        results.head   shouldBe build1
+        results.last   shouldBe build2
 
       }
     }

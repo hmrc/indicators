@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import play.api.{Logger, Play}
 trait ConfigProvider {
   def configs: Configs
 
-  lazy val deploymentsApiBase: String = requiredConf("deployments.api.base")
-  lazy val teamsAndRepositoryApiBase : String = requiredConf("teamsandrepositories.api.base")
-  lazy val repositoryJobsApiBase : String = requiredConf("repositoryjobs.api.base")
+  lazy val deploymentsApiBase: String        = requiredConf("deployments.api.base")
+  lazy val teamsAndRepositoryApiBase: String = requiredConf("teamsandrepositories.api.base")
+  lazy val repositoryJobsApiBase: String     = requiredConf("repositoryjobs.api.base")
 
   private def optionalConf(path: String): Option[String] = configs.config(path)
-  private def requiredConf(path: String): String = configs.config(path).getOrElse(
-    throw new RuntimeException(s"No conf for key : $path"))
+  private def requiredConf(path: String): String =
+    configs.config(path).getOrElse(throw new RuntimeException(s"No conf for key : $path"))
 }
 
 trait IndicatorsConfigProvider extends ConfigProvider {
@@ -41,6 +41,6 @@ trait Configs {
 }
 
 object PlayConfigs extends Configs {
-  def config(path: String) = Play.current.configuration.getString(path)
+  def config(path: String)  = Play.current.configuration.getString(path)
   def config0(path: String) = Play.current.configuration.getString(path)
 }
