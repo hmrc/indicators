@@ -27,10 +27,11 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-class ServiceIndicatorController @Inject()(http: HttpClient, indicatorsService: IndicatorsService) extends BaseController {
+class ServiceIndicatorController @Inject()(http: HttpClient, indicatorsService: IndicatorsService)
+    extends BaseController {
 
   def serviceDeploymentMetrics(serviceName: String) = Action.async { implicit request =>
-    indicatorsService.getServiceDeploymentMetrics(serviceName, 12) map {
+    indicatorsService.getServiceDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
       case _        => NotFound
     }

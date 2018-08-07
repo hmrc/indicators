@@ -86,25 +86,27 @@ class RepositoryJobsConnectorSpec
       val results = repositoryJobsConnector.getBuildsForRepository("test-repo").futureValue
 
       val build1 = Build(
-        "test-repo",
-        "repository-abcd",
-        "job.url",
-        1,
-        Some("SUCCESS"),
-        1486571562000l,
-        218869,
-        "build.url",
-        "built-on")
+        repositoryName = "test-repo",
+        jobName        = "repository-abcd",
+        jobUrl         = "job.url",
+        buildNumber    = 1,
+        result         = Some("SUCCESS"),
+        timestamp      = 1486571562000l,
+        duration       = 218869,
+        buildUrl       = "build.url",
+        builtOn        = "built-on"
+      )
       val build2 = Build(
-        "test-repo",
-        "repository-abcd",
-        "job.url",
-        5,
-        Some("SUCCESS"),
-        1486571562000l,
-        218869,
-        "build.url",
-        "built-on")
+        repositoryName = "test-repo",
+        jobName        = "repository-abcd",
+        jobUrl         = "job.url",
+        buildNumber    = 5,
+        result         = Some("SUCCESS"),
+        timestamp      = 1486571562000l,
+        duration       = 218869,
+        buildUrl       = "build.url",
+        builtOn        = "built-on"
+      )
 
       results.length shouldBe 2
       results.head   shouldBe build1
