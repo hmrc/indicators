@@ -20,9 +20,10 @@ import java.time.{LocalDate, LocalDateTime, YearMonth, ZoneOffset}
 
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, OptionValues, WordSpec}
-import uk.gov.hmrc.indicators.datasource.{TeamsAndRepositoriesDataSource, _}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.indicators.datasource._
 import uk.gov.hmrc.indicators.{DateHelper, DefaultPatienceConfig}
 
 import scala.collection.immutable
@@ -38,9 +39,10 @@ class IndicatorsServiceSpec
 
   trait SetUp {
 
-    val deploymentsClient                = mock[DeploymentsDataSource]
-    val repositoryJobsDataSource         = mock[RepositoryJobsDataSource]
-    val teamsAndRepositoriesDataSource   = mock[TeamsAndRepositoriesDataSource]
+    implicit val hc                      = HeaderCarrier()
+    val deploymentsClient                = mock[ServiceDeploymentsConnector]
+    val repositoryJobsDataSource         = mock[RepositoryJobsConnector]
+    val teamsAndRepositoriesDataSource   = mock[TeamsAndRepositoriesConnector]
     val deploymentMetricCalculator       = mock[DeploymentMetricCalculator]
     val jobExecutionTimeMetricCalculator = mock[JobMetricCalculator]
 

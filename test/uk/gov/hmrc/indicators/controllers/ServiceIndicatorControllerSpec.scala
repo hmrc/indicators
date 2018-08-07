@@ -18,23 +18,27 @@ package uk.gov.hmrc.indicators.controllers
 
 import java.time.{LocalDate, YearMonth}
 
+import org.mockito.Matchers.{any, eq => is}
 import org.mockito.Mockito.when
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.indicators.TestImplicits._
 import uk.gov.hmrc.indicators.service._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.Future
 
-class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
+class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach {
 
+  private val httpClient            = mock[HttpClient]
   private val mockIndicatorsService = mock[IndicatorsService]
+  private implicit val hc           = HeaderCarrier()
 
-  val controller = new ServiceIndicatorController {
-    override val indicatorsService: IndicatorsService = mockIndicatorsService
-  }
+  val controller = new ServiceIndicatorController(httpClient, mockIndicatorsService)
 
   "ServiceIndicatorController.serviceDeploymentMetrics" should {
 
@@ -42,20 +46,21 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(Some(List(
-        DeploymentsMetricResult(
-          YearMonth.of(2016, 4),
-          from = date,
-          to   = date,
-          Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))),
-          None),
-        DeploymentsMetricResult(
-          YearMonth.of(2016, 5),
-          from = date,
-          to   = date,
-          Some(Throughput(Some(MeasureResult(6)), None)),
-          None)
-      ))))
+      when(mockIndicatorsService.getServiceDeploymentMetrics(is("serviceName"), any())(any[HeaderCarrier]))
+        .thenReturn(Future.successful(Some(List(
+          DeploymentsMetricResult(
+            YearMonth.of(2016, 4),
+            from = date,
+            to   = date,
+            Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))),
+            None),
+          DeploymentsMetricResult(
+            YearMonth.of(2016, 5),
+            from = date,
+            to   = date,
+            Some(Throughput(Some(MeasureResult(6)), None)),
+            None)
+        ))))
 
       val result = controller.serviceDeploymentMetrics("serviceName")(FakeRequest())
 
@@ -69,7 +74,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
     "return NotFound if None lead times returned" in {
-      when(mockIndicatorsService.getServiceDeploymentMetrics("serviceName")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getServiceDeploymentMetrics(is("serviceName"), any())(any[HeaderCarrier]))
+        .thenReturn(Future.successful(None))
 
       val result = controller.serviceDeploymentMetrics("serviceName")(FakeRequest())
 
@@ -85,20 +91,21 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(Some(List(
-        DeploymentsMetricResult(
-          YearMonth.of(2016, 4),
-          from = date,
-          to   = date,
-          Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))),
-          None),
-        DeploymentsMetricResult(
-          YearMonth.of(2016, 5),
-          from = date,
-          to   = date,
-          Some(Throughput(Some(MeasureResult(6)), None)),
-          None)
-      ))))
+      when(mockIndicatorsService.getTeamDeploymentMetrics(is("teamName"), any())(any()))
+        .thenReturn(Future.successful(Some(List(
+          DeploymentsMetricResult(
+            YearMonth.of(2016, 4),
+            from = date,
+            to   = date,
+            Some(Throughput(Some(MeasureResult(5)), Some(MeasureResult(4)))),
+            None),
+          DeploymentsMetricResult(
+            YearMonth.of(2016, 5),
+            from = date,
+            to   = date,
+            Some(Throughput(Some(MeasureResult(6)), None)),
+            None)
+        ))))
 
       val result = controller.teamDeploymentMetrics("teamName")(FakeRequest())
 
@@ -112,7 +119,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
     "return NotFound if None lead times returned" in {
-      when(mockIndicatorsService.getTeamDeploymentMetrics("teamName")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getTeamDeploymentMetrics(is("teamName"), any())(any[HeaderCarrier]))
+        .thenReturn(Future.successful(None))
 
       val result = controller.teamDeploymentMetrics("teamName")(FakeRequest())
 
@@ -128,10 +136,11 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
 
       val date = LocalDate.of(2016, 9, 13)
 
-      when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(Some(List(
-        JobMetric(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4)), Some(0.01)),
-        JobMetric(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)), Some(0.02))
-      ))))
+      when(mockIndicatorsService.getJobMetrics(is("test-repo"), any())(any[HeaderCarrier])).thenReturn(
+        Future.successful(Some(List(
+          JobMetric(YearMonth.of(2016, 4), from = date, to = date, Some(MeasureResult(4)), Some(0.01)),
+          JobMetric(YearMonth.of(2016, 5), from = date, to = date, Some(MeasureResult(5)), Some(0.02))
+        ))))
 
       val result = controller.jobMetrics("test-repo")(FakeRequest())
 
@@ -145,7 +154,8 @@ class ServiceIndicatorControllerSpec extends PlaySpec with MockitoSugar {
     }
 
     "return NotFound if None builds returned" in {
-      when(mockIndicatorsService.getJobMetrics("test-repo")).thenReturn(Future.successful(None))
+      when(mockIndicatorsService.getJobMetrics(is("test-repo"), any())(any[HeaderCarrier]))
+        .thenReturn(Future.successful(None))
 
       val result = controller.jobMetrics("test-repo")(FakeRequest())
 

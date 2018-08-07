@@ -16,38 +16,48 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import java.time.{LocalDateTime, ZoneOffset}
-
-import com.github.tomakehurst.wiremock.http.RequestMethod.GET
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, stubFor, urlEqualTo}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
-import play.api.test.Helpers._
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.http.ws.WSHttp
 
-class TeamsAndRepositoriesClientSpec
+class TeamsAndRepositoriesConnectorSpec
     extends WordSpec
     with Matchers
     with WireMockSpec
     with ScalaFutures
     with DefaultPatienceConfig
-    with OneAppPerSuite {
+    with GuiceOneAppPerSuite {
 
-  val teamsAndRepositoriesClient = new TeamsAndRepositoriesClient(endpointMockUrl)
+  implicit val hc = HeaderCarrier()
+  private val httpClient = new HttpClient with WSHttp {
+    override val hooks: Seq[HttpHook] = Seq.empty
+  }
+
+  val configuration = Configuration(
+    "microservice.services.teams-and-repositories.port" -> Port,
+    "microservice.services.teams-and-repositories.host" -> Host)
+  val teamsAndRepositoriesConnector = new TeamsAndRepositoriesConnector(httpClient, configuration, Environment.simple())
 
   "getServicesForTeam" should {
     "return all services of a team" in {
 
-      running(app) {
-        val teamName = "test-team"
+      val teamName = "test-team"
 
-        givenRequestExpects(
-          method = GET,
-          url    = s"$endpointMockUrl/teams/test-team",
-          willRespondWith = (
-            200,
-            Some(
-              s"""
+      stubFor(
+        get(urlEqualTo("/api/teams/test-team"))
+          .willReturn(
+            aResponse()
+              .withStatus(200)
+              .withBody(
+                s"""
                  |{
                  |   "Service" : [
                  |        "Service1",
@@ -66,15 +76,14 @@ class TeamsAndRepositoriesClientSpec
                  | ]
                  |}
             """.stripMargin
-            ))
-        )
+              ))
+      )
 
-        val results: List[String] = teamsAndRepositoriesClient.getServicesForTeam(teamName).futureValue
-        results shouldBe List("Service1", "Service2", "Service3")
-
-      }
+      val results: List[String] = teamsAndRepositoriesConnector.getServicesForTeam(teamName).futureValue
+      results shouldBe List("Service1", "Service2", "Service3")
 
     }
+
   }
 
 }

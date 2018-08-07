@@ -17,16 +17,17 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time._
+import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.indicators.datasource.Deployment
-import IndicatorTraversable._
+import uk.gov.hmrc.indicators.service.IndicatorTraversable._
 
 import scala.math.BigDecimal.RoundingMode
-import scala.util.Try
 
-class DeploymentMetricCalculator(clock: Clock = Clock.systemUTC()) {
+@Singleton
+class DeploymentMetricCalculator @Inject()() {
 
-  implicit val c = clock
+  implicit lazy val clock = Clock.systemUTC()
 
   type DeploymentBucket = Iterable[(YearMonth, Seq[Deployment])]
   val monthlyWindowSize: Int = 3

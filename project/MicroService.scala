@@ -35,8 +35,7 @@ trait MicroService {
       fork in Test := false,
       retrieveManaged := true,
       targetJvm := "jvm-1.8",
-      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-      routesGenerator := StaticRoutesGenerator
+      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
     )
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
     .settings(resolvers ++= Seq(Resolver.bintrayRepo("hmrc", "releases"), Resolver.jcenterRepo))

@@ -16,12 +16,17 @@
 
 package uk.gov.hmrc.indicators.datasource
 
-import com.github.tomakehurst.wiremock.http.RequestMethod.GET
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, stubFor, urlEqualTo}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
-import play.api.test.Helpers.running
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.http.ws.WSHttp
 
 class RepositoryJobsConnectorSpec
     extends WordSpec
@@ -29,21 +34,28 @@ class RepositoryJobsConnectorSpec
     with WireMockSpec
     with ScalaFutures
     with DefaultPatienceConfig
-    with OneAppPerSuite {
+    with GuiceOneAppPerSuite {
+
+  implicit val hc = HeaderCarrier()
+  private val httpClient = new HttpClient with WSHttp {
+    override val hooks: Seq[HttpHook] = Seq.empty
+  }
+
+  val configuration = Configuration(
+    "microservice.services.repository-jobs.port" -> Port,
+    "microservice.services.repository-jobs.host" -> Host)
+  val repositoryJobsConnector = new RepositoryJobsConnector(httpClient, configuration, Environment.simple())
 
   "Repository jobs connector" should {
 
     "Return a list of builds for a given repository" in {
 
-      running(app) {
-        givenRequestExpects(
-          method = GET,
-//          url = s"$endpointMockUrl/builds/test-repo",
-          url = s"$endpointMockUrl/api/builds/test-repo",
-          willRespondWith = (
-            200,
-            Some(
-              s"""
+      stubFor(
+        get(urlEqualTo("/api/builds/test-repo"))
+          .willReturn(
+            aResponse()
+              .withStatus(200)
+              .withBody(s"""
                  |[
                  |    {
                  |        "repositoryName":"test-repo",
@@ -68,41 +80,37 @@ class RepositoryJobsConnectorSpec
                  |        "builtOn":"built-on"
                  |    }
                  |]
-               """.stripMargin
-            ))
-        )
+               """.stripMargin))
+      )
 
-        val connector = new RepositoryJobsConnector(endpointMockUrl)
-        val results   = connector.getBuildsForRepository("test-repo").futureValue
+      val results = repositoryJobsConnector.getBuildsForRepository("test-repo").futureValue
 
-        val build1 = Build(
-          "test-repo",
-          "repository-abcd",
-          "job.url",
-          1,
-          Some("SUCCESS"),
-          1486571562000l,
-          218869,
-          "build.url",
-          "built-on")
-        val build2 = Build(
-          "test-repo",
-          "repository-abcd",
-          "job.url",
-          5,
-          Some("SUCCESS"),
-          1486571562000l,
-          218869,
-          "build.url",
-          "built-on")
+      val build1 = Build(
+        "test-repo",
+        "repository-abcd",
+        "job.url",
+        1,
+        Some("SUCCESS"),
+        1486571562000l,
+        218869,
+        "build.url",
+        "built-on")
+      val build2 = Build(
+        "test-repo",
+        "repository-abcd",
+        "job.url",
+        5,
+        Some("SUCCESS"),
+        1486571562000l,
+        218869,
+        "build.url",
+        "built-on")
 
-        results.length shouldBe 2
-        results.head   shouldBe build1
-        results.last   shouldBe build2
+      results.length shouldBe 2
+      results.head   shouldBe build1
+      results.last   shouldBe build2
 
-      }
     }
-
   }
 
 }

@@ -73,9 +73,11 @@ class JobMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTri
     val July_2016     = YearMonth.of(2016, 7)
     val August_2016   = YearMonth.of(2016, 8)
 
-    def jobMetricCalculator = new JobMetricCalculator(clock)
+    def jobMetricCalculator = new JobMetricCalculator() {
+      override implicit lazy val clock: Clock = testClock
+    }
 
-    def clock = clockFrom(May_10th)
+    def testClock = clockFrom(May_10th)
 
   }
 
@@ -100,7 +102,7 @@ class JobMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTri
   "JobMetricCalculator" should {
 
     "calculate median build duration" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val builds = List(
         build(toEpochMillis(Feb_4th), 1, Some("SUCCESS")),
@@ -114,7 +116,7 @@ class JobMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTri
     }
 
     "calculate median build duration in multiple months, some empty" in new SetUp {
-      override val clock: Clock = clockFrom(Jun_5th)
+      override val testClock: Clock = clockFrom(Jun_5th)
 
       val builds = List(
         build(toEpochMillis(Feb_4th), 3, Some("SUCCESS")),
@@ -141,7 +143,7 @@ class JobMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTri
     }
 
     "calculate the job success rate for a given month" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val builds = List(
         build(toEpochMillis(Feb_4th), 1, Some("SUCCESS")),
@@ -155,7 +157,7 @@ class JobMetricCalculatorSpec extends WordSpec with Matchers with TypeCheckedTri
     }
 
     "calculate the job success rate for a given month when some build results are empty or not valid" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val builds = List(
         build(toEpochMillis(Feb_4th), 1, Some("SUCCESS")),

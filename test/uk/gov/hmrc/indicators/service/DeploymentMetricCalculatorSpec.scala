@@ -102,9 +102,11 @@ class DeploymentMetricCalculatorSpec
     val Jun_2016    = YearMonth.of(2016, 6)
     val July_2016   = YearMonth.of(2016, 7)
     val August_2016 = YearMonth.of(2016, 8)
-    def clock       = clockFrom(May_10th)
+    def testClock   = clockFrom(May_10th)
 
-    def deploymentMetricCalculator = new DeploymentMetricCalculator(clock)
+    def deploymentMetricCalculator = new DeploymentMetricCalculator() {
+      override implicit lazy val clock: Clock = testClock
+    }
 
   }
 
@@ -123,15 +125,15 @@ class DeploymentMetricCalculatorSpec
   "DeploymentMetricCalculator for stability" should {
 
     "calculates when there has been no deployment" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
-      val deployments           = List()
+      override val testClock: Clock = clockFrom(Feb_18th)
+      val deployments               = List()
 
       deploymentMetricCalculator.calculateDeploymentMetrics(deployments, 1).stability shouldBe
         Seq((Feb_2016, Dec_1st_2015.toLocalDate, Feb_18th.toLocalDate, None, None))
     }
 
     "calculates hotfix rate based on (hotfix intervals only) when there has been some hotfix deployments" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
       val deployments = List(
         deployment(serviceName, Feb_4th, version              = "1.0.0"),
         deployment(serviceName, Feb_4th.plusDays(1), interval = Some(1), version = "1.0.1"),
@@ -144,7 +146,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculates hotfix rate when there has been no hotfix deployments" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
       val deployments = List(
         deployment(serviceName, Feb_4th, version             = "1.0.0"),
         deployment(serviceName, Feb_4th.plusDays(1), version = "2.0.0"),
@@ -156,7 +158,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculates hotfix rate when there has been hotfixes and deployments in mulitple months" in new SetUp {
-      override val clock: Clock = clockFrom(Jun_5th)
+      override val testClock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
         deployment("test-service", Feb_4th, interval  = Some(3), version  = "3.1.1"),
@@ -187,7 +189,7 @@ class DeploymentMetricCalculatorSpec
   "deploymentMetricCalculator throughput leadtime" should {
 
     "calculate the correct median lead time for one tag and deployment in the same month 3 days apart" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_4th)
+      override val testClock: Clock = clockFrom(Feb_4th)
 
       val deploymentBucket = Seq(deployment(serviceName, Feb_4th, Some(3)))
 
@@ -199,7 +201,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median lead time for two tags" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_16th)
+      override val testClock: Clock = clockFrom(Feb_16th)
 
       val deployments = Seq(deployment("test-service", Feb_4th, Some(3)), deployment("test-service", Feb_16th, Some(6)))
 
@@ -209,7 +211,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median lead time for deployments that spans two months" in new SetUp {
-      override val clock: Clock = clockFrom(Apr_10th)
+      override val testClock: Clock = clockFrom(Apr_10th)
 
       val deployments = Seq(deployment("test-service", Mar_4th, Some(3)), deployment("test-service", Apr_10th, Some(6)))
 
@@ -220,7 +222,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median lead time for 3 deployments" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val deployments = Seq(
         deployment("test-service", Feb_6th, Some(5)),
@@ -234,7 +236,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median lead time for 3 deployments with one missing tag date" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val deployments = Seq(
         deployment("test-service", Feb_6th, Some(5)),
@@ -247,7 +249,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median lead time for 4 deployments (3, 6, 6, 2)" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val deployments = Seq(
         deployment("test-service", Feb_4th, Some(3)),
@@ -262,7 +264,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the rolling lead time for 7 months (3 months sliding window) when provided tags and deployments are not ordered" in new SetUp {
-      override val clock: Clock = clockFrom(Jun_5th)
+      override val testClock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
         deployment("test-service", Apr_1st, Some(5)),
@@ -289,7 +291,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the median deployment lead time for 5 months (3 months sliding window) looking back 8 months" in new SetUp {
-      override val clock: Clock = clockFrom(Jun_5th)
+      override val testClock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
         deployment("test-service", Nov_26th_2015, leadTime = Some(10)),
@@ -329,7 +331,7 @@ class DeploymentMetricCalculatorSpec
   "deploymentMetricCalculator throughput interval" should {
 
     "calculate the correct median deployment interval for deployment in the same month 3 days apart" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_4th)
+      override val testClock: Clock = clockFrom(Feb_4th)
 
       val deployments = Seq(deployment("test-service", Feb_4th))
 
@@ -342,7 +344,7 @@ class DeploymentMetricCalculatorSpec
 
       val Jan_29th = LocalDateTime.of(LocalDate.of(2016, 1, 29), LocalTime.of(11, 16, 9))
 
-      override val clock: Clock = clockFrom(Jan_29th)
+      override val testClock: Clock = clockFrom(Jan_29th)
 
       val Jan_7th  = LocalDateTime.of(LocalDate.of(2016, 1, 7), LocalTime.of(12, 16, 3))
       val Jan_28th = LocalDateTime.of(LocalDate.of(2016, 1, 28), LocalTime.of(11, 16, 3))
@@ -356,7 +358,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median deployment interval for deployments that spans two months" in new SetUp {
-      override val clock: Clock = clockFrom(Apr_10th)
+      override val testClock: Clock = clockFrom(Apr_10th)
 
       val deployments =
         Seq(deployment("test-service", Mar_4th), deployment("test-service", Apr_10th, interval = Some(37)))
@@ -368,7 +370,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median deployment interval for 3 deployments" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       val deployments = Seq(
         deployment("test-service", Feb_4th),
@@ -381,7 +383,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the correct median deployment interval for 4 deployments (3, 6, 6, 2)" in new SetUp {
-      override val clock: Clock = clockFrom(Feb_18th)
+      override val testClock: Clock = clockFrom(Feb_18th)
 
       //6,6,2
       val deployments = Seq(
@@ -397,7 +399,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the median deployment interval for 7 months (3 months sliding window) when provided deployments are not ordered" in new SetUp {
-      override val clock: Clock = clockFrom(Jun_5th)
+      override val testClock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
         deployment("test-service", May_11th, interval = Some(30)), //interval 30
@@ -432,7 +434,7 @@ class DeploymentMetricCalculatorSpec
     }
 
     "calculate the median deployment interval for 5 months (3 months sliding window) looking back 8 months" in new SetUp {
-      override val clock: Clock = clockFrom(Jun_5th)
+      override val testClock: Clock = clockFrom(Jun_5th)
 
       val deployments = List(
         deployment("test-service", Nov_26th_2015, interval = Some(10)),
