@@ -17,11 +17,10 @@
 package uk.gov.hmrc.indicators.service
 
 import java.time._
+import javax.inject.{Inject, Singleton}
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.indicators.datasource.{Build, Deployment}
-
-import scala.util.Try
 
 object JobMetric {
   import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
@@ -35,9 +34,10 @@ case class JobMetric(
   duration: Option[MeasureResult],
   successRate: Option[Double])
 
-class JobMetricCalculator(clock: Clock = Clock.systemUTC()) {
+@Singleton
+class JobMetricCalculator @Inject()() {
 
-  implicit val c = clock
+  implicit lazy val clock = Clock.systemUTC()
 
   type JobExecutionBucket = Iterable[(YearMonth, Seq[Deployment])]
   val monthlyWindowSize: Int = 3

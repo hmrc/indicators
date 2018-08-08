@@ -17,13 +17,18 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.LocalDateTime
+import javax.inject.{Inject, Singleton}
 
-import play.api.libs.json.{Json, Reads}
-import uk.gov.hmrc.indicators.JavaDateTimeImplicits
-import uk.gov.hmrc.indicators.http.HttpClient
+import play.api.Mode.Mode
+import play.api.libs.json.Json
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.config.ServicesConfig
+
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 case class Deployment(
   name: String,
@@ -32,16 +37,20 @@ case class Deployment(
   leadTime: Option[Long] = None,
   interval: Option[Long] = None)
 
-trait DeploymentsDataSource {
-  def getForService(serviceName: String): Future[List[Deployment]]
-}
+@Singleton
+class ServiceDeploymentsConnector @Inject()(
+  httpClient: HttpClient,
+  override val runModeConfiguration: Configuration,
+  environment: Environment)
+    extends ServicesConfig {
 
-class DeploymentsClient(deploymentsApiBase: String) extends DeploymentsDataSource {
+  override protected def mode: Mode = environment.mode
 
-  import JavaDateTimeImplicits._
-
+  import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
   implicit val reads = Json.reads[Deployment]
 
-  def getForService(serviceName: String): Future[List[Deployment]] =
-    HttpClient.get[List[Deployment]](s"$deploymentsApiBase/$serviceName")
+  def getForService(serviceName: String)(implicit hc: HeaderCarrier): Future[List[Deployment]] =
+    httpClient
+      .GET[Option[List[Deployment]]](s"${baseUrl("service-deployments")}/api/deployments/$serviceName")
+      .map(_.getOrElse(List.empty))
 }

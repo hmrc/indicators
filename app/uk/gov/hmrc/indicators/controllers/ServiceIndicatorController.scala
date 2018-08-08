@@ -16,23 +16,19 @@
 
 package uk.gov.hmrc.indicators.controllers
 
+import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.indicators.ComponentRegistry
 import uk.gov.hmrc.indicators.service.IndicatorsService
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object ServiceIndicatorController extends ServiceIndicatorController {
-
-  override val indicatorsService: IndicatorsService = ComponentRegistry.indicatorsService
-
-}
-
-trait ServiceIndicatorController extends BaseController {
-
-  def indicatorsService: IndicatorsService
+@Singleton
+class ServiceIndicatorController @Inject()(http: HttpClient, indicatorsService: IndicatorsService)
+    extends BaseController {
 
   def serviceDeploymentMetrics(serviceName: String) = Action.async { implicit request =>
     indicatorsService.getServiceDeploymentMetrics(serviceName) map {

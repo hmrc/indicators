@@ -16,8 +16,15 @@
 
 package uk.gov.hmrc.indicators.datasource
 
+import javax.inject.Inject
+
+import play.api.Mode.Mode
 import play.api.libs.json.Json
-import uk.gov.hmrc.indicators.http.HttpClient
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
 import scala.concurrent.Future
 
@@ -32,15 +39,21 @@ case class Build(
   buildUrl: String,
   builtOn: String)
 
-trait RepositoryJobsDataSource {
-  def getBuildsForRepository(repositoryName: String): Future[Seq[Build]]
-}
+class RepositoryJobsConnector @Inject()(
+  httpClient: HttpClient,
+  override val runModeConfiguration: Configuration,
+  environment: Environment)
+    extends ServicesConfig {
 
-class RepositoryJobsConnector(repositoryJobsApiBase: String) extends RepositoryJobsDataSource {
+  override protected def mode: Mode = environment.mode
 
-  def getBuildsForRepository(repositoryName: String): Future[Seq[Build]] = {
+  def getBuildsForRepository(repositoryName: String)(implicit hc: HeaderCarrier): Future[Seq[Build]] = {
     implicit val reads = Json.reads[Build]
-    HttpClient.get[List[Build]](s"$repositoryJobsApiBase/api/builds/$repositoryName")
+    val url            = baseUrl("repository-jobs")
+
+    httpClient
+      .GET[Option[List[Build]]](s"$url/api/builds/$repositoryName")
+      .map(_.getOrElse(List.empty))
   }
 
 }

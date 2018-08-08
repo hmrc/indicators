@@ -16,22 +16,25 @@
 
 package uk.gov.hmrc.indicators.service
 
+import javax.inject.{Inject, Singleton}
+
 import play.api.Logger
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.indicators.datasource._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class IndicatorsService(
-  deploymentsDataSource: DeploymentsDataSource,
-  teamsAndRepositoriesDataSource: TeamsAndRepositoriesDataSource,
-  repositoryJobsDataSource: RepositoryJobsDataSource,
+@Singleton
+class IndicatorsService @Inject()(
+  serviceDeploymentsConnector: ServiceDeploymentsConnector,
+  teamsAndRepositoriesConnector: TeamsAndRepositoriesConnector,
+  repositoryJobsConnector: RepositoryJobsConnector,
   deploymentMetricCalculator: DeploymentMetricCalculator,
   jobExecutionTimeMetricCalculator: JobMetricCalculator) {
 
-  def getServiceDeploymentMetrics(
-    serviceName: String,
-    periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
+  def getServiceDeploymentMetrics(serviceName: String, periodInMonths: Int = 12)(
+    implicit hc: HeaderCarrier): Future[Option[Seq[DeploymentsMetricResult]]] =
     getServiceDeployments(serviceName)
       .map { deployments =>
         Logger.debug(s"### Calculating production lead time for $serviceName , period : $periodInMonths months ###")
@@ -42,10 +45,9 @@ class IndicatorsService(
       }
       .recoverWith { case ex => Future.successful(None) }
 
-  def getTeamDeploymentMetrics(
-    teamName: String,
-    periodInMonths: Int = 12): Future[Option[Seq[DeploymentsMetricResult]]] =
-    teamsAndRepositoriesDataSource
+  def getTeamDeploymentMetrics(teamName: String, periodInMonths: Int = 12)(
+    implicit hc: HeaderCarrier): Future[Option[Seq[DeploymentsMetricResult]]] =
+    teamsAndRepositoriesConnector
       .getServicesForTeam(teamName)
       .flatMap { services =>
         Future
@@ -63,15 +65,16 @@ class IndicatorsService(
       case l   => Some(deploymentMetricCalculator.calculateDeploymentMetrics(l, periodInMonths))
     }
 
-  def getServiceDeployments(service: String): Future[List[Deployment]] =
-    deploymentsDataSource.getForService(service).map { rs =>
+  def getServiceDeployments(service: String)(implicit hc: HeaderCarrier): Future[List[Deployment]] =
+    serviceDeploymentsConnector.getForService(service).map { rs =>
       val (invalidDeployments, validDeployments) = rs.partition(r => r.leadTime.isDefined && r.leadTime.exists(_ < 0))
       logInvalidDeployments(invalidDeployments)
       validDeployments
     }
 
-  def getJobMetrics(repositoryName: String, periodInMonths: Int = 12): Future[Option[Seq[JobMetric]]] = {
-    val repository = repositoryJobsDataSource.getBuildsForRepository(repositoryName)
+  def getJobMetrics(repositoryName: String, periodInMonths: Int = 12)(
+    implicit hc: HeaderCarrier): Future[Option[Seq[JobMetric]]] = {
+    val repository = repositoryJobsConnector.getBuildsForRepository(repositoryName)
 
     repository
       .map { builds =>
