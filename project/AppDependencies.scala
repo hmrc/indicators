@@ -5,7 +5,7 @@ private object AppDependencies {
   import play.core.PlayVersion.current
 
   val compile = Seq(
-    "uk.gov.hmrc"      %% "bootstrap-play-25" % "1.7.0",
+    "uk.gov.hmrc"      %% "bootstrap-play-25" % "3.1.0",
     "uk.gov.hmrc"      %% "play-url-binders"  % "2.1.0",
     "uk.gov.hmrc"      %% "git-client"        % "0.6.0",
     "uk.gov.hmrc"      %% "github-client"     % "1.21.0",
