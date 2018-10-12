@@ -6,7 +6,6 @@ private object AppDependencies {
 
   val compile = Seq(
     "uk.gov.hmrc"      %% "bootstrap-play-25" % "3.1.0",
-    "uk.gov.hmrc"      %% "git-client"        % "0.6.0",
     "uk.gov.hmrc"      %% "github-client"     % "1.21.0",
     "uk.gov.hmrc"      %% "domain"            % "5.2.0",
     "com.google.guava" % "guava"              % "18.0"
