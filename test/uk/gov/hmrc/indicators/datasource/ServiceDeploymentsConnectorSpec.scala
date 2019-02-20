@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.{LocalDateTime, ZoneOffset}
-
+import akka.actor.ActorSystem
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.typesafe.config.Config
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -39,7 +40,9 @@ class ServiceDeploymentsConnectorSpec
 
   implicit val hc = HeaderCarrier()
   private val httpClient = new HttpClient with WSHttp {
-    override val hooks: Seq[HttpHook] = Seq.empty
+    override val hooks: Seq[HttpHook]                    = Seq.empty
+    override protected def actorSystem: ActorSystem      = ActorSystem("test-actor-system")
+    override protected def configuration: Option[Config] = None
   }
 
   val configuration = Configuration(

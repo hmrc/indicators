@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,13 @@ package uk.gov.hmrc.indicators.datasource
 
 import java.time.LocalDateTime
 import javax.inject.{Inject, Singleton}
-
 import play.api.Mode.Mode
 import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
-
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
-
 import scala.concurrent.Future
 
 case class Deployment(
@@ -45,9 +42,7 @@ class ServiceDeploymentsConnector @Inject()(
     extends ServicesConfig {
 
   override protected def mode: Mode = environment.mode
-
-  import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
-  implicit val reads = Json.reads[Deployment]
+  implicit val reads                = Json.reads[Deployment]
 
   def getForService(serviceName: String)(implicit hc: HeaderCarrier): Future[List[Deployment]] =
     httpClient
