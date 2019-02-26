@@ -22,6 +22,7 @@ import play.api.Mode.Mode
 import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.indicators.JavaDateTimeImplicits
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
@@ -42,6 +43,7 @@ class ServiceDeploymentsConnector @Inject()(
     extends ServicesConfig {
 
   override protected def mode: Mode = environment.mode
+  implicit val localDateTimeReads = JavaDateTimeImplicits.localDateTime
   implicit val reads                = Json.reads[Deployment]
 
   def getForService(serviceName: String)(implicit hc: HeaderCarrier): Future[List[Deployment]] =
