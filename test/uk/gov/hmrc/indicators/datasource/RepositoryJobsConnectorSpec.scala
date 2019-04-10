@@ -29,6 +29,8 @@ import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.ws.WSHttp
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class RepositoryJobsConnectorSpec
     extends WordSpec
     with Matchers

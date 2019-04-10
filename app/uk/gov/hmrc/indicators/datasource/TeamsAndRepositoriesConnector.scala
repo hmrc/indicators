@@ -17,20 +17,18 @@
 package uk.gov.hmrc.indicators.datasource
 
 import javax.inject.Inject
-
 import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class TeamsAndRepositoriesConnector @Inject()(
   httpClient: HttpClient,
   override val runModeConfiguration: Configuration,
-  environment: Environment)
+  environment: Environment)(implicit ec: ExecutionContext)
     extends ServicesConfig {
 
   val mode           = environment.mode

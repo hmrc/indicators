@@ -17,6 +17,7 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.LocalDateTime
+
 import javax.inject.{Inject, Singleton}
 import play.api.Mode.Mode
 import play.api.libs.json.Json
@@ -25,8 +26,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.indicators.JavaDateTimeImplicits
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
-import scala.concurrent.Future
+
+import scala.concurrent.{ExecutionContext, Future}
 
 case class Deployment(
   name: String,
@@ -39,7 +40,7 @@ case class Deployment(
 class ServiceDeploymentsConnector @Inject()(
   httpClient: HttpClient,
   override val runModeConfiguration: Configuration,
-  environment: Environment)
+  environment: Environment)(implicit ec: ExecutionContext)
     extends ServicesConfig {
 
   override protected def mode: Mode = environment.mode
