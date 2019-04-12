@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package uk.gov.hmrc.indicators.service
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
 object FutureImplicit {
 
   implicit class SequenceOfFutures[A](listOfFuture: List[Future[A]]) {
@@ -26,6 +25,5 @@ object FutureImplicit {
     def futureList(implicit ec: ExecutionContext): Future[List[A]] = Future.sequence(listOfFuture)
 
   }
-  
 
 }

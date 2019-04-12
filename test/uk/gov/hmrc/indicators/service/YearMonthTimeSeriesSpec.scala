@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
     "map monthly bucket items to given function" in {
       val timeSeries = YearMonthTimeSeries[Int](YearMonth.of(2016, 1), YearMonth.of(2016, 3), ym => List(1, 2, 3))
 
-
       timeSeries.toList shouldBe List(
         (YearMonth.of(2016, 1), List(1, 2, 3)),
         (YearMonth.of(2016, 2), List(1, 2, 3)),
@@ -52,14 +51,9 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
       )
     }
 
-
-
     "produce a sliding window" in {
 
-      val timeSeries = YearMonthTimeSeries[Int](
-        YearMonth.of(2016, 1),
-        YearMonth.of(2016, 9),
-        ym => List())
+      val timeSeries = YearMonthTimeSeries[Int](YearMonth.of(2016, 1), YearMonth.of(2016, 9), ym => List())
 
       timeSeries.slidingWindow(3).toList shouldBe List(
         Iterable(
@@ -75,7 +69,6 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
           (YearMonth.of(2016, 3), List.empty[Int])
         ),
         Iterable(
-
           (YearMonth.of(2016, 2), List.empty[Int]),
           (YearMonth.of(2016, 3), List.empty[Int]),
           (YearMonth.of(2016, 4), List.empty[Int])
@@ -105,16 +98,12 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
           (YearMonth.of(2016, 8), List.empty[Int]),
           (YearMonth.of(2016, 9), List.empty[Int])
         )
-
       )
     }
 
     "produce sliding window when there are less months then the window size" in {
 
-      val timeSeries = YearMonthTimeSeries[Int](
-        YearMonth.of(2016, 1),
-        YearMonth.of(2016, 2),
-        ym => List())
+      val timeSeries = YearMonthTimeSeries[Int](YearMonth.of(2016, 1), YearMonth.of(2016, 2), ym => List())
 
       timeSeries.slidingWindow(3).toList shouldBe List(
         Iterable(
@@ -138,13 +127,9 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
 
     }
 
-
     "produce sliding window when there are same months then the window size" in {
 
-      val timeSeries = YearMonthTimeSeries[Int](
-        YearMonth.of(2016, 1),
-        YearMonth.of(2016, 3),
-        ym => List())
+      val timeSeries = YearMonthTimeSeries[Int](YearMonth.of(2016, 1), YearMonth.of(2016, 3), ym => List())
 
       timeSeries.slidingWindow(3).toList shouldBe List(
         Iterable(
@@ -161,7 +146,6 @@ class YearMonthTimeSeriesSpec extends WordSpec with Matchers {
         )
       )
     }
-
 
   }
 }

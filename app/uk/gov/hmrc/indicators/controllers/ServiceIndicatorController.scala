@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,41 @@
 
 package uk.gov.hmrc.indicators.controllers
 
+import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.indicators.ComponentRegistry
 import uk.gov.hmrc.indicators.service.IndicatorsService
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object ServiceIndicatorController extends ServiceIndicatorController {
-
-  override val indicatorsService: IndicatorsService = ComponentRegistry.indicatorsService
-
-}
-
-
-trait ServiceIndicatorController extends BaseController {
-
-  def indicatorsService: IndicatorsService
-
+@Singleton
+class ServiceIndicatorController @Inject()(http: HttpClient, indicatorsService: IndicatorsService)
+    extends BaseController {
 
   def serviceDeploymentMetrics(serviceName: String) = Action.async { implicit request =>
-
     indicatorsService.getServiceDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
-      case _ => NotFound
+      case _        => NotFound
     }
   }
 
   def teamDeploymentMetrics(serviceName: String) = Action.async { implicit request =>
-
     indicatorsService.getTeamDeploymentMetrics(serviceName) map {
       case Some(ls) => Ok(Json.toJson(ls)).as("application/json")
-      case _ => NotFound
+      case _        => NotFound
     }
   }
 
+  def jobMetrics(repoName: String) = Action.async { implicit request =>
+    val metrics = indicatorsService.getJobMetrics(repoName)
+    metrics map {
+      case Some(ls) =>
+        Ok(Json.toJson(ls)).as("application/json")
+      case _ => NotFound
+    }
+  }
 
 }

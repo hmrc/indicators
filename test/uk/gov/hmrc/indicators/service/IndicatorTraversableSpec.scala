@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package uk.gov.hmrc.indicators.service
 
 import org.scalatest.{Matchers, OptionValues, WordSpec}
 
-class IndicatorTraversableSpec extends WordSpec with Matchers with OptionValues{
+class IndicatorTraversableSpec extends WordSpec with Matchers with OptionValues {
 
   import IndicatorTraversable._
 
@@ -48,8 +48,8 @@ class IndicatorTraversableSpec extends WordSpec with Matchers with OptionValues{
     }
 
     "find the median of random series of numbers" in {
-      (1 to 10).median.get shouldBe 5.5
-      (11 to 20 ).median.get shouldBe 15.5
+      (1 to 10).median.get                               shouldBe 5.5
+      (11 to 20).median.get                              shouldBe 15.5
       Seq(1, 2, 3, 3, 5, 20, 7, 8, 9, 10, 30).median.get shouldBe 7
 
     }

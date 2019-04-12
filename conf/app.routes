@@ -1,6 +1,6 @@
 # microservice specific routes
 
 GET        /service/:serviceName/deployments    uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.serviceDeploymentMetrics(serviceName)
-GET        /team/:teamName/deployments    uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.teamDeploymentMetrics(teamName)
-
+GET        /team/:teamName/deployments          uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.teamDeploymentMetrics(teamName)
+GET        /repository/:repoName/builds         uk.gov.hmrc.indicators.controllers.ServiceIndicatorController.jobMetrics(repoName)
 

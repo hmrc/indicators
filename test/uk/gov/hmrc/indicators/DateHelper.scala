@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ object DateHelper {
     def zoned: ZonedDateTime = self.atZone(TimeZone.getDefault().toZoneId)
   }
 
-
-  def clockFrom(localDate: LocalDateTime) = {
-
+  def clockFrom(localDate: LocalDateTime) =
     Clock.fixed(localDate.toInstant(ZoneOffset.UTC), TimeZone.getDefault().toZoneId)
-  }
 
 }

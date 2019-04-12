@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,17 @@ object Stability {
   implicit val writes = Json.writes[Stability]
 }
 
-case class DeploymentsMetricResult(period: YearMonth,
-                                   from: LocalDate,
-                                   to: LocalDate,
-                                   throughput: Option[Throughput],
-                                   stability: Option[Stability])
+case class DeploymentsMetricResult(
+  period: YearMonth,
+  from: LocalDate,
+  to: LocalDate,
+  throughput: Option[Throughput],
+  stability: Option[Stability])
 
 object DeploymentsMetricResult {
   import uk.gov.hmrc.indicators.JavaDateTimeImplicits._
   implicit val writes = Json.writes[DeploymentsMetricResult]
 }
-
 
 case class MeasureResult(median: Int)
 
@@ -61,19 +61,28 @@ abstract class MetricsResult {
   val median: Option[Int]
 }
 
+case class DeploymentLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int])
+    extends MetricsResult
 
-case class ReleaseLeadTimeResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
+case class DeploymentIntervalResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int])
+    extends MetricsResult
 
-case class ReleaseIntervalResult(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[Int]) extends MetricsResult
+object DeploymentIntervalResult {
 
-object ReleaseIntervalResult {
-
-  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseIntervalResult =
-    ReleaseIntervalResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
+  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): DeploymentIntervalResult =
+    DeploymentIntervalResult(
+      period = period,
+      from   = from,
+      to     = to,
+      median = median.map(x => Math.round(x.toDouble).toInt))
 }
 
-object ReleaseLeadTimeResult {
+object DeploymentLeadTimeResult {
 
-  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): ReleaseLeadTimeResult =
-    ReleaseLeadTimeResult(period = period, from = from, to = to, median = median.map(x => Math.round(x.toDouble).toInt))
+  def of(period: YearMonth, from: LocalDate, to: LocalDate, median: Option[BigDecimal]): DeploymentLeadTimeResult =
+    DeploymentLeadTimeResult(
+      period = period,
+      from   = from,
+      to     = to,
+      median = median.map(x => Math.round(x.toDouble).toInt))
 }
