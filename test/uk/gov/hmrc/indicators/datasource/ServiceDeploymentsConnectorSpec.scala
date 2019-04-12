@@ -17,6 +17,7 @@
 package uk.gov.hmrc.indicators.datasource
 
 import java.time.{LocalDateTime, ZoneOffset}
+
 import akka.actor.ActorSystem
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.typesafe.config.Config
@@ -29,6 +30,8 @@ import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.indicators.{DefaultPatienceConfig, WireMockSpec}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.ws.WSHttp
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class ServiceDeploymentsConnectorSpec
     extends WordSpec
